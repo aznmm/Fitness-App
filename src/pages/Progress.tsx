@@ -1,6 +1,7 @@
-import { ChevronRight, Info, Trash2 } from 'lucide-react';
+import { ChevronRight, CircleCheck, Clock, Flame, Info, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BodyMap } from '../components/BodyMap';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
 import { ExerciseInitial } from '../components/ExercisePicker';
@@ -11,11 +12,13 @@ import { ScoreDelta } from '../components/StrengthScoreCard';
 import { MUSCLE_LABELS, muscleClass } from '../data/exercises';
 import { exerciseRecords } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
+import { groupFatigue, MAP_MUSCLES, muscleFatigue, muscleSets, type RecoveryStatus } from '../lib/muscles';
 import { exerciseUsage, setsPerMuscle, VOLUME_MUSCLES, weeklyStats } from '../lib/stats';
 import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
 import { formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
 import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
+import type { Muscle } from '../types';
 
 export function Progress() {
   return (
@@ -308,53 +311,144 @@ function WeeklySection() {
   );
 }
 
+const STATUS_META: Record<RecoveryStatus, { label: string; color: string; icon: typeof CircleCheck }> = {
+  fresh: { label: 'Fresh', color: 'var(--green-text)', icon: CircleCheck },
+  recovering: { label: 'Recovering', color: 'var(--gold)', icon: Clock },
+  fatigued: { label: 'Fatigued', color: 'var(--heat)', icon: Flame },
+};
+
 function MuscleSection() {
   const workouts = useStore((s) => s.workouts);
   const { byId } = useExercises();
+  const [mode, setMode] = useState<'sets' | 'recovery'>('sets');
   const [range, setRange] = useState<7 | 30>(7);
-  const sets = useMemo(() => setsPerMuscle(workouts, byId, Date.now() - range * DAY_MS), [workouts, byId, range]);
+  const since = useMemo(() => Date.now() - range * DAY_MS, [range]);
+  const sets = useMemo(() => setsPerMuscle(workouts, byId, since), [workouts, byId, since]);
+  const raw = useMemo(() => muscleSets(workouts, byId, since), [workouts, byId, since]);
+  const fatigue = useMemo(() => muscleFatigue(workouts, byId), [workouts, byId]);
   const perWeek = (n: number) => (range === 7 ? n : (n / 30) * 7);
   const rows = VOLUME_MUSCLES.map((m) => ({ m, n: perWeek(sets[m]) }));
   const max = Math.max(22, ...rows.map((r) => r.n));
   const BAND = [10, 20];
+  const mapValues =
+    mode === 'sets' ? Object.fromEntries(MAP_MUSCLES.map((m) => [m, Math.min(1, perWeek(raw[m] ?? 0) / 20)])) : fatigue;
 
   return (
     <section className="section">
       <div className="section-head">
-        <h2>Sets per muscle</h2>
-        <div className="seg" role="group" aria-label="Range">
-          <button aria-pressed={range === 7} onClick={() => setRange(7)}>
-            7 days
+        <h2>Muscles</h2>
+        <div className="seg" role="group" aria-label="Muscle view">
+          <button aria-pressed={mode === 'sets'} onClick={() => setMode('sets')}>
+            Sets
           </button>
-          <button aria-pressed={range === 30} onClick={() => setRange(30)}>
-            30 days
+          <button aria-pressed={mode === 'recovery'} onClick={() => setMode('recovery')}>
+            Recovery
           </button>
         </div>
       </div>
       <div className="card">
-        <p className="small muted" style={{ margin: '0 0 14px' }}>
-          Working sets {range === 30 ? 'per week (30-day average)' : 'this past week'}. Secondary muscles count as half a set. Shaded band: the 10–20 sets/week most
-          lifters grow on.
-        </p>
-        <div className="stack-sm" style={{ gap: 8 }}>
-          {rows.map(({ m, n }) => (
-            <div className={`hbar-row ${muscleClass(m)}`} key={m}>
-              <span className="row" style={{ gap: 8 }}>
-                <span className="dot" aria-hidden />
-                {MUSCLE_LABELS[m]}
+        <BodyMap
+          values={mapValues}
+          color={mode === 'sets' ? 'var(--accent)' : 'var(--heat)'}
+          height={250}
+          label={mode === 'sets' ? 'Working sets per muscle' : 'Muscle fatigue right now'}
+        />
+        {mode === 'sets' ? (
+          <>
+            <div className="legend" style={{ marginTop: 12 }}>
+              <span>
+                <span className="swatch" style={{ background: 'var(--fill-strong)' }} />
+                None
               </span>
-              <div className="hbar-track">
-                <div className="band" style={{ left: `${(BAND[0] / max) * 100}%`, width: `${((BAND[1] - BAND[0]) / max) * 100}%` }} />
-                {n > 0 && <div className="fill" style={{ width: `${(n / max) * 100}%` }} />}
-              </div>
-              <span className="rounded-num" style={{ textAlign: 'right', fontWeight: 600 }}>
-                {trimNumber(n)}
+              <span>
+                <span className="swatch" style={{ background: 'var(--accent)', opacity: 0.45 }} />
+                A few sets
+              </span>
+              <span>
+                <span className="swatch" style={{ background: 'var(--accent)' }} />
+                20+ sets / week
               </span>
             </div>
-          ))}
-        </div>
+            <div className="divider" />
+            <div className="spread" style={{ marginBottom: 12 }}>
+              <span className="small muted">{range === 30 ? 'Sets per week, 30-day average' : 'Sets in the last 7 days'}</span>
+              <div className="seg" role="group" aria-label="Range">
+                <button aria-pressed={range === 7} onClick={() => setRange(7)}>
+                  7 days
+                </button>
+                <button aria-pressed={range === 30} onClick={() => setRange(30)}>
+                  30 days
+                </button>
+              </div>
+            </div>
+            <div className="stack-sm" style={{ gap: 8 }}>
+              {rows.map(({ m, n }) => (
+                <div className={`hbar-row ${muscleClass(m)}`} key={m}>
+                  <span className="row" style={{ gap: 8 }}>
+                    <span className="dot" aria-hidden />
+                    {MUSCLE_LABELS[m]}
+                  </span>
+                  <div className="hbar-track">
+                    <div className="band" style={{ left: `${(BAND[0] / max) * 100}%`, width: `${((BAND[1] - BAND[0]) / max) * 100}%` }} />
+                    {n > 0 && <div className="fill" style={{ width: `${(n / max) * 100}%` }} />}
+                  </div>
+                  <span className="rounded-num" style={{ textAlign: 'right', fontWeight: 600 }}>
+                    {trimNumber(n)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="tiny muted" style={{ margin: '12px 0 0' }}>
+              Secondary muscles count as half a set. Shaded band: the 10–20 sets a week most lifters grow on.
+            </p>
+          </>
+        ) : (
+          <RecoveryList fatigue={fatigue} />
+        )}
       </div>
     </section>
+  );
+}
+
+function RecoveryList({ fatigue }: { fatigue: Partial<Record<Muscle, number>> }) {
+  return (
+    <>
+      <div className="legend" style={{ marginTop: 12 }}>
+        <span>
+          <span className="swatch" style={{ background: 'var(--fill-strong)' }} />
+          Fresh
+        </span>
+        <span>
+          <span className="swatch" style={{ background: 'var(--heat)', opacity: 0.5 }} />
+          Recovering
+        </span>
+        <span>
+          <span className="swatch" style={{ background: 'var(--heat)' }} />
+          Just trained
+        </span>
+      </div>
+      <div className="divider" />
+      <div className="stack-sm" style={{ gap: 10 }}>
+        {groupFatigue(fatigue).map((g) => {
+          const meta = STATUS_META[g.status];
+          const Icon = meta.icon;
+          return (
+            <div className="spread" key={g.id}>
+              <span style={{ fontWeight: 500 }}>{g.label}</span>
+              <span className="row small" style={{ gap: 6, color: meta.color, fontWeight: 600 }}>
+                <Icon size={15} /> {meta.label}
+                <span className="rounded-num muted" style={{ fontWeight: 500, minWidth: 44, textAlign: 'right' }}>
+                  {Math.round((1 - g.fatigue) * 100)}%
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="tiny muted" style={{ margin: '12px 0 0' }}>
+        Estimated from your recent sets. Most muscles are fully recovered 2–3 days after a hard session.
+      </p>
+    </>
   );
 }
 

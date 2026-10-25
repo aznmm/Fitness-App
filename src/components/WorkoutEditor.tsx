@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, Disc3, Flame, MessageSquare, MoreHorizontal, Plus, Repeat, Target, Timer, Trash2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpen, Check, Disc3, Flame, MessageSquare, MoreHorizontal, Plus, Repeat, Target, Timer, Trash2, Trophy } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MUSCLE_LABELS } from '../data/exercises';
@@ -31,6 +31,7 @@ import {
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } from '../types';
 import { toast } from './Dialogs';
+import { ExerciseGuide } from './ExerciseGuide';
 import { ExerciseInitial, ExercisePicker } from './ExercisePicker';
 import { NumberInput } from './NumberInput';
 import { PlateCalculator } from './PlateCalculator';
@@ -107,6 +108,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   const bodyweight = useBodyweight();
   const [menu, setMenu] = useState(false);
   const [plates, setPlates] = useState(false);
+  const [guide, setGuide] = useState(false);
   const [showNotes, setShowNotes] = useState(!!we.notes);
 
   const type = exercise?.type ?? 'weight_reps';
@@ -202,6 +204,16 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
       {menu && (
         <Sheet title={exercise?.name ?? 'Exercise'} onClose={() => setMenu(false)}>
           <div className="menu">
+            {exercise && !exercise.custom && (
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  setGuide(true);
+                }}
+              >
+                <BookOpen size={18} /> How to do it
+              </button>
+            )}
             <button
               onClick={() => {
                 setShowNotes(true);
@@ -289,6 +301,11 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
         </Sheet>
       )}
       {plates && <PlateCalculator initialKg={firstWorkingKg || undefined} onClose={() => setPlates(false)} />}
+      {guide && exercise && (
+        <Sheet title={exercise.name} onClose={() => setGuide(false)}>
+          <ExerciseGuide exercise={exercise} mapHeight={180} />
+        </Sheet>
+      )}
     </section>
   );
 });

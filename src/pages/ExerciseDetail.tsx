@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { LineChart } from '../components/charts/LineChart';
 import { CustomExerciseSheet } from '../components/CustomExerciseSheet';
+import { ExerciseGuide } from '../components/ExerciseGuide';
 import { confirm } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
 import { ScoreRing } from '../components/ScoreRing';
@@ -139,6 +140,11 @@ export function ExerciseDetail() {
             </p>
           )}
         </div>
+      </section>
+
+      <section className="section">
+        <h2 style={{ marginBottom: 12 }}>Muscles & form</h2>
+        <ExerciseGuide exercise={exercise} />
       </section>
 
       {exercise.type === 'weight_reps' && records.heaviest > 0 && (
