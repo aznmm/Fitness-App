@@ -1,12 +1,14 @@
-import { Check, ChevronRight, Dumbbell, Flame, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Check, ChevronRight, CircleCheck, Clock, Dumbbell, Flame, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { BodyMap } from '../components/BodyMap';
 import { confirm } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
 import { StrengthScoreCard } from '../components/StrengthScoreCard';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { muscleClass } from '../data/exercises';
 import { addDays, formatDate, greeting, sameDay, startOfWeek } from '../lib/dates';
+import { groupFatigue, muscleFatigue } from '../lib/muscles';
 import { finished, weekStreak, weeklyStats } from '../lib/stats';
 import { formatVolume } from '../lib/units';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
@@ -110,6 +112,8 @@ export function Home() {
         </div>
       </div>
 
+      <RecoveryCard />
+
       <section className="section">
         {active ? (
           <Link to="/workout" className="btn btn-hero btn-lg btn-block">
@@ -185,5 +189,44 @@ export function Home() {
         )}
       </section>
     </div>
+  );
+}
+
+/** Body map of what's still recovering, with ready-to-train groups listed. */
+function RecoveryCard() {
+  const workouts = useStore((s) => s.workouts);
+  const { byId } = useExercises();
+  const fatigue = useMemo(() => muscleFatigue(workouts, byId), [workouts, byId]);
+  if (!workouts.some((w) => w.endedAt)) return null;
+  const groups = groupFatigue(fatigue);
+  const ready = groups.filter((g) => g.status === 'fresh');
+  const recovering = groups.filter((g) => g.status !== 'fresh');
+
+  return (
+    <Link to="/progress" className="card link">
+      <div className="spread">
+        <div className="card-title">Recovery</div>
+        <ChevronRight size={20} className="faint" />
+      </div>
+      <div className="row" style={{ gap: 18, marginTop: 10, alignItems: 'center' }}>
+        <BodyMap values={fatigue} color="var(--heat)" height={128} captions={false} label="Muscle recovery" />
+        <div className="grow stack" style={{ gap: 12 }}>
+          <div>
+            <div className="row small" style={{ gap: 5, color: 'var(--green-text)', fontWeight: 600 }}>
+              <CircleCheck size={15} /> Ready to train
+            </div>
+            <div style={{ marginTop: 2, fontWeight: 500 }}>{ready.map((g) => g.label).join(', ') || 'Nothing yet'}</div>
+          </div>
+          {recovering.length > 0 && (
+            <div>
+              <div className="row small" style={{ gap: 5, color: 'var(--heat)', fontWeight: 600 }}>
+                <Clock size={15} /> Recovering
+              </div>
+              <div style={{ marginTop: 2, fontWeight: 500 }}>{recovering.map((g) => g.label).join(', ')}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }

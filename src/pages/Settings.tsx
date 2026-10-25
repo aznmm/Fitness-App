@@ -1,10 +1,13 @@
-import { Bell, CalendarCheck, Download, FileSpreadsheet, Moon, Ruler, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { Bell, CalendarCheck, ChevronRight, Disc3, FileInput, Download, FileSpreadsheet, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
+import { SyncSettings } from '../components/SyncSettings';
 import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
 import { toDateInput } from '../lib/dates';
-import { formatDuration } from '../lib/units';
+import { BAR_OPTIONS, defaultBarKg } from '../lib/progression';
+import { formatDuration, fromKg, toKg } from '../lib/units';
 import { useExercises, useStore } from '../store/useStore';
 import type { Settings as SettingsType } from '../types';
 
@@ -94,7 +97,7 @@ export function Settings() {
   const reset = async () => {
     const ok = await confirm({
       title: 'Delete all data?',
-      message: 'Every workout, routine and bodyweight entry on this device will be erased. Export a backup first if you want to keep them.',
+      message: 'Every workout, routine and bodyweight entry will be erased, including your synced copy if you are signed in. Export a backup first if you want to keep them.',
       confirmLabel: 'Delete everything',
       danger: true,
     });
@@ -108,7 +111,13 @@ export function Settings() {
     <div className="page">
       <PageHeader back title="Settings" />
 
-      <div className="list-header">Units & profile</div>
+      <div className="list-header">Account & sync</div>
+      <SyncSettings IconTile={IconTile} />
+
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Units & profile
+      </div>
       <div className="list with-small-icons">
         <Row icon={<IconTile color="var(--accent)"><Ruler size={17} /></IconTile>} label="Weight unit">
           <Seg label="Weight unit" value={settings.unit} options={[['lb', 'lb'], ['kg', 'kg']]} onChange={set('unit')} />
@@ -127,6 +136,33 @@ export function Settings() {
         </Row>
       </div>
       <div className="list-footer">Standards set what counts as intermediate for your strength score.</div>
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Training
+      </div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--accent-2)"><Target size={17} /></IconTile>} label="Smart targets">
+          <Switch label="Smart targets" checked={settings.smartSuggestions} onChange={set('smartSuggestions')} />
+        </Row>
+        <Row icon={<IconTile color="#8e8e93"><Disc3 size={17} /></IconTile>} label="Barbell weight">
+          <select
+            className="select"
+            style={compactSelect}
+            value={Math.round(fromKg(settings.barKg ?? defaultBarKg(settings.unit), settings.unit))}
+            onChange={(e) => update({ barKg: toKg(Number(e.target.value), settings.unit) })}
+            aria-label="Barbell weight"
+          >
+            {[...new Set([...BAR_OPTIONS[settings.unit], Math.round(fromKg(settings.barKg ?? defaultBarKg(settings.unit), settings.unit))])]
+              .sort((a, b) => b - a)
+              .map((b) => (
+                <option key={b} value={b}>
+                  {b} {settings.unit}
+                </option>
+              ))}
+          </select>
+        </Row>
+      </div>
+      <div className="list-footer">Smart targets suggest today's weight and reps from your last session. The bar weight is used for warm-ups and the plate calculator.</div>
 
       <div className="list-header" style={{ marginTop: 28 }}>
         Rest timer
@@ -175,6 +211,13 @@ export function Settings() {
           </IconTile>
           <span className="grow title">Restore from backup</span>
         </button>
+        <Link to="/import" className="list-item">
+          <IconTile color="var(--m-shoulders)">
+            <FileInput size={17} />
+          </IconTile>
+          <span className="grow title">Import from another app</span>
+          <ChevronRight size={18} className="chev" />
+        </Link>
         <button className="list-item" onClick={exportCsv}>
           <IconTile color="var(--m-arms)">
             <FileSpreadsheet size={17} />

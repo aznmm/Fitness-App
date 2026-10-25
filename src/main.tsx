@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { requestPersistentStorage } from './store/storage';
 import { useStore } from './store/useStore';
+import { initSync } from './sync/engine';
 import '@fontsource-variable/inter';
 import './styles.css';
 
@@ -11,7 +12,10 @@ import './styles.css';
 function Root() {
   const [ready, setReady] = useState(() => useStore.persist.hasHydrated());
   useEffect(() => {
-    if (ready) return;
+    if (ready) {
+      void initSync();
+      return;
+    }
     const unsub = useStore.persist.onFinishHydration(() => setReady(true));
     if (useStore.persist.hasHydrated()) setReady(true);
     return unsub;

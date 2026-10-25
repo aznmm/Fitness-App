@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restSound: true,
   theme: 'system',
   weeklyGoal: 3,
+  smartSuggestions: true,
 };
 
 export interface AppData {
@@ -25,6 +26,10 @@ export interface AppData {
   bodyweights: BodyWeightEntry[];
   settings: Settings;
   rest: RestTimer | null;
+  /** When settings last changed, so synced devices keep the newest. */
+  settingsUpdatedAt: number;
+  /** Deleted record ids → deletion time, so deletes reach other devices. */
+  deleted: Record<string, number>;
 }
 
 export interface AppActions {
@@ -36,6 +41,8 @@ export interface AppActions {
   finishWorkout(): Workout | null;
 
   addWorkout(w: Workout): void;
+  /** Bulk import (e.g. from another app's CSV export). */
+  importWorkouts(workouts: Workout[], exercises: Exercise[]): void;
   updateWorkout(id: string, fn: WorkoutUpdater): void;
   deleteWorkout(id: string): void;
 
@@ -55,6 +62,7 @@ export interface AppActions {
 
   updateSettings(patch: Partial<Settings>): void;
   replaceAll(data: Partial<AppData>): void;
+  /** Delete everything (also on other devices once synced). */
   resetAll(): void;
 }
 
@@ -68,6 +76,14 @@ const EMPTY: AppData = {
   bodyweights: [],
   settings: DEFAULT_SETTINGS,
   rest: null,
+  settingsUpdatedAt: 0,
+  deleted: {},
+};
+
+const stamp = <T extends object>(item: T): T & { updatedAt: number } => ({ ...item, updatedAt: Date.now() });
+const tombstone = (deleted: Record<string, number>, ...ids: string[]) => {
+  const now = Date.now();
+  return { ...deleted, ...Object.fromEntries(ids.map((id) => [id, now])) };
 };
 
 export const useStore = create<AppState>()(
@@ -82,7 +98,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           active: workout,
           rest: null,
-          routines: routine ? s.routines.map((r) => (r.id === routine.id ? { ...r, lastUsedAt: workout.startedAt } : r)) : s.routines,
+          routines: routine ? s.routines.map((r) => (r.id === routine.id ? stamp({ ...r, lastUsedAt: workout.startedAt }) : r)) : s.routines,
         }));
         return workout;
       },
@@ -99,22 +115,29 @@ export const useStore = create<AppState>()(
       finishWorkout() {
         const { active } = get();
         if (!active) return null;
-        const saved = { ...pruneIncomplete(active), endedAt: Date.now() };
+        const saved = stamp({ ...pruneIncomplete(active), endedAt: Date.now() });
         if (!saved.exercises.length) return null;
         set((s) => ({ workouts: [...s.workouts, saved], active: null, rest: null }));
         return saved;
       },
 
       addWorkout(w) {
-        set((s) => ({ workouts: [...s.workouts, w] }));
+        set((s) => ({ workouts: [...s.workouts, stamp(w)] }));
+      },
+
+      importWorkouts(workouts, exercises) {
+        set((s) => ({
+          workouts: [...s.workouts, ...workouts.map(stamp)].sort((a, b) => a.startedAt - b.startedAt),
+          customExercises: [...s.customExercises, ...exercises.map((e) => stamp({ ...e, custom: true }))],
+        }));
       },
 
       updateWorkout(id, fn) {
-        set((s) => ({ workouts: s.workouts.map((w) => (w.id === id ? fn(w) : w)) }));
+        set((s) => ({ workouts: s.workouts.map((w) => (w.id === id ? stamp(fn(w)) : w)) }));
       },
 
       deleteWorkout(id) {
-        set((s) => ({ workouts: s.workouts.filter((w) => w.id !== id) }));
+        set((s) => ({ workouts: s.workouts.filter((w) => w.id !== id), deleted: tombstone(s.deleted, id) }));
       },
 
       startRest(sec) {
@@ -133,7 +156,8 @@ export const useStore = create<AppState>()(
         set({ rest: null });
       },
 
-      saveRoutine(r) {
+      saveRoutine(routine) {
+        const r = stamp(routine);
         set((s) => {
           const exists = s.routines.some((x) => x.id === r.id);
           return { routines: exists ? s.routines.map((x) => (x.id === r.id ? r : x)) : [...s.routines, r] };
@@ -141,20 +165,20 @@ export const useStore = create<AppState>()(
       },
 
       deleteRoutine(id) {
-        set((s) => ({ routines: s.routines.filter((r) => r.id !== id) }));
+        set((s) => ({ routines: s.routines.filter((r) => r.id !== id), deleted: tombstone(s.deleted, id) }));
       },
 
       routineFromWorkout(workoutId) {
         const w = get().workouts.find((x) => x.id === workoutId);
         if (!w) return null;
-        const routine = routineFromWorkout(w);
+        const routine = stamp(routineFromWorkout(w));
         set((s) => ({ routines: [...s.routines, routine] }));
         return routine;
       },
 
       saveCustomExercise(e) {
         set((s) => {
-          const custom = { ...e, custom: true };
+          const custom = stamp({ ...e, custom: true });
           const exists = s.customExercises.some((x) => x.id === e.id);
           return {
             customExercises: exists ? s.customExercises.map((x) => (x.id === e.id ? custom : x)) : [...s.customExercises, custom],
@@ -163,34 +187,53 @@ export const useStore = create<AppState>()(
       },
 
       deleteCustomExercise(id) {
-        set((s) => ({ customExercises: s.customExercises.filter((e) => e.id !== id) }));
+        set((s) => ({ customExercises: s.customExercises.filter((e) => e.id !== id), deleted: tombstone(s.deleted, id) }));
       },
 
       addBodyweight(weightKg, date = Date.now()) {
-        set((s) => ({ bodyweights: [...s.bodyweights, { id: uid(), date, weight: weightKg }].sort((a, b) => a.date - b.date) }));
+        set((s) => ({ bodyweights: [...s.bodyweights, stamp({ id: uid(), date, weight: weightKg })].sort((a, b) => a.date - b.date) }));
       },
 
       deleteBodyweight(id) {
-        set((s) => ({ bodyweights: s.bodyweights.filter((b) => b.id !== id) }));
+        set((s) => ({ bodyweights: s.bodyweights.filter((b) => b.id !== id), deleted: tombstone(s.deleted, id) }));
       },
 
       updateSettings(patch) {
-        set((s) => ({ settings: { ...s.settings, ...patch } }));
+        set((s) => ({ settings: { ...s.settings, ...patch }, settingsUpdatedAt: Date.now() }));
       },
 
       replaceAll(data) {
-        set({ ...EMPTY, ...data, settings: { ...DEFAULT_SETTINGS, ...data.settings } });
+        set((s) => {
+          // Restored records win over earlier deletes of the same ids.
+          const restored = new Set([...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? [])].map((x) => x.id));
+          const deleted = Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !restored.has(id)));
+          const stampAll = <T extends object>(xs: T[] | undefined) => (xs ?? []).map(stamp);
+          return {
+            ...EMPTY,
+            ...data,
+            workouts: stampAll(data.workouts),
+            routines: stampAll(data.routines),
+            customExercises: stampAll(data.customExercises),
+            bodyweights: stampAll(data.bodyweights),
+            settings: { ...DEFAULT_SETTINGS, ...data.settings },
+            settingsUpdatedAt: Date.now(),
+            deleted,
+          };
+        });
       },
 
       resetAll() {
-        set({ ...EMPTY });
+        set((s) => ({
+          ...EMPTY,
+          deleted: tombstone(s.deleted, ...[...s.workouts, ...s.routines, ...s.customExercises, ...s.bodyweights].map((x) => x.id)),
+        }));
       },
     }),
     {
       name: 'forge-data',
       version: 1,
       storage: createJSONStorage(() => appStorage),
-      partialize: ({ workouts, active, routines, customExercises, bodyweights, settings, rest }) => ({
+      partialize: ({ workouts, active, routines, customExercises, bodyweights, settings, rest, settingsUpdatedAt, deleted }) => ({
         workouts,
         active,
         routines,
@@ -198,6 +241,8 @@ export const useStore = create<AppState>()(
         bodyweights,
         settings,
         rest,
+        settingsUpdatedAt,
+        deleted,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<AppData>;

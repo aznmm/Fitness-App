@@ -34,3 +34,13 @@ describe('setsPerMuscle', () => {
     expect(sets.shoulders).toBe(0.5);
   });
 });
+
+describe('exercise guides', () => {
+  it('has a guide for every built-in exercise', async () => {
+    const { BUILT_IN_EXERCISES } = await import('../data/exercises');
+    const { GUIDES } = await import('../data/guides');
+    const missing = BUILT_IN_EXERCISES.filter((e) => !GUIDES[e.id]).map((e) => e.id);
+    expect(missing).toEqual([]);
+    expect(Object.keys(GUIDES).filter((id) => !BUILT_IN_EXERCISES.some((e) => e.id === id))).toEqual([]);
+  });
+});
