@@ -1,0 +1,134 @@
+export type Unit = 'lb' | 'kg';
+
+export type Muscle =
+  | 'chest'
+  | 'back'
+  | 'lats'
+  | 'traps'
+  | 'shoulders'
+  | 'biceps'
+  | 'triceps'
+  | 'forearms'
+  | 'abs'
+  | 'quads'
+  | 'hamstrings'
+  | 'glutes'
+  | 'calves'
+  | 'cardio';
+
+/** The five groups the strength score is built from. */
+export type StrengthGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs';
+
+export type Equipment =
+  | 'barbell'
+  | 'dumbbell'
+  | 'machine'
+  | 'cable'
+  | 'bodyweight'
+  | 'kettlebell'
+  | 'band'
+  | 'other';
+
+/**
+ * How a set of the exercise is recorded.
+ * - weight_reps: load × reps (bench press)
+ * - reps: bodyweight reps, optional added load (pull-up)
+ * - duration: hold time (plank)
+ * - distance_duration: distance + time (run)
+ */
+export type ExerciseType = 'weight_reps' | 'reps' | 'duration' | 'distance_duration';
+
+export interface Exercise {
+  id: string;
+  name: string;
+  primary: Muscle;
+  secondary: Muscle[];
+  equipment: Equipment;
+  type: ExerciseType;
+  /**
+   * Intermediate-level one-rep max as a multiple of bodyweight (male standard).
+   * Only set for lifts that count toward the strength score. For dumbbell lifts
+   * the standard is per dumbbell; for `reps` lifts it is total load (bodyweight + added).
+   */
+  standard?: number;
+  custom?: boolean;
+}
+
+export type SetKind = 'normal' | 'warmup' | 'drop' | 'failure';
+
+export interface WorkoutSet {
+  id: string;
+  kind: SetKind;
+  /** Load in kg. For `reps` exercises this is the *added* load. */
+  weight?: number;
+  reps?: number;
+  /** Seconds. */
+  duration?: number;
+  /** Metres. */
+  distance?: number;
+  done: boolean;
+}
+
+export interface WorkoutExercise {
+  id: string;
+  exerciseId: string;
+  sets: WorkoutSet[];
+  notes?: string;
+  /** Rest after each set, in seconds. Falls back to the default rest setting. */
+  restSec?: number;
+  /** Goal carried over from the routine; shown when there is no previous performance. */
+  target?: { reps?: number; weight?: number };
+}
+
+export interface Workout {
+  id: string;
+  name: string;
+  startedAt: number;
+  endedAt?: number;
+  exercises: WorkoutExercise[];
+  notes?: string;
+  routineId?: string;
+}
+
+export interface RoutineExercise {
+  id: string;
+  exerciseId: string;
+  sets: number;
+  reps?: number;
+  /** Suggested load in kg. */
+  weight?: number;
+  restSec?: number;
+}
+
+export interface Routine {
+  id: string;
+  name: string;
+  notes?: string;
+  exercises: RoutineExercise[];
+  createdAt: number;
+  lastUsedAt?: number;
+}
+
+export interface BodyWeightEntry {
+  id: string;
+  date: number;
+  /** kg */
+  weight: number;
+}
+
+export type Theme = 'system' | 'light' | 'dark';
+
+export interface Settings {
+  unit: Unit;
+  sex: 'male' | 'female';
+  defaultRestSec: number;
+  autoRestTimer: boolean;
+  restSound: boolean;
+  theme: Theme;
+  weeklyGoal: number;
+}
+
+export interface RestTimer {
+  endsAt: number;
+  totalSec: number;
+}

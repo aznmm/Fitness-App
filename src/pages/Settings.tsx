@@ -1,0 +1,211 @@
+import { Bell, CalendarCheck, Download, FileSpreadsheet, Moon, Ruler, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { useRef, type ReactNode } from 'react';
+import { confirm, toast } from '../components/Dialogs';
+import { PageHeader } from '../components/Layout';
+import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
+import { toDateInput } from '../lib/dates';
+import { formatDuration } from '../lib/units';
+import { useExercises, useStore } from '../store/useStore';
+import type { Settings as SettingsType } from '../types';
+
+/** Rounded-square icon in a solid colour, like the iOS Settings app. */
+function IconTile({ color, children }: { color: string; children: ReactNode }) {
+  return (
+    <span className="icon-tile" style={{ background: color }} aria-hidden>
+      {children}
+    </span>
+  );
+}
+
+function Row({ icon, label, hint, children }: { icon: ReactNode; label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="list-item" style={{ minHeight: 52 }}>
+      {icon}
+      <div className="grow">
+        <div className="title">{label}</div>
+        {hint && <div className="sub">{hint}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Seg<T extends string | number>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div className="seg" role="group" aria-label={label} style={{ minWidth: 132 }}>
+      {options.map(([v, l]) => (
+        <button key={String(v)} aria-pressed={value === v} onClick={() => onChange(v)}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="switch">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} aria-label={label} />
+      <span />
+    </label>
+  );
+}
+
+const compactSelect = { width: 'auto', minHeight: 34, padding: '4px 30px 4px 12px', fontFamily: 'var(--font-rounded)', fontWeight: 600 } as const;
+
+export function Settings() {
+  const settings = useStore((s) => s.settings);
+  const update = useStore((s) => s.updateSettings);
+  const replaceAll = useStore((s) => s.replaceAll);
+  const resetAll = useStore((s) => s.resetAll);
+  const workoutCount = useStore((s) => s.workouts.length);
+  const routineCount = useStore((s) => s.routines.length);
+  const { byId } = useExercises();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const set = <K extends keyof SettingsType>(k: K) => (v: SettingsType[K]) => update({ [k]: v } as Partial<SettingsType>);
+
+  const exportJson = () => {
+    const s = useStore.getState();
+    downloadFile(`forge-backup-${toDateInput(Date.now())}.json`, JSON.stringify(makeBackup(s)), 'application/json');
+  };
+
+  const exportCsv = () => {
+    downloadFile(`forge-workouts-${toDateInput(Date.now())}.csv`, workoutsToCsv(useStore.getState(), byId, settings.unit), 'text/csv');
+  };
+
+  const importJson = async (file: File) => {
+    try {
+      const data = parseBackup(await file.text());
+      const ok = await confirm({
+        title: 'Restore backup?',
+        message: `This replaces everything on this device with ${data.workouts?.length ?? 0} workouts and ${data.routines?.length ?? 0} routines from the file.`,
+        confirmLabel: 'Restore',
+        danger: true,
+      });
+      if (ok) {
+        replaceAll(data);
+        toast('Backup restored');
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not read that file');
+    }
+  };
+
+  const reset = async () => {
+    const ok = await confirm({
+      title: 'Delete all data?',
+      message: 'Every workout, routine and bodyweight entry on this device will be erased. Export a backup first if you want to keep them.',
+      confirmLabel: 'Delete everything',
+      danger: true,
+    });
+    if (ok) {
+      resetAll();
+      toast('All data deleted');
+    }
+  };
+
+  return (
+    <div className="page">
+      <PageHeader back title="Settings" />
+
+      <div className="list-header">Units & profile</div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--accent)"><Ruler size={17} /></IconTile>} label="Weight unit">
+          <Seg label="Weight unit" value={settings.unit} options={[['lb', 'lb'], ['kg', 'kg']]} onChange={set('unit')} />
+        </Row>
+        <Row icon={<IconTile color="var(--m-back)"><User size={17} /></IconTile>} label="Strength standards">
+          <Seg label="Strength standards" value={settings.sex} options={[['male', 'Male'], ['female', 'Female']]} onChange={set('sex')} />
+        </Row>
+        <Row icon={<IconTile color="var(--m-legs)"><CalendarCheck size={17} /></IconTile>} label="Weekly goal">
+          <select className="select" style={compactSelect} value={settings.weeklyGoal} onChange={(e) => update({ weeklyGoal: Number(e.target.value) })} aria-label="Weekly goal">
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <option key={n} value={n}>
+                {n} / week
+              </option>
+            ))}
+          </select>
+        </Row>
+      </div>
+      <div className="list-footer">Standards set what counts as intermediate for your strength score.</div>
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Rest timer
+      </div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--m-shoulders)"><Zap size={17} /></IconTile>} label="Start automatically">
+          <Switch label="Start rest timer automatically" checked={settings.autoRestTimer} onChange={set('autoRestTimer')} />
+        </Row>
+        <Row icon={<IconTile color="var(--m-cardio)"><Timer size={17} /></IconTile>} label="Default rest">
+          <select className="select" style={compactSelect} value={settings.defaultRestSec} onChange={(e) => update({ defaultRestSec: Number(e.target.value) })} aria-label="Default rest">
+            {[30, 45, 60, 90, 120, 150, 180, 240, 300].map((s) => (
+              <option key={s} value={s}>
+                {formatDuration(s)}
+              </option>
+            ))}
+          </select>
+        </Row>
+        <Row icon={<IconTile color="var(--m-chest)"><Bell size={17} /></IconTile>} label="Sound">
+          <Switch label="Rest timer sound" checked={settings.restSound} onChange={set('restSound')} />
+        </Row>
+      </div>
+      <div className="list-footer">The timer starts when you tick a set and beeps when rest is over.</div>
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Appearance
+      </div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="#636366"><Moon size={17} /></IconTile>} label="Theme">
+          <Seg label="Theme" value={settings.theme} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} onChange={set('theme')} />
+        </Row>
+      </div>
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Your data
+      </div>
+      <div className="list with-small-icons">
+        <button className="list-item" onClick={exportJson}>
+          <IconTile color="var(--m-legs)">
+            <Download size={17} />
+          </IconTile>
+          <span className="grow title">Export backup</span>
+        </button>
+        <button className="list-item" onClick={() => fileRef.current?.click()}>
+          <IconTile color="var(--accent)">
+            <Upload size={17} />
+          </IconTile>
+          <span className="grow title">Restore from backup</span>
+        </button>
+        <button className="list-item" onClick={exportCsv}>
+          <IconTile color="var(--m-arms)">
+            <FileSpreadsheet size={17} />
+          </IconTile>
+          <span className="grow title">Export workouts as CSV</span>
+        </button>
+      </div>
+      <div className="list-footer">
+        Everything is stored on this device ({workoutCount} workouts, {routineCount} routines). Export a backup regularly, or to move to another phone.
+      </div>
+
+      <div className="list" style={{ marginTop: 28 }}>
+        <button className="list-item" style={{ color: 'var(--red)', justifyContent: 'center', minHeight: 50 }} onClick={reset}>
+          <Trash2 size={18} /> Delete all data
+        </button>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importJson(f);
+          e.target.value = '';
+        }}
+      />
+
+      <p className="tiny faint" style={{ textAlign: 'center', marginTop: 32 }}>
+        Forge · workout tracker
+      </p>
+    </div>
+  );
+}
