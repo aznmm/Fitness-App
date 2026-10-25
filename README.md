@@ -21,6 +21,11 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - Per-exercise notes and rest times, replace / reorder / remove exercises
 - Minimise a workout and keep browsing — a bar at the bottom brings you back
 
+**Smart training**
+- **Smart targets**: a suggested weight × reps for every exercise, based on your last session (add weight once you hit your reps on every set, repeat otherwise, deload after three stalled sessions)
+- One-tap **warm-up sets** that ramp up to your working weight
+- **Plate calculator** showing exactly which plates go on each side of the bar
+
 **Strength score** (Caliber-style)
 - One number for overall strength, from **Beginner** to **Elite**
 - Compares your estimated 1RM on ~45 scored lifts with standard strength levels for your bodyweight and sex
@@ -36,13 +41,17 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - Workout history as a list or a calendar, with PRs per workout; edit or backfill past workouts
 - Per-exercise charts (est. 1RM, heaviest, volume), rep-max table and full set history
 - Weekly volume / workouts / sets charts
-- Weekly sets per muscle against the 10–20 sets/week growth range
+- **Muscle map**: front/back body diagram of your weekly sets per muscle, against the 10–20 sets/week growth range
+- **Recovery**: which muscle groups are fresh, recovering or just trained, on Home and Progress
+- **Exercise guides**: muscles worked, how-to steps and form cues for every built-in exercise
 - Bodyweight log with trend chart
 
 **Your data**
 - ~90 built-in exercises, plus your own custom ones
 - lb or kg (switch any time — everything converts)
 - Stored on your device (IndexedDB). Export / restore a JSON backup, or export every set as CSV for spreadsheets
+- **Import history** from other apps' CSV exports: Strong and Hevy are recognised automatically, and any other spreadsheet can be mapped column by column, with exercise names matched to the library
+- Optional **cloud sync** across devices via a free Supabase project (see [docs/sync-setup.md](docs/sync-setup.md))
 - iOS-inspired design with light and dark themes: large titles, glass tab bar, activity-ring strength score and colour-coded muscle groups
 
 ## Using it on your phone
