@@ -37,6 +37,8 @@ export interface AppActions {
   finishWorkout(): Workout | null;
 
   addWorkout(w: Workout): void;
+  /** Bulk import (e.g. from another app's CSV export). */
+  importWorkouts(workouts: Workout[], exercises: Exercise[]): void;
   updateWorkout(id: string, fn: WorkoutUpdater): void;
   deleteWorkout(id: string): void;
 
@@ -108,6 +110,13 @@ export const useStore = create<AppState>()(
 
       addWorkout(w) {
         set((s) => ({ workouts: [...s.workouts, w] }));
+      },
+
+      importWorkouts(workouts, exercises) {
+        set((s) => ({
+          workouts: [...s.workouts, ...workouts].sort((a, b) => a.startedAt - b.startedAt),
+          customExercises: [...s.customExercises, ...exercises.map((e) => ({ ...e, custom: true }))],
+        }));
       },
 
       updateWorkout(id, fn) {

@@ -7,6 +7,7 @@ import { ActiveWorkout } from './pages/ActiveWorkout';
 import { ExerciseDetail } from './pages/ExerciseDetail';
 import { Exercises } from './pages/Exercises';
 import { History } from './pages/History';
+import { Import } from './pages/Import';
 import { Home } from './pages/Home';
 import { Progress } from './pages/Progress';
 import { RoutineEditor } from './pages/RoutineEditor';
@@ -17,7 +18,7 @@ import { useStore } from './store/useStore';
 
 /** Full-screen flows hide the tab bar. */
 function hidesTabs(pathname: string, search: string): boolean {
-  return pathname === '/workout' || /^\/routines\/[^/]+/.test(pathname) || (pathname.startsWith('/history/') && search.includes('edit=1'));
+  return pathname === '/workout' || pathname === '/import' || /^\/routines\/[^/]+/.test(pathname) || (pathname.startsWith('/history/') && search.includes('edit=1'));
 }
 
 function useTheme() {
@@ -57,6 +58,7 @@ function Shell() {
         <Route path="/exercises/:id" element={<ExerciseDetail />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/import" element={<Import />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {tabs && <ActiveWorkoutBar />}

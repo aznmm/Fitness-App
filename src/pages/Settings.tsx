@@ -1,5 +1,6 @@
-import { Bell, CalendarCheck, Disc3, Download, FileSpreadsheet, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { Bell, CalendarCheck, ChevronRight, Disc3, FileInput, Download, FileSpreadsheet, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
 import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
@@ -203,6 +204,13 @@ export function Settings() {
           </IconTile>
           <span className="grow title">Restore from backup</span>
         </button>
+        <Link to="/import" className="list-item">
+          <IconTile color="var(--m-shoulders)">
+            <FileInput size={17} />
+          </IconTile>
+          <span className="grow title">Import from another app</span>
+          <ChevronRight size={18} className="chev" />
+        </Link>
         <button className="list-item" onClick={exportCsv}>
           <IconTile color="var(--m-arms)">
             <FileSpreadsheet size={17} />
