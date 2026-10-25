@@ -53,12 +53,18 @@ const BACK_SILHOUETTE = [
   'M70 176 C74 186 80 196 89 200 L89 152 C84 160 78 168 70 176 Z',
 ];
 
+/** Heat-scale step (1–4) for an intensity, or 0 for none. */
+export function heatStep(v: number): 0 | 1 | 2 | 3 | 4 {
+  if (!(v > 0)) return 0;
+  return v < 0.25 ? 1 : v < 0.5 ? 2 : v < 0.75 ? 3 : 4;
+}
+
+export const heatColor = (step: number) => `var(--heat-${step})`;
+
 interface Props {
-  /** Intensity per muscle, 0–1. Missing muscles render neutral. */
+  /** Intensity per muscle, 0–1, drawn on the heat scale. Missing muscles render neutral. */
   values: Partial<Record<Muscle, number>>;
-  /** CSS colour for full intensity. */
-  color?: string;
-  /** Explicit solid colour per muscle; overrides `values`/`color` for those muscles. */
+  /** Explicit colour per muscle; overrides `values` for those muscles. */
   fills?: Partial<Record<Muscle, string>>;
   height?: number;
   label: string;
@@ -66,11 +72,11 @@ interface Props {
   captions?: boolean;
 }
 
-export function BodyMap({ values, color = 'var(--accent)', fills, height = 260, label, captions = true }: Props) {
+export function BodyMap({ values, fills, height = 260, label, captions = true }: Props) {
   return (
     <div className="body-map" role="img" aria-label={label}>
-      <Figure regions={FRONT} silhouette={SILHOUETTE} values={values} color={color} fills={fills} height={height} caption={captions ? 'Front' : undefined} />
-      <Figure regions={BACK} silhouette={BACK_SILHOUETTE} values={values} color={color} fills={fills} height={height} caption={captions ? 'Back' : undefined} />
+      <Figure regions={FRONT} silhouette={SILHOUETTE} values={values} fills={fills} height={height} caption={captions ? 'Front' : undefined} />
+      <Figure regions={BACK} silhouette={BACK_SILHOUETTE} values={values} fills={fills} height={height} caption={captions ? 'Back' : undefined} />
     </div>
   );
 }
@@ -79,7 +85,6 @@ function Figure({
   regions,
   silhouette,
   values,
-  color,
   fills,
   height,
   caption,
@@ -87,7 +92,6 @@ function Figure({
   regions: Region[];
   silhouette: string[];
   values: Partial<Record<Muscle, number>>;
-  color: string;
   fills?: Partial<Record<Muscle, string>>;
   height: number;
   caption?: string;
@@ -98,12 +102,12 @@ function Figure({
         <path key={`s${i}`} d={d} className="bm-neutral" />
       ))}
       {regions.map((r, i) => {
-        const solid = fills?.[r.muscle];
-        const v = Math.max(0, Math.min(1, values[r.muscle] ?? 0));
+        const step = heatStep(values[r.muscle] ?? 0);
+        const fill = fills?.[r.muscle] ?? (step ? heatColor(step) : undefined);
         return (
           <g key={i}>
             <path d={r.d} className="bm-muscle" />
-            {solid ? <path d={r.d} fill={solid} /> : v > 0 && <path d={r.d} fill={color} fillOpacity={0.18 + 0.82 * v} />}
+            {fill && <path d={r.d} fill={fill} />}
           </g>
         );
       })}
@@ -117,5 +121,28 @@ function Figure({
       </svg>
       {caption && <figcaption>{caption}</figcaption>}
     </figure>
+  );
+}
+
+/** "Less ▮▮▮▮ More" key for the heat scale, with an optional neutral swatch. */
+export function HeatLegend({ low, high, none }: { low: string; high: string; none?: string }) {
+  return (
+    <div className="legend heat-legend">
+      {none && (
+        <span>
+          <span className="swatch" style={{ background: 'var(--fill-strong)' }} />
+          {none}
+        </span>
+      )}
+      <span className="row" style={{ gap: 6 }}>
+        {low}
+        <span className="heat-steps" aria-hidden>
+          {[1, 2, 3, 4].map((n) => (
+            <span key={n} className="swatch" style={{ background: heatColor(n), marginRight: 0 }} />
+          ))}
+        </span>
+        {high}
+      </span>
+    </div>
   );
 }

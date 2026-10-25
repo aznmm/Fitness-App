@@ -44,3 +44,10 @@ describe('exercise guides', () => {
     expect(Object.keys(GUIDES).filter((id) => !BUILT_IN_EXERCISES.some((e) => e.id === id))).toEqual([]);
   });
 });
+
+describe('heat scale', () => {
+  it('buckets intensities into four steps', async () => {
+    const { heatStep } = await import('../components/BodyMap');
+    expect([0, 0.1, 0.25, 0.49, 0.5, 0.74, 0.75, 1, 3].map(heatStep)).toEqual([0, 1, 2, 2, 3, 3, 4, 4, 4]);
+  });
+});
