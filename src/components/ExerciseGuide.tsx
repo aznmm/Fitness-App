@@ -3,11 +3,12 @@ import { MUSCLE_LABELS } from '../data/exercises';
 import type { Exercise, Muscle } from '../types';
 import { BodyMap } from './BodyMap';
 
-export function highlightValues(exercise: Exercise): Partial<Record<Muscle, number>> {
-  const values: Partial<Record<Muscle, number>> = {};
-  for (const m of exercise.secondary) values[m] = 0.4;
-  values[exercise.primary] = 1;
-  return values;
+/** Primary muscle in the strong colour, supporting muscles in the soft one. */
+export function workedFills(exercise: Exercise): Partial<Record<Muscle, string>> {
+  const fills: Partial<Record<Muscle, string>> = {};
+  for (const m of exercise.secondary) fills[m] = 'var(--map-secondary)';
+  fills[exercise.primary] = 'var(--map-primary)';
+  return fills;
 }
 
 /** Muscles worked (diagram) plus how-to steps and form cues. */
@@ -18,15 +19,20 @@ export function ExerciseGuide({ exercise, mapHeight = 220 }: { exercise: Exercis
     <div className="stack" style={{ gap: 16 }}>
       {hasMap && (
         <div className="card">
-          <BodyMap values={highlightValues(exercise)} height={mapHeight} label={`Muscles worked: ${MUSCLE_LABELS[exercise.primary]}`} />
+          <BodyMap
+            values={{}}
+            fills={workedFills(exercise)}
+            height={mapHeight}
+            label={`Muscles worked. Primary: ${MUSCLE_LABELS[exercise.primary]}${exercise.secondary.length ? `. Secondary: ${exercise.secondary.map((m) => MUSCLE_LABELS[m]).join(', ')}` : ''}`}
+          />
           <div className="legend" style={{ marginTop: 12 }}>
             <span>
-              <span className="swatch" style={{ background: 'var(--accent)' }} />
+              <span className="swatch" style={{ background: 'var(--map-primary)' }} />
               Primary: {MUSCLE_LABELS[exercise.primary]}
             </span>
             {exercise.secondary.length > 0 && (
               <span>
-                <span className="swatch" style={{ background: 'var(--accent)', opacity: 0.5 }} />
+                <span className="swatch" style={{ background: 'var(--map-secondary)' }} />
                 Secondary: {exercise.secondary.map((m) => MUSCLE_LABELS[m]).join(', ')}
               </span>
             )}

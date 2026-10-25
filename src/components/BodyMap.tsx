@@ -58,17 +58,19 @@ interface Props {
   values: Partial<Record<Muscle, number>>;
   /** CSS colour for full intensity. */
   color?: string;
+  /** Explicit solid colour per muscle; overrides `values`/`color` for those muscles. */
+  fills?: Partial<Record<Muscle, string>>;
   height?: number;
   label: string;
   /** Show "Front"/"Back" captions. */
   captions?: boolean;
 }
 
-export function BodyMap({ values, color = 'var(--accent)', height = 260, label, captions = true }: Props) {
+export function BodyMap({ values, color = 'var(--accent)', fills, height = 260, label, captions = true }: Props) {
   return (
     <div className="body-map" role="img" aria-label={label}>
-      <Figure regions={FRONT} silhouette={SILHOUETTE} values={values} color={color} height={height} caption={captions ? 'Front' : undefined} />
-      <Figure regions={BACK} silhouette={BACK_SILHOUETTE} values={values} color={color} height={height} caption={captions ? 'Back' : undefined} />
+      <Figure regions={FRONT} silhouette={SILHOUETTE} values={values} color={color} fills={fills} height={height} caption={captions ? 'Front' : undefined} />
+      <Figure regions={BACK} silhouette={BACK_SILHOUETTE} values={values} color={color} fills={fills} height={height} caption={captions ? 'Back' : undefined} />
     </div>
   );
 }
@@ -78,6 +80,7 @@ function Figure({
   silhouette,
   values,
   color,
+  fills,
   height,
   caption,
 }: {
@@ -85,6 +88,7 @@ function Figure({
   silhouette: string[];
   values: Partial<Record<Muscle, number>>;
   color: string;
+  fills?: Partial<Record<Muscle, string>>;
   height: number;
   caption?: string;
 }) {
@@ -94,11 +98,12 @@ function Figure({
         <path key={`s${i}`} d={d} className="bm-neutral" />
       ))}
       {regions.map((r, i) => {
+        const solid = fills?.[r.muscle];
         const v = Math.max(0, Math.min(1, values[r.muscle] ?? 0));
         return (
           <g key={i}>
             <path d={r.d} className="bm-muscle" />
-            {v > 0 && <path d={r.d} fill={color} fillOpacity={0.18 + 0.82 * v} />}
+            {solid ? <path d={r.d} fill={solid} /> : v > 0 && <path d={r.d} fill={color} fillOpacity={0.18 + 0.82 * v} />}
           </g>
         );
       })}
