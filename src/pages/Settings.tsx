@@ -3,6 +3,7 @@ import { useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
+import { SyncSettings } from '../components/SyncSettings';
 import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
 import { toDateInput } from '../lib/dates';
 import { BAR_OPTIONS, defaultBarKg } from '../lib/progression';
@@ -96,7 +97,7 @@ export function Settings() {
   const reset = async () => {
     const ok = await confirm({
       title: 'Delete all data?',
-      message: 'Every workout, routine and bodyweight entry on this device will be erased. Export a backup first if you want to keep them.',
+      message: 'Every workout, routine and bodyweight entry will be erased, including your synced copy if you are signed in. Export a backup first if you want to keep them.',
       confirmLabel: 'Delete everything',
       danger: true,
     });
@@ -110,7 +111,13 @@ export function Settings() {
     <div className="page">
       <PageHeader back title="Settings" />
 
-      <div className="list-header">Units & profile</div>
+      <div className="list-header">Account & sync</div>
+      <SyncSettings IconTile={IconTile} />
+
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Units & profile
+      </div>
       <div className="list with-small-icons">
         <Row icon={<IconTile color="var(--accent)"><Ruler size={17} /></IconTile>} label="Weight unit">
           <Seg label="Weight unit" value={settings.unit} options={[['lb', 'lb'], ['kg', 'kg']]} onChange={set('unit')} />

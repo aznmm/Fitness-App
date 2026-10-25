@@ -2265,3 +2265,13 @@ a.list-item:active {
   border-radius: 50%;
   background: var(--green);
 }
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -52,6 +52,8 @@ export interface Exercise {
    */
   standard?: number;
   custom?: boolean;
+  /** Last local change (ms), used to merge synced copies. */
+  updatedAt?: number;
 }
 
 export type SetKind = 'normal' | 'warmup' | 'drop' | 'failure';
@@ -88,6 +90,7 @@ export interface Workout {
   exercises: WorkoutExercise[];
   notes?: string;
   routineId?: string;
+  updatedAt?: number;
 }
 
 export interface RoutineExercise {
@@ -107,6 +110,7 @@ export interface Routine {
   exercises: RoutineExercise[];
   createdAt: number;
   lastUsedAt?: number;
+  updatedAt?: number;
 }
 
 export interface BodyWeightEntry {
@@ -114,6 +118,7 @@ export interface BodyWeightEntry {
   date: number;
   /** kg */
   weight: number;
+  updatedAt?: number;
 }
 
 export type Theme = 'system' | 'light' | 'dark';
