@@ -1,4 +1,4 @@
-import { Download, FileSpreadsheet, Trash2, Upload } from 'lucide-react';
+import { Bell, CalendarCheck, Download, FileSpreadsheet, Moon, Ruler, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
@@ -8,12 +8,22 @@ import { formatDuration } from '../lib/units';
 import { useExercises, useStore } from '../store/useStore';
 import type { Settings as SettingsType } from '../types';
 
-function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+/** Rounded-square icon in a solid colour, like the iOS Settings app. */
+function IconTile({ color, children }: { color: string; children: ReactNode }) {
   return (
-    <div className="list-item">
+    <span className="icon-tile" style={{ background: color }} aria-hidden>
+      {children}
+    </span>
+  );
+}
+
+function Row({ icon, label, hint, children }: { icon: ReactNode; label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="list-item" style={{ minHeight: 52 }}>
+      {icon}
       <div className="grow">
-        <div style={{ fontWeight: 600 }}>{label}</div>
-        {hint && <div className="small muted">{hint}</div>}
+        <div className="title">{label}</div>
+        {hint && <div className="sub">{hint}</div>}
       </div>
       {children}
     </div>
@@ -22,7 +32,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 
 function Seg<T extends string | number>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
   return (
-    <div className="seg" role="group" aria-label={label} style={{ minWidth: 140 }}>
+    <div className="seg" role="group" aria-label={label} style={{ minWidth: 132 }}>
       {options.map(([v, l]) => (
         <button key={String(v)} aria-pressed={value === v} onClick={() => onChange(v)}>
           {l}
@@ -40,6 +50,8 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: 
     </label>
   );
 }
+
+const compactSelect = { width: 'auto', minHeight: 34, padding: '4px 30px 4px 12px', fontFamily: 'var(--font-rounded)', fontWeight: 600 } as const;
 
 export function Settings() {
   const settings = useStore((s) => s.settings);
@@ -96,36 +108,35 @@ export function Settings() {
     <div className="page">
       <PageHeader back title="Settings" />
 
-      <div className="small muted" style={{ fontWeight: 700, margin: '8px 0 6px' }}>
-        UNITS & PROFILE
-      </div>
-      <div className="list">
-        <Row label="Weight unit">
+      <div className="list-header">Units & profile</div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--accent)"><Ruler size={17} /></IconTile>} label="Weight unit">
           <Seg label="Weight unit" value={settings.unit} options={[['lb', 'lb'], ['kg', 'kg']]} onChange={set('unit')} />
         </Row>
-        <Row label="Strength standards" hint="Used for your strength score">
+        <Row icon={<IconTile color="var(--m-back)"><User size={17} /></IconTile>} label="Strength standards">
           <Seg label="Strength standards" value={settings.sex} options={[['male', 'Male'], ['female', 'Female']]} onChange={set('sex')} />
         </Row>
-        <Row label="Weekly goal" hint="Workouts per week">
-          <select className="select" style={{ width: 80 }} value={settings.weeklyGoal} onChange={(e) => update({ weeklyGoal: Number(e.target.value) })} aria-label="Weekly goal">
+        <Row icon={<IconTile color="var(--m-legs)"><CalendarCheck size={17} /></IconTile>} label="Weekly goal">
+          <select className="select" style={compactSelect} value={settings.weeklyGoal} onChange={(e) => update({ weeklyGoal: Number(e.target.value) })} aria-label="Weekly goal">
             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <option key={n} value={n}>
-                {n}
+                {n} / week
               </option>
             ))}
           </select>
         </Row>
       </div>
+      <div className="list-footer">Standards set what counts as intermediate for your strength score.</div>
 
-      <div className="small muted" style={{ fontWeight: 700, margin: '20px 0 6px' }}>
-        REST TIMER
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Rest timer
       </div>
-      <div className="list">
-        <Row label="Start automatically" hint="When you complete a set">
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--m-shoulders)"><Zap size={17} /></IconTile>} label="Start automatically">
           <Switch label="Start rest timer automatically" checked={settings.autoRestTimer} onChange={set('autoRestTimer')} />
         </Row>
-        <Row label="Default rest">
-          <select className="select" style={{ width: 96 }} value={settings.defaultRestSec} onChange={(e) => update({ defaultRestSec: Number(e.target.value) })} aria-label="Default rest">
+        <Row icon={<IconTile color="var(--m-cardio)"><Timer size={17} /></IconTile>} label="Default rest">
+          <select className="select" style={compactSelect} value={settings.defaultRestSec} onChange={(e) => update({ defaultRestSec: Number(e.target.value) })} aria-label="Default rest">
             {[30, 45, 60, 90, 120, 150, 180, 240, 300].map((s) => (
               <option key={s} value={s}>
                 {formatDuration(s)}
@@ -133,38 +144,51 @@ export function Settings() {
             ))}
           </select>
         </Row>
-        <Row label="Sound" hint="Beep when rest is over">
+        <Row icon={<IconTile color="var(--m-chest)"><Bell size={17} /></IconTile>} label="Sound">
           <Switch label="Rest timer sound" checked={settings.restSound} onChange={set('restSound')} />
         </Row>
       </div>
+      <div className="list-footer">The timer starts when you tick a set and beeps when rest is over.</div>
 
-      <div className="small muted" style={{ fontWeight: 700, margin: '20px 0 6px' }}>
-        APPEARANCE
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Appearance
       </div>
-      <div className="list">
-        <Row label="Theme">
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="#636366"><Moon size={17} /></IconTile>} label="Theme">
           <Seg label="Theme" value={settings.theme} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} onChange={set('theme')} />
         </Row>
       </div>
 
-      <div className="small muted" style={{ fontWeight: 700, margin: '20px 0 6px' }}>
-        YOUR DATA
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Your data
       </div>
-      <p className="small muted" style={{ margin: '0 0 8px' }}>
-        Everything is stored on this device only ({workoutCount} workouts, {routineCount} routines). Export a backup regularly, or to move to another phone.
-      </p>
-      <div className="list">
+      <div className="list with-small-icons">
         <button className="list-item" onClick={exportJson}>
-          <Download size={18} /> <span className="grow">Export backup (.json)</span>
+          <IconTile color="var(--m-legs)">
+            <Download size={17} />
+          </IconTile>
+          <span className="grow title">Export backup</span>
         </button>
         <button className="list-item" onClick={() => fileRef.current?.click()}>
-          <Upload size={18} /> <span className="grow">Restore from backup</span>
+          <IconTile color="var(--accent)">
+            <Upload size={17} />
+          </IconTile>
+          <span className="grow title">Restore from backup</span>
         </button>
         <button className="list-item" onClick={exportCsv}>
-          <FileSpreadsheet size={18} /> <span className="grow">Export workouts as CSV</span>
+          <IconTile color="var(--m-arms)">
+            <FileSpreadsheet size={17} />
+          </IconTile>
+          <span className="grow title">Export workouts as CSV</span>
         </button>
-        <button className="list-item" style={{ color: 'var(--danger)' }} onClick={reset}>
-          <Trash2 size={18} /> <span className="grow">Delete all data</span>
+      </div>
+      <div className="list-footer">
+        Everything is stored on this device ({workoutCount} workouts, {routineCount} routines). Export a backup regularly, or to move to another phone.
+      </div>
+
+      <div className="list" style={{ marginTop: 28 }}>
+        <button className="list-item" style={{ color: 'var(--red)', justifyContent: 'center', minHeight: 50 }} onClick={reset}>
+          <Trash2 size={18} /> Delete all data
         </button>
       </div>
       <input
@@ -179,7 +203,7 @@ export function Settings() {
         }}
       />
 
-      <p className="tiny muted" style={{ textAlign: 'center', marginTop: 28 }}>
+      <p className="tiny faint" style={{ textAlign: 'center', marginTop: 32 }}>
         Forge · workout tracker
       </p>
     </div>

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useId, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { compact, niceTicks, useWidth } from './useWidth';
 
 export interface LinePoint {
@@ -23,6 +23,7 @@ const PAD = { top: 16, right: 16, bottom: 24, left: 40 };
 export function LineChart({ points, height = 180, formatY = compact, formatX, formatXLong = formatX, label, zeroBased }: Props) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
+  const washId = `wash-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
   if (points.length === 0) return null;
 
@@ -90,8 +91,14 @@ export function LineChart({ points, height = 180, formatY = compact, formatX, fo
             {formatX(p.x)}
           </text>
         ))}
-        <path d={area} fill="var(--accent)" opacity={0.1} />
-        <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={washId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.24} />
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <path d={area} fill={`url(#${washId})`} />
+        <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
         {points.length === 1 && <circle cx={sx(last.x)} cy={sy(last.y)} r={4} fill="var(--accent)" />}
         {a && <line x1={sx(a.x)} x2={sx(a.x)} y1={PAD.top} y2={PAD.top + innerH} stroke="var(--axis)" strokeWidth={1} />}
         <circle
@@ -99,8 +106,8 @@ export function LineChart({ points, height = 180, formatY = compact, formatX, fo
           cy={sy((a ?? last).y)}
           r={5}
           fill="var(--accent)"
-          stroke="var(--surface)"
-          strokeWidth={2}
+          stroke="var(--card)"
+          strokeWidth={2.5}
         />
       </svg>
       {a ? (

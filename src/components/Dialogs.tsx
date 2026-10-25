@@ -1,6 +1,7 @@
+import { CircleCheck } from 'lucide-react';
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { create } from 'zustand';
-import { Sheet } from './Sheet';
 
 interface ConfirmOptions {
   title: string;
@@ -38,36 +39,43 @@ export function DialogHost() {
     return () => clearTimeout(timer);
   }, [t]);
 
+  useEffect(() => {
+    if (!c) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   const close = (ok: boolean) => {
     c?.resolve(ok);
     useDialogs.setState({ confirm: null });
   };
 
-  return (
+  return createPortal(
     <>
       {c && (
-        <Sheet
-          title={c.title}
-          onClose={() => close(false)}
-          footer={
-            <div className="row">
-              <button className="btn btn-outline grow" onClick={() => close(false)}>
-                {c.cancelLabel ?? 'Cancel'}
-              </button>
-              <button className={`btn grow ${c.danger ? 'btn-danger' : 'btn-primary'}`} onClick={() => close(true)} autoFocus>
+        <div className="alert-wrap" onPointerDown={(e) => e.target === e.currentTarget && close(false)}>
+          <div className="alert" role="alertdialog" aria-modal="true" aria-labelledby="alert-title">
+            <div className="alert-body">
+              <h2 id="alert-title">{c.title}</h2>
+              {c.message && <p>{c.message}</p>}
+            </div>
+            <div className="alert-actions">
+              <button onClick={() => close(false)}>{c.cancelLabel ?? 'Cancel'}</button>
+              <button className={c.danger ? 'danger' : undefined} onClick={() => close(true)} autoFocus>
                 {c.confirmLabel ?? 'OK'}
               </button>
             </div>
-          }
-        >
-          {c.message && <p className="secondary" style={{ margin: '4px 0 8px' }}>{c.message}</p>}
-        </Sheet>
+          </div>
+        </div>
       )}
       {t && (
         <div className="toast" role="status" key={t.id}>
+          <CircleCheck size={18} />
           {t.message}
         </div>
       )}
-    </>
+    </>,
+    document.body,
   );
 }

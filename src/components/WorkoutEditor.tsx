@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Check, MessageSquare, MoreHorizontal, Plus, Repeat, Timer, Trash2, Trophy } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MUSCLE_LABELS } from '../data/exercises';
 import { exerciseRecords, lastPerformance, setPRs, type ExerciseRecords } from '../lib/calc';
 import { primeAudio } from '../lib/feedback';
 import {
@@ -27,7 +28,7 @@ import {
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } from '../types';
 import { toast } from './Dialogs';
-import { ExercisePicker } from './ExercisePicker';
+import { ExerciseInitial, ExercisePicker } from './ExercisePicker';
 import { NumberInput } from './NumberInput';
 import { Sheet } from './Sheet';
 
@@ -61,8 +62,8 @@ export function WorkoutEditor({ workout, onChange, live }: EditorProps) {
         />
       ))}
 
-      <button className="btn btn-block btn-lg" style={{ marginTop: 16, color: 'var(--accent)' }} onClick={() => setPicker({ mode: 'add' })}>
-        <Plus size={20} /> Add exercise
+      <button className="btn btn-tinted btn-block btn-lg" style={{ marginTop: 16 }} onClick={() => setPicker({ mode: 'add' })}>
+        <Plus size={20} strokeWidth={2.5} /> Add exercise
       </button>
 
       {picker && (
@@ -129,16 +130,16 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   return (
     <section className="ex-card" aria-label={exercise?.name}>
       <div className="ex-card-head">
-        <button className="name truncate" onClick={() => navigate(`/exercises/${we.exerciseId}`)}>
-          {exercise?.name ?? 'Unknown exercise'}
-        </button>
-        {live && (
-          <span className="badge" title="Rest timer">
-            <Timer size={12} /> {restSec ? formatDuration(restSec) : 'Off'}
+        <ExerciseInitial exercise={exercise} />
+        <button className="name" onClick={() => navigate(`/exercises/${we.exerciseId}`)}>
+          <strong className="truncate">{exercise?.name ?? 'Unknown exercise'}</strong>
+          <span>
+            {exercise ? MUSCLE_LABELS[exercise.primary] : ''}
+            {live && ` · Rest ${restSec ? formatDuration(restSec) : 'off'}`}
           </span>
-        )}
-        <button className="icon-btn" aria-label="Exercise options" onClick={() => setMenu(true)}>
-          <MoreHorizontal size={20} />
+        </button>
+        <button className="glass-btn" style={{ width: 34, height: 34 }} aria-label="Exercise options" onClick={() => setMenu(true)}>
+          <MoreHorizontal size={19} />
         </button>
       </div>
 
@@ -178,7 +179,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
       })}
 
       <button className="btn btn-sm btn-block add-set" onClick={() => onChange(addSet(we.id))}>
-        <Plus size={16} /> Add set
+        <Plus size={16} strokeWidth={2.5} /> Add set
       </button>
 
       {menu && (
@@ -192,13 +193,12 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             >
               <MessageSquare size={18} /> {we.notes ? 'Edit note' : 'Add note'}
             </button>
-            <label className="spread" style={{ minHeight: 50, borderTop: '1px solid var(--border)', padding: '0 4px', fontWeight: 550 }}>
-              <span className="row">
-                <Timer size={18} /> Rest timer
-              </span>
+            <label>
+              <Timer size={18} />
+              <span className="grow">Rest timer</span>
               <select
                 className="select"
-                style={{ width: 'auto', minHeight: 36 }}
+                style={{ width: 'auto', minHeight: 34, padding: '4px 30px 4px 12px' }}
                 value={restSec}
                 onChange={(e) => onChange(patchExercise(we.id, { restSec: Number(e.target.value) }))}
               >
@@ -212,7 +212,6 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
               </select>
             </label>
             <button
-              style={{ borderTop: '1px solid var(--border)' }}
               onClick={() => {
                 setMenu(false);
                 onReplace();
@@ -438,7 +437,7 @@ const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, targe
       >
         {prs.length ? (
           <span className="pr-tag">
-            <Trophy size={12} /> PR
+            <Trophy size={11} strokeWidth={2.5} /> PR
           </span>
         ) : prev ? (
           describeSet(prev, type, unit)
@@ -460,7 +459,7 @@ const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, targe
         </>
       )}
       <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
-        <Check size={20} strokeWidth={3} />
+        <Check size={19} strokeWidth={3.2} />
       </button>
     </div>
   );

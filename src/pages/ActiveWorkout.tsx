@@ -2,7 +2,7 @@ import { ChevronDown, Dumbbell, Trash2 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { confirm } from '../components/Dialogs';
-import { EmptyState } from '../components/Layout';
+import { EmptyState, useScrolled } from '../components/Layout';
 import { WorkoutEditor } from '../components/WorkoutEditor';
 import { workoutVolume } from '../lib/calc';
 import { useNow } from '../lib/useNow';
@@ -18,6 +18,7 @@ export function ActiveWorkout() {
   const finishWorkout = useStore((s) => s.finishWorkout);
   const discardWorkout = useStore((s) => s.discardWorkout);
   const now = useNow(1000);
+  const scrolled = useScrolled(8);
   // Finishing clears `active`; don't let the redirect below beat the navigation to the summary.
   const finishing = useRef(false);
 
@@ -73,14 +74,17 @@ export function ActiveWorkout() {
 
   return (
     <div className="page no-tabs">
-      <div className="sticky-header">
-        <div className="workout-head">
-          <button className="icon-btn filled" aria-label="Minimize workout" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
-            <ChevronDown size={22} />
-          </button>
-          <div className="grow tabular" style={{ fontWeight: 700, fontSize: 17 }}>
+      <div className={`navbar workout-bar${scrolled ? ' scrolled' : ''}`}>
+        <button className="glass-btn" aria-label="Minimize workout" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
+          <ChevronDown size={22} strokeWidth={2.4} />
+        </button>
+        <div className="workout-timer">
+          <span className="row" style={{ gap: 6, justifyContent: 'center' }}>
+            <span className="dot" style={{ background: 'var(--green)' }} aria-hidden />
             {formatDuration((now - active.startedAt) / 1000)}
-          </div>
+          </span>
+        </div>
+        <div className="navbar-side end">
           <button className="btn btn-good btn-sm" onClick={finish}>
             Finish
           </button>
@@ -93,28 +97,39 @@ export function ActiveWorkout() {
         onChange={(e) => updateActive((w) => ({ ...w, name: e.target.value }))}
         aria-label="Workout name"
       />
-      <div className="small muted">
-        {doneSets} set{doneSets === 1 ? '' : 's'} done · {formatVolume(workoutVolume(active), unit)}
+      <div className="row small muted" style={{ gap: 14, marginTop: 2 }}>
+        <span>
+          <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
+            {doneSets}
+          </span>{' '}
+          set{doneSets === 1 ? '' : 's'} done
+        </span>
+        <span>
+          <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
+            {formatVolume(workoutVolume(active), unit)}
+          </span>{' '}
+          volume
+        </span>
       </div>
       <textarea
         className="textarea"
-        style={{ marginTop: 10, minHeight: 40 }}
+        style={{ marginTop: 14 }}
         rows={1}
-        placeholder="Workout notes"
+        placeholder="Add a note…"
         value={active.notes ?? ''}
         onChange={(e) => updateActive((w) => ({ ...w, notes: e.target.value }))}
       />
 
       {active.exercises.length === 0 && (
-        <EmptyState icon={<Dumbbell size={36} />} title="Empty workout">
+        <EmptyState icon={<Dumbbell size={30} />} title="Empty workout">
           <p className="small">Add your first exercise to start logging sets.</p>
         </EmptyState>
       )}
 
       <WorkoutEditor workout={active} onChange={onChange} live />
 
-      <button className="btn btn-danger btn-block" style={{ marginTop: 12 }} onClick={discard}>
-        <Trash2 size={18} /> Discard workout
+      <button className="btn btn-plain-danger btn-block" style={{ marginTop: 10 }} onClick={discard}>
+        <Trash2 size={17} /> Discard workout
       </button>
 
     </div>

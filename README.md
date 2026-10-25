@@ -43,7 +43,7 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - ~90 built-in exercises, plus your own custom ones
 - lb or kg (switch any time — everything converts)
 - Stored on your device (IndexedDB). Export / restore a JSON backup, or export every set as CSV for spreadsheets
-- Light and dark themes
+- iOS-inspired design with light and dark themes: large titles, glass tab bar, activity-ring strength score and colour-coded muscle groups
 
 ## Using it on your phone
 
@@ -70,7 +70,7 @@ npm run build      # production build in dist/
 npm run preview    # serve the production build
 ```
 
-Stack: React 19, TypeScript, Vite, Zustand (persisted to IndexedDB), React Router, `vite-plugin-pwa`, Lucide icons. Charts are hand-rolled SVG.
+Stack: React 19, TypeScript, Vite, Zustand (persisted to IndexedDB), React Router, `vite-plugin-pwa`, Lucide icons. Charts are hand-rolled SVG. Text uses the system font (SF Pro on Apple devices, Inter elsewhere); the design tokens live at the top of `src/styles.css`.
 
 ```
 src/

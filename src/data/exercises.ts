@@ -165,3 +165,25 @@ export const MUSCLE_FILTERS: { id: string; label: string; muscles: Muscle[] }[] 
   { id: 'core', label: 'Core', muscles: ['abs'] },
   { id: 'cardio', label: 'Cardio', muscles: ['cardio'] },
 ];
+
+const MUSCLE_CLASS: Record<Muscle, string> = {
+  chest: 'm-chest',
+  back: 'm-back',
+  lats: 'm-back',
+  traps: 'm-back',
+  shoulders: 'm-shoulders',
+  biceps: 'm-arms',
+  triceps: 'm-arms',
+  forearms: 'm-arms',
+  quads: 'm-legs',
+  hamstrings: 'm-legs',
+  glutes: 'm-legs',
+  calves: 'm-legs',
+  abs: 'm-core',
+  cardio: 'm-cardio',
+};
+
+/** CSS class carrying the muscle group's identity colour (see styles.css). */
+export function muscleClass(muscle: Muscle | undefined): string {
+  return muscle ? MUSCLE_CLASS[muscle] : '';
+}

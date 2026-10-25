@@ -4,11 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
+import { muscleClass } from '../data/exercises';
 import { PROGRAMS, type Program } from '../data/programs';
 import { relativeDayInline } from '../lib/dates';
 import { uid } from '../lib/id';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import { useStartWorkout } from './Home';
+
+const PROGRAM_TILES = ['m-legs', 'm-back', 'm-chest', 'm-shoulders'];
 
 export function Routines() {
   const routines = useStore((s) => s.routines);
@@ -44,38 +47,52 @@ export function Routines() {
       <PageHeader
         title="Routines"
         actions={
-          <button className="btn btn-sm btn-primary" onClick={create}>
-            <Plus size={16} /> New
+          <button className="glass-btn accent" onClick={create} aria-label="New routine">
+            <Plus size={22} strokeWidth={2.4} />
           </button>
         }
       />
 
       {routines.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<ClipboardList size={36} />} title="No routines yet">
+          <EmptyState icon={<ClipboardList size={30} />} title="No routines yet">
             <p className="small">Routines are reusable workout templates. Build your own or start from a program below.</p>
+            <button className="btn btn-tinted" style={{ marginTop: 14 }} onClick={create}>
+              <Plus size={18} strokeWidth={2.5} /> New routine
+            </button>
           </EmptyState>
         </div>
       ) : (
-        <div className="stack" style={{ gap: 10 }}>
+        <div className="stack" style={{ gap: 12 }}>
           {routines.map((r) => (
             <div className="card" key={r.id} style={{ margin: 0 }}>
-              <div className="spread">
+              <div className="spread" style={{ alignItems: 'flex-start' }}>
                 <Link to={`/routines/${r.id}`} className="grow" style={{ color: 'inherit' }}>
-                  <h3 className="truncate">{r.name}</h3>
+                  <h3 className="truncate" style={{ fontSize: 19 }}>
+                    {r.name}
+                  </h3>
                   <div className="small muted" style={{ marginTop: 2 }}>
                     {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'}
                     {r.lastUsedAt ? ` · last done ${relativeDayInline(r.lastUsedAt)}` : ''}
                   </div>
                 </Link>
                 <button className="btn btn-sm btn-primary" onClick={() => start(r.id)} disabled={!r.exercises.length}>
-                  <Play size={14} fill="currentColor" /> Start
+                  <Play size={13} fill="currentColor" /> Start
                 </button>
               </div>
               {r.exercises.length > 0 && (
-                <div className="small secondary" style={{ marginTop: 10, lineHeight: 1.6 }}>
-                  {r.exercises.map((e) => `${e.sets}× ${exerciseName(byId, e.exerciseId)}`).join(' · ')}
-                </div>
+                <Link to={`/routines/${r.id}`} className="stack-sm" style={{ marginTop: 14, gap: 8, color: 'inherit' }}>
+                  {r.exercises.slice(0, 5).map((e) => (
+                    <div key={e.id} className="row small" style={{ gap: 10 }}>
+                      <span className={`dot ${muscleClass(byId.get(e.exerciseId)?.primary)}`} aria-hidden />
+                      <span className="grow truncate">{exerciseName(byId, e.exerciseId)}</span>
+                      <span className="rounded-num muted">
+                        {e.sets} × {e.reps ?? '—'}
+                      </span>
+                    </div>
+                  ))}
+                  {r.exercises.length > 5 && <div className="small muted" style={{ paddingLeft: 18 }}>+{r.exercises.length - 5} more</div>}
+                </Link>
               )}
             </div>
           ))}
@@ -85,15 +102,16 @@ export function Routines() {
       <section className="section">
         <div className="section-head">
           <h2>Programs</h2>
-          <span className="small muted">Tap to preview</span>
         </div>
-        <div className="list">
-          {PROGRAMS.map((p) => (
+        <div className="list with-icons">
+          {PROGRAMS.map((p, i) => (
             <button className="list-item" key={p.id} onClick={() => setProgram(p)}>
-              <div className="avatar accent">{p.days.length}</div>
+              <div className={`tile solid ${PROGRAM_TILES[i % PROGRAM_TILES.length]}`}>
+                <span className="rounded-num">{p.days.length}</span>
+              </div>
               <div className="grow">
-                <div style={{ fontWeight: 650 }}>{p.name}</div>
-                <div className="small muted truncate">
+                <div className="title">{p.name}</div>
+                <div className="sub truncate">
                   {p.daysPerWeek} · {p.description}
                 </div>
               </div>
@@ -108,25 +126,31 @@ export function Routines() {
           title={program.name}
           onClose={() => setProgram(null)}
           footer={
-            <button className="btn btn-primary btn-block" onClick={() => addProgram(program)}>
-              <Plus size={18} /> Add {program.days.length} routines
+            <button className="btn btn-primary btn-lg btn-block" onClick={() => addProgram(program)}>
+              <Plus size={19} strokeWidth={2.5} /> Add {program.days.length} routines
             </button>
           }
         >
           <p className="secondary" style={{ marginTop: 0 }}>
-            {program.description} <span className="muted">({program.daysPerWeek} per week)</span>
+            {program.description}
           </p>
+          <span className="badge accent" style={{ marginBottom: 14 }}>
+            {program.daysPerWeek} per week
+          </span>
           {program.days.map((d) => (
             <div className="card tight" key={d.name}>
-              <h3 style={{ marginBottom: 6 }}>{d.name}</h3>
-              {d.exercises.map((e) => (
-                <div className="spread small secondary" key={e.exerciseId} style={{ padding: '3px 0' }}>
-                  <span>{exerciseName(byId, e.exerciseId)}</span>
-                  <span className="tabular muted">
-                    {e.sets} × {e.reps ?? '—'}
-                  </span>
-                </div>
-              ))}
+              <h3 style={{ marginBottom: 10 }}>{d.name}</h3>
+              <div className="stack-sm" style={{ gap: 8 }}>
+                {d.exercises.map((e) => (
+                  <div className="row small" key={e.exerciseId} style={{ gap: 10 }}>
+                    <span className={`dot ${muscleClass(byId.get(e.exerciseId)?.primary)}`} aria-hidden />
+                    <span className="grow">{exerciseName(byId, e.exerciseId)}</span>
+                    <span className="rounded-num muted">
+                      {e.sets} × {e.reps ?? '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </Sheet>

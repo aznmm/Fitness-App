@@ -49,7 +49,7 @@ export function History() {
         actions={
           <>
             <button
-              className="icon-btn filled"
+              className="glass-btn"
               aria-label={view === 'list' ? 'Calendar view' : 'List view'}
               onClick={() => {
                 setView(view === 'list' ? 'calendar' : 'list');
@@ -58,24 +58,27 @@ export function History() {
             >
               {view === 'list' ? <CalendarDays size={20} /> : <List size={20} />}
             </button>
-            <button className="btn btn-sm" onClick={logPast}>
-              <Plus size={16} /> Log past
+            <button className="glass-btn accent" onClick={logPast} aria-label="Log a past workout">
+              <Plus size={22} strokeWidth={2.4} />
             </button>
           </>
         }
       />
 
       {done.length > 0 && (
-        <div className="small muted" style={{ marginTop: -8, marginBottom: 12 }}>
-          {done.length} workout{done.length === 1 ? '' : 's'} logged
+        <div className="small muted" style={{ marginTop: -12, marginBottom: 16 }}>
+          <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
+            {done.length}
+          </span>{' '}
+          workout{done.length === 1 ? '' : 's'} logged
         </div>
       )}
 
       {view === 'calendar' && <MonthCalendar month={month} setMonth={setMonth} workouts={done} day={day} setDay={setDay} />}
 
       {done.length === 0 ? (
-        <EmptyState icon={<HistoryIcon size={36} />} title="No workouts yet">
-          <p className="small">Finished workouts show up here. You can also backfill old sessions with “Log past”.</p>
+        <EmptyState icon={<HistoryIcon size={30} />} title="No workouts yet">
+          <p className="small">Finished workouts show up here. Tap + to backfill an old session.</p>
         </EmptyState>
       ) : groups.length === 0 ? (
         <p className="muted small" style={{ textAlign: 'center', marginTop: 16 }}>
@@ -83,8 +86,8 @@ export function History() {
         </p>
       ) : (
         groups.map((g) => (
-          <section key={g.label} className="section" style={{ marginTop: 16 }}>
-            <div className="small muted" style={{ fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <section key={g.label} className="section" style={{ marginTop: 20 }}>
+            <div className="list-header" style={{ paddingLeft: 4 }}>
               {g.label} · {g.items.length}
             </div>
             {g.items.map((w) => (
@@ -114,20 +117,22 @@ function MonthCalendar({ month, setMonth, workouts, day, setDay }: CalendarProps
   const rows = cells.slice(35).some(inMonth) ? 6 : 5;
 
   return (
-    <div className="card" style={{ marginBottom: 8 }}>
-      <div className="spread" style={{ marginBottom: 8 }}>
-        <button className="icon-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>
-          <ChevronLeft size={20} />
-        </button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 700 }}>{formatDate(month, { month: 'long', year: 'numeric' })}</div>
-          <div className="tiny muted">
-            {count} workout{count === 1 ? '' : 's'}
+    <div className="card" style={{ marginBottom: 8, padding: '16px 12px 12px' }}>
+      <div className="spread" style={{ marginBottom: 10, padding: '0 6px' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>{formatDate(month, { month: 'long', year: 'numeric' })}</div>
+          <div className="small muted">
+            <span className="rounded-num">{count}</span> workout{count === 1 ? '' : 's'}
           </div>
         </div>
-        <button className="icon-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>
-          <ChevronRight size={20} />
-        </button>
+        <div className="row" style={{ gap: 4 }}>
+          <button className="icon-btn" style={{ color: 'var(--accent)' }} aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>
+            <ChevronLeft size={22} strokeWidth={2.4} />
+          </button>
+          <button className="icon-btn" style={{ color: 'var(--accent)' }} aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>
+            <ChevronRight size={22} strokeWidth={2.4} />
+          </button>
+        </div>
       </div>
       <div className="calendar">
         {cells.slice(0, 7).map((d) => (
@@ -141,8 +146,7 @@ function MonthCalendar({ month, setMonth, workouts, day, setDay }: CalendarProps
           return (
             <button
               key={d}
-              className={`cell${on ? ' on' : ''}${sameDay(d, Date.now()) ? ' today' : ''}${inMonth(d) ? '' : ' out'}`}
-              style={selected ? { outline: '2px solid var(--text)', outlineOffset: 1 } : undefined}
+              className={`cell${on ? ' on' : ''}${sameDay(d, Date.now()) ? ' today' : ''}${selected ? ' selected' : ''}${inMonth(d) ? '' : ' out'}`}
               onClick={() => setDay(selected ? null : d)}
               aria-label={`${formatDate(d, { month: 'long', day: 'numeric' })}${on ? ', workout logged' : ''}`}
               aria-pressed={selected}

@@ -5,11 +5,12 @@ import { LineChart } from '../components/charts/LineChart';
 import { CustomExerciseSheet } from '../components/CustomExerciseSheet';
 import { confirm } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
+import { ScoreRing } from '../components/ScoreRing';
 import { describeSet } from '../components/WorkoutEditor';
 import { EQUIPMENT_LABELS, MUSCLE_LABELS } from '../data/exercises';
 import { exerciseSessions, recordsFromSessions, repMaxes, setE1RM, setVolume, workingSets, type ExerciseSession } from '../lib/calc';
 import { formatDate, relativeDay } from '../lib/dates';
-import { levelFor, liftScore, standardFor } from '../lib/strength';
+import { GAUGE_MAX, levelFor, liftScore, standardFor } from '../lib/strength';
 import { formatDistance, formatDuration, formatVolume, formatWeight, fromKg, fromMetres, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, ExerciseType, Unit } from '../types';
@@ -87,16 +88,17 @@ export function ExerciseDetail() {
     <div className="page">
       <PageHeader
         back
+        compact
         eyebrow={`${MUSCLE_LABELS[exercise.primary]}${exercise.secondary.length ? ` + ${exercise.secondary.map((m) => MUSCLE_LABELS[m]).join(', ')}` : ''} · ${EQUIPMENT_LABELS[exercise.equipment]}`}
         title={exercise.name}
         actions={
           exercise.custom && (
             <>
-              <button className="icon-btn filled" aria-label="Edit exercise" onClick={() => setEditing(true)}>
-                <Pencil size={18} />
+              <button className="glass-btn" aria-label="Edit exercise" onClick={() => setEditing(true)}>
+                <Pencil size={17} />
               </button>
-              <button className="icon-btn filled" aria-label="Delete exercise" onClick={remove}>
-                <Trash2 size={18} />
+              <button className="glass-btn" style={{ color: 'var(--red)' }} aria-label="Delete exercise" onClick={remove}>
+                <Trash2 size={17} />
               </button>
             </>
           )
@@ -141,7 +143,7 @@ export function ExerciseDetail() {
 
       {exercise.type === 'weight_reps' && records.heaviest > 0 && (
         <section className="section">
-          <h2 style={{ marginBottom: 10 }}>Rep maxes</h2>
+          <h2 style={{ marginBottom: 12 }}>Rep maxes</h2>
           <div className="card">
             <table className="table">
               <thead>
@@ -154,8 +156,10 @@ export function ExerciseDetail() {
               <tbody>
                 {repMaxes(sessions).map((r) => (
                   <tr key={r.reps}>
-                    <td>{r.reps} RM</td>
-                    <td style={{ fontWeight: 650 }}>{r.weight ? formatWeight(r.weight, unit) : '—'}</td>
+                    <td className="muted">{r.reps} RM</td>
+                    <td className="rounded-num" style={{ fontWeight: 600 }}>
+                      {r.weight ? formatWeight(r.weight, unit) : '—'}
+                    </td>
                     <td className="muted">{r.date ? formatDate(r.date) : ''}</td>
                   </tr>
                 ))}
@@ -166,23 +170,27 @@ export function ExerciseDetail() {
       )}
 
       <section className="section">
-        <h2 style={{ marginBottom: 10 }}>History</h2>
+        <h2 style={{ marginBottom: 12 }}>History</h2>
         {sessions.length === 0 && <p className="muted small">Nothing logged yet.</p>}
         {[...sessions].reverse().map((s) => {
           let n = 0;
           return (
             <Link to={`/history/${s.workoutId}`} className="card link" key={s.workoutId + s.date}>
-              <div className="spread" style={{ marginBottom: 6 }}>
-                <span style={{ fontWeight: 650 }}>{relativeDay(s.date)}</span>
+              <div className="spread" style={{ marginBottom: 10 }}>
+                <h3>{relativeDay(s.date)}</h3>
                 <span className="small muted">{workouts.find((w) => w.id === s.workoutId)?.name}</span>
               </div>
-              {s.sets.map((set) => (
-                <div className="set-line" key={set.id}>
-                  <span className="n">{set.kind === 'warmup' ? 'W' : ++n}</span>
-                  <span className="grow">{describeSet(set, exercise.type, unit)}</span>
-                  {exercise.type === 'weight_reps' && set.kind !== 'warmup' && <span className="muted small">{formatWeight(setE1RM(set, exercise.type), unit)}</span>}
-                </div>
-              ))}
+              <div className="stack-sm" style={{ gap: 8 }}>
+                {s.sets.map((set) => (
+                  <div className="set-line" key={set.id}>
+                    <span className={`n${set.kind === 'warmup' ? ' warmup' : ''}`}>{set.kind === 'warmup' ? 'W' : ++n}</span>
+                    <span className="grow">{describeSet(set, exercise.type, unit)}</span>
+                    {exercise.type === 'weight_reps' && set.kind !== 'warmup' && (
+                      <span className="muted small rounded-num">{formatWeight(setE1RM(set, exercise.type), unit)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </Link>
           );
         })}
@@ -192,6 +200,9 @@ export function ExerciseDetail() {
     </div>
   );
 }
+
+/** Matches a trailing unit such as " lb" so it can be set smaller than the number. */
+const UNIT_SUFFIX = / (lb|kg|mi|km)$/;
 
 function RecordStats({ exercise, records, unit, bodyweight }: { exercise: Exercise; records: ReturnType<typeof recordsFromSessions>; unit: Unit; bodyweight?: number }) {
   const tiles: [string, string][] = [];
@@ -220,7 +231,10 @@ function RecordStats({ exercise, records, unit, bodyweight }: { exercise: Exerci
       {shown.map(([label, value]) => (
         <div className="stat" key={label}>
           <div className="label">{label}</div>
-          <div className="value tabular">{value}</div>
+          <div className="value">
+            {value.replace(UNIT_SUFFIX, '')}
+            {UNIT_SUFFIX.test(value) && <small>{value.match(UNIT_SUFFIX)![1]}</small>}
+          </div>
         </div>
       ))}
     </div>
@@ -234,21 +248,31 @@ function StandardCard({ exercise, e1rm, bodyweight, sex, unit }: { exercise: Exe
   const level = levelFor(score);
   return (
     <div className="card" style={{ marginTop: 10 }}>
-      <div className="spread">
-        <div>
-          <div className="small muted" style={{ fontWeight: 650 }}>
-            Lift score
+      <div className="score-card" style={{ gap: 16 }}>
+        <ScoreRing progress={score / GAUGE_MAX} size={76} stroke={9} label={`Lift score ${Math.round(score)}, ${level.name}`}>
+          <span className="score" style={{ fontSize: 22 }}>
+            {Math.round(score)}
+          </span>
+        </ScoreRing>
+        <div className="grow">
+          <div className="card-title">Lift score</div>
+          <div className="level-name" style={{ fontSize: 19 }}>
+            {level.name}
           </div>
-          <div style={{ fontSize: 24, fontWeight: 750 }}>
-            {Math.round(score)} <span className="small secondary">{level.name}</span>
+          <div className="small muted" style={{ marginTop: 2 }}>
+            Intermediate for you:{' '}
+            <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
+              {formatWeight(standard, unit)}
+            </span>{' '}
+            1RM
           </div>
-        </div>
-        <div style={{ textAlign: 'right' }} className="small secondary">
-          Intermediate at your bodyweight
-          <div style={{ fontWeight: 700, color: 'var(--text)' }}>{formatWeight(standard, unit)} 1RM</div>
         </div>
       </div>
-      {exercise.equipment === 'dumbbell' && <div className="tiny muted" style={{ marginTop: 6 }}>Log the weight of one dumbbell.</div>}
+      {exercise.equipment === 'dumbbell' && (
+        <div className="tiny muted" style={{ marginTop: 10 }}>
+          Log the weight of one dumbbell.
+        </div>
+      )}
     </div>
   );
 }

@@ -44,6 +44,8 @@ const MAX_SCORE = 1000;
 /** Sets above this many reps make the 1RM estimate too noisy to score. */
 const MAX_REPS_FOR_SCORE = 12;
 export const SCORE_WINDOW_DAYS = 90;
+/** Score that fills a gauge completely (comfortably inside Elite). */
+export const GAUGE_MAX = 800;
 
 export interface StrengthLevel {
   name: string;

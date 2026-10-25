@@ -3,17 +3,19 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
+import { ExerciseInitial } from '../components/ExercisePicker';
+import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
+import { ScoreRing } from '../components/ScoreRing';
 import { ScoreDelta } from '../components/StrengthScoreCard';
-import { MUSCLE_LABELS } from '../data/exercises';
+import { MUSCLE_LABELS, muscleClass } from '../data/exercises';
 import { exerciseRecords } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
 import { exerciseUsage, setsPerMuscle, VOLUME_MUSCLES, weeklyStats } from '../lib/stats';
-import { GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
+import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
 import { formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
 import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
-import { PageHeader } from '../components/Layout';
 
 export function Progress() {
   return (
@@ -35,39 +37,59 @@ function StrengthSection() {
 
   return (
     <section>
-      <div className="card">
-        <div className="spread">
-          <div className="small muted" style={{ fontWeight: 650 }}>
-            Strength score
-          </div>
-          <button className="icon-btn" style={{ width: 32, height: 32 }} aria-label="How the strength score works" onClick={() => setInfo(true)}>
-            <Info size={18} />
-          </button>
-        </div>
+      <div className="card" style={{ position: 'relative', textAlign: 'center', paddingTop: 24 }}>
+        <button
+          className="glass-btn"
+          style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, color: 'var(--text-2)' }}
+          aria-label="How the strength score works"
+          onClick={() => setInfo(true)}
+        >
+          <Info size={18} />
+        </button>
         {current.overall === null ? (
-          <p className="secondary" style={{ margin: '4px 0 0' }}>
-            {bodyweight
-              ? 'Log a main lift (bench, squat, deadlift, rows, overhead press, curls…) to calculate your score.'
-              : 'Add your bodyweight below — the score compares your lifts to your bodyweight.'}
-          </p>
+          <>
+            <div style={{ display: 'inline-block' }}>
+              <ScoreRing progress={0} size={150} stroke={16} label="Strength score not available yet">
+                <span className="score muted" style={{ fontSize: 40 }}>
+                  –
+                </span>
+              </ScoreRing>
+            </div>
+            <p className="secondary" style={{ margin: '16px auto 4px', maxWidth: 300 }}>
+              {bodyweight
+                ? 'Log a main lift — bench, squat, deadlift, rows, presses, curls — to calculate your score.'
+                : 'Add your bodyweight below. The score compares your lifts to your bodyweight.'}
+            </p>
+          </>
         ) : (
           <>
-            <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
-              <div className="hero-number">{Math.round(current.overall)}</div>
-              <div style={{ paddingBottom: 4 }}>
-                <div style={{ fontWeight: 700 }}>{levelFor(current.overall).name}</div>
-                <ScoreDelta change={change} />
-              </div>
+            <div style={{ display: 'inline-block' }}>
+              <ScoreRing progress={current.overall / GAUGE_MAX} size={184} stroke={18} label={`Strength score ${Math.round(current.overall)}`}>
+                <div>
+                  <div className="score" style={{ fontSize: 56 }}>
+                    {Math.round(current.overall)}
+                  </div>
+                  <div className="small muted" style={{ fontWeight: 600, marginTop: 4 }}>
+                    Strength score
+                  </div>
+                </div>
+              </ScoreRing>
+            </div>
+            <div className="level-name" style={{ fontSize: 26, marginTop: 14 }}>
+              {levelFor(current.overall).name}
+            </div>
+            <div className="row" style={{ justifyContent: 'center', marginTop: 4, minHeight: 20 }}>
+              <ScoreDelta change={change} />
             </div>
             {history.length >= 2 && (
-              <div style={{ marginTop: 12 }}>
+              <div style={{ marginTop: 18, textAlign: 'left' }}>
                 <LineChart
                   points={history.map((p) => ({ x: p.date, y: Math.round(p.score) }))}
                   label="Strength score, last 12 weeks"
                   formatY={(v) => String(Math.round(v))}
                   formatX={(x) => formatDate(x)}
                   formatXLong={(x) => `Week of ${formatDate(x)}`}
-                  height={150}
+                  height={140}
                 />
               </div>
             )}
@@ -76,41 +98,43 @@ function StrengthSection() {
       </div>
 
       {current.overall !== null && (
-        <div className="card">
-          <h3 style={{ marginBottom: 4 }}>Strength balance</h3>
-          <p className="small muted" style={{ margin: '0 0 12px' }}>
-            Best lift per muscle group, last {SCORE_WINDOW_DAYS} days
-          </p>
-          <div className="stack" style={{ gap: 12 }}>
+        <section className="section">
+          <div className="section-head">
+            <h2>Strength balance</h2>
+            <span className="small muted">Last {SCORE_WINDOW_DAYS} days</span>
+          </div>
+          <div className="list with-icons">
             {STRENGTH_GROUPS.map((g) => {
               const gs = current.groups[g];
               return (
-                <div key={g}>
-                  <div className="spread small">
-                    <span style={{ fontWeight: 650 }}>{GROUP_LABELS[g]}</span>
-                    <span className="tabular">
+                <div key={g} className={`list-item m-${g}`} style={{ alignItems: 'flex-start', paddingTop: 14, paddingBottom: 14 }}>
+                  <div className={`tile m-${g}`}>{GROUP_LABELS[g].charAt(0)}</div>
+                  <div className="grow">
+                    <div className="spread">
+                      <span className="title">{GROUP_LABELS[g]}</span>
                       {gs ? (
-                        <>
-                          <strong>{Math.round(gs.score)}</strong> <span className="muted">{levelFor(gs.score).name}</span>
-                        </>
+                        <span>
+                          <span className="rounded-num" style={{ fontWeight: 700, fontSize: 17 }}>
+                            {Math.round(gs.score)}
+                          </span>{' '}
+                          <span className="small muted">{levelFor(gs.score).name}</span>
+                        </span>
                       ) : (
-                        <span className="muted">No data</span>
+                        <span className="small muted">No data</span>
                       )}
-                    </span>
-                  </div>
-                  <div className="meter" style={{ marginTop: 6 }} aria-hidden>
-                    <div style={{ width: `${gs ? Math.min(100, (gs.score / 800) * 100) : 0}%` }} />
-                  </div>
-                  {gs && (
-                    <div className="tiny muted" style={{ marginTop: 4 }}>
-                      {exerciseName(byId, gs.exerciseId)}
                     </div>
-                  )}
+                    <div className="meter" style={{ marginTop: 8 }} aria-hidden>
+                      <div style={{ width: `${gs ? Math.min(100, (gs.score / GAUGE_MAX) * 100) : 0}%` }} />
+                    </div>
+                    <div className="tiny muted" style={{ marginTop: 6 }}>
+                      {gs ? exerciseName(byId, gs.exerciseId) : 'Log a main lift for this group'}
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
       {info && (
@@ -199,7 +223,7 @@ function BodyweightSection() {
             style={{ flex: 1.2 }}
           />
           <input className="input" type="date" value={date} max={toDateInput(Date.now())} onChange={(e) => setDate(e.target.value)} aria-label="Date" style={{ flex: 1 }} />
-          <button className="btn btn-primary" type="submit" disabled={!(Number(value.replace(',', '.')) > 0)}>
+          <button className="btn btn-primary" type="submit" disabled={!(Number(value.replace(',', '.')) > 0)} style={{ minHeight: 46 }}>
             Log
           </button>
         </form>
@@ -218,10 +242,10 @@ function BodyweightSection() {
         {recent.length > 0 && (
           <div style={{ marginTop: 8 }}>
             {recent.map((e) => (
-              <div className="spread small" key={e.id} style={{ padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+              <div className="spread small" key={e.id} style={{ padding: '4px 0', boxShadow: '0 -0.5px 0 var(--separator)' }}>
                 <span className="secondary">{relativeDay(e.date)}</span>
                 <span className="row">
-                  <span className="tabular" style={{ fontWeight: 650 }}>
+                  <span className="rounded-num" style={{ fontWeight: 600, fontSize: 15 }}>
                     {formatWeight(e.weight, unit)}
                   </span>
                   <button className="icon-btn" style={{ width: 32, height: 32 }} aria-label="Delete entry" onClick={() => deleteBodyweight(e.id)}>
@@ -257,7 +281,7 @@ function WeeklySection() {
           avg {metric === 'volume' ? formatVolume(avg, unit, true) : trimNumber(avg)} / week
         </span>
       </div>
-      <div className="seg" role="group" aria-label="Weekly metric" style={{ marginBottom: 10 }}>
+      <div className="seg" role="group" aria-label="Weekly metric" style={{ marginBottom: 12 }}>
         <button aria-pressed={metric === 'volume'} onClick={() => setMetric('volume')}>
           Volume
         </button>
@@ -298,7 +322,7 @@ function MuscleSection() {
     <section className="section">
       <div className="section-head">
         <h2>Sets per muscle</h2>
-        <div className="seg" role="group" aria-label="Range" style={{ width: 150 }}>
+        <div className="seg" role="group" aria-label="Range">
           <button aria-pressed={range === 7} onClick={() => setRange(7)}>
             7 days
           </button>
@@ -308,19 +332,22 @@ function MuscleSection() {
         </div>
       </div>
       <div className="card">
-        <p className="small muted" style={{ margin: '0 0 12px' }}>
+        <p className="small muted" style={{ margin: '0 0 14px' }}>
           Working sets {range === 30 ? 'per week (30-day average)' : 'this past week'}. Secondary muscles count as half a set. Shaded band: the 10–20 sets/week most
           lifters grow on.
         </p>
-        <div className="stack-sm">
+        <div className="stack-sm" style={{ gap: 8 }}>
           {rows.map(({ m, n }) => (
-            <div className="hbar-row" key={m}>
-              <span className="secondary">{MUSCLE_LABELS[m]}</span>
+            <div className={`hbar-row ${muscleClass(m)}`} key={m}>
+              <span className="row" style={{ gap: 8 }}>
+                <span className="dot" aria-hidden />
+                {MUSCLE_LABELS[m]}
+              </span>
               <div className="hbar-track">
                 <div className="band" style={{ left: `${(BAND[0] / max) * 100}%`, width: `${((BAND[1] - BAND[0]) / max) * 100}%` }} />
                 {n > 0 && <div className="fill" style={{ width: `${(n / max) * 100}%` }} />}
               </div>
-              <span className="tabular" style={{ textAlign: 'right', fontWeight: 650 }}>
+              <span className="rounded-num" style={{ textAlign: 'right', fontWeight: 600 }}>
                 {trimNumber(n)}
               </span>
             </div>
@@ -353,19 +380,18 @@ function RecordsSection() {
         <h2>Top lifts</h2>
         <span className="small muted">Est. 1RM</span>
       </div>
-      <div className="list">
+      <div className="list with-icons">
         {records.map(({ exercise, rec, last }) => (
           <Link to={`/exercises/${exercise.id}`} className="list-item" key={exercise.id}>
+            <ExerciseInitial exercise={exercise} />
             <div className="grow">
-              <div style={{ fontWeight: 600 }} className="truncate">
-                {exercise.name}
-              </div>
-              <div className="small muted">
+              <div className="title truncate">{exercise.name}</div>
+              <div className="sub truncate">
                 {rec.sessions} sessions · last {relativeDayInline(last)}
                 {last < addDays(Date.now(), -SCORE_WINDOW_DAYS) ? ' · not in score' : ''}
               </div>
             </div>
-            <span className="tabular" style={{ fontWeight: 700 }}>
+            <span className="rounded-num" style={{ fontWeight: 700, fontSize: 17 }}>
               {formatWeight(rec.bestE1RM, unit)}
             </span>
             <ChevronRight size={18} className="chev" />

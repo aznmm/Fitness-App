@@ -8,6 +8,7 @@ interface SheetProps {
   children: ReactNode;
   footer?: ReactNode;
   full?: boolean;
+  /** Shown at the leading edge of the header, e.g. a "New" button. */
   headerExtra?: ReactNode;
 }
 
@@ -34,12 +35,15 @@ export function Sheet({ title, onClose, children, footer, full, headerExtra }: S
   return createPortal(
     <div className="backdrop" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`sheet${full ? ' full' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <div className="grabber" aria-hidden />
         <div className="sheet-head">
+          <div>{headerExtra}</div>
           <h2 id={titleId}>{title}</h2>
-          {headerExtra}
-          <button className="icon-btn filled" onClick={onClose} aria-label="Close">
-            <X size={20} />
-          </button>
+          <div className="end">
+            <button className="glass-btn" style={{ width: 32, height: 32 }} onClick={onClose} aria-label="Close">
+              <X size={18} strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
         <div className="sheet-body">{children}</div>
         {footer && <div className="sheet-foot">{footer}</div>}

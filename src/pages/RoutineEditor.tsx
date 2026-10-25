@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { confirm } from '../components/Dialogs';
-import { ExercisePicker } from '../components/ExercisePicker';
+import { ExerciseInitial, ExercisePicker } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { NumberInput } from '../components/NumberInput';
 import { uid } from '../lib/id';
@@ -51,7 +51,7 @@ export function RoutineEditor() {
         back="/routines"
         title={params.get('new') ? 'New routine' : 'Edit routine'}
         actions={
-          <button className="icon-btn filled" aria-label="Delete routine" onClick={remove}>
+          <button className="glass-btn" style={{ color: 'var(--red)' }} aria-label="Delete routine" onClick={remove}>
             <Trash2 size={18} />
           </button>
         }
@@ -69,11 +69,14 @@ export function RoutineEditor() {
       </div>
 
       <section className="section">
-        <h2 style={{ marginBottom: 6 }}>Exercises</h2>
+        <h2 style={{ marginBottom: 12 }}>Exercises</h2>
         {routine.exercises.map((re, i) => (
           <div className="card tight" key={re.id}>
-            <div className="spread">
-              <h3 className="truncate grow">{exerciseName(byId, re.exerciseId)}</h3>
+            <div className="row" style={{ gap: 4 }}>
+              <ExerciseInitial exercise={byId.get(re.exerciseId)} small />
+              <h3 className="truncate grow" style={{ marginLeft: 8 }}>
+                {exerciseName(byId, re.exerciseId)}
+              </h3>
               <button className="icon-btn" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}>
                 <ArrowUp size={18} />
               </button>
@@ -88,19 +91,19 @@ export function RoutineEditor() {
                 <Trash2 size={18} />
               </button>
             </div>
-            <div className="row" style={{ marginTop: 8 }}>
+            <div className="row" style={{ marginTop: 12, alignItems: 'flex-end' }}>
               <label className="field grow">
                 <span>Sets</span>
-                <NumberInput className="input" inputMode="numeric" value={re.sets} onValue={(v) => v && updateEx(re.id, { sets: Math.min(20, v) })} format={String} parse={int} />
+                <NumberInput className="set-input" inputMode="numeric" value={re.sets} onValue={(v) => v && updateEx(re.id, { sets: Math.min(20, v) })} format={String} parse={int} />
               </label>
               <label className="field grow">
                 <span>Reps</span>
-                <NumberInput className="input" inputMode="numeric" placeholder="—" value={re.reps} onValue={(v) => updateEx(re.id, { reps: v || undefined })} format={String} parse={int} />
+                <NumberInput className="set-input" inputMode="numeric" placeholder="—" value={re.reps} onValue={(v) => updateEx(re.id, { reps: v || undefined })} format={String} parse={int} />
               </label>
               <label className="field grow">
                 <span>{settings.unit}</span>
                 <NumberInput
-                  className="input"
+                  className="set-input"
                   inputMode="decimal"
                   placeholder="—"
                   value={re.weight}
@@ -115,7 +118,7 @@ export function RoutineEditor() {
                   className="select"
                   value={re.restSec ?? settings.defaultRestSec}
                   onChange={(e) => updateEx(re.id, { restSec: Number(e.target.value) })}
-                  style={{ paddingLeft: 8, paddingRight: 4 }}
+                  style={{ minHeight: 36, height: 36, padding: '0 22px 0 8px', fontFamily: 'var(--font-rounded)', fontWeight: 600, backgroundPosition: 'calc(100% - 13px) 52%, calc(100% - 8px) 52%' }}
                 >
                   {[...new Set([...REST_CHOICES, re.restSec ?? settings.defaultRestSec])]
                     .sort((a, b) => a - b)
@@ -129,13 +132,13 @@ export function RoutineEditor() {
             </div>
           </div>
         ))}
-        <button className="btn btn-block btn-lg" style={{ marginTop: 12, color: 'var(--accent)' }} onClick={() => setPicking(true)}>
-          <Plus size={20} /> Add exercises
+        <button className="btn btn-tinted btn-block btn-lg" style={{ marginTop: 14 }} onClick={() => setPicking(true)}>
+          <Plus size={20} strokeWidth={2.5} /> Add exercises
         </button>
       </section>
 
       {routine.exercises.length > 0 && (
-        <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 16 }} onClick={() => start(routine.id)}>
+        <button className="btn btn-hero btn-lg btn-block" style={{ marginTop: 12 }} onClick={() => start(routine.id)}>
           <Play size={18} fill="currentColor" /> Start workout
         </button>
       )}

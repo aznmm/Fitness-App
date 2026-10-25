@@ -1,6 +1,6 @@
 import { Check, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { EQUIPMENT_LABELS, MUSCLE_FILTERS, MUSCLE_LABELS } from '../data/exercises';
+import { EQUIPMENT_LABELS, MUSCLE_FILTERS, MUSCLE_LABELS, muscleClass } from '../data/exercises';
 import { exerciseUsage } from '../lib/stats';
 import { useExercises, useStore } from '../store/useStore';
 import type { Exercise } from '../types';
@@ -18,10 +18,11 @@ export function filterExercises(list: Exercise[], query: string, muscleFilter: s
   });
 }
 
-export function ExerciseInitial({ exercise, selected }: { exercise: Exercise; selected?: boolean }) {
+/** Muscle-coloured tile with the exercise's initial (or a check when selected). */
+export function ExerciseInitial({ exercise, selected, small }: { exercise?: Exercise; selected?: boolean; small?: boolean }) {
   return (
-    <div className={`avatar${selected ? ' selected' : ''}`} aria-hidden>
-      {selected ? <Check size={20} /> : exercise.name.charAt(0)}
+    <div className={`tile ${muscleClass(exercise?.primary)}${selected ? ' selected' : ''}${small ? ' sm' : ''}`} aria-hidden>
+      {selected ? <Check size={small ? 16 : 20} strokeWidth={3} /> : (exercise?.name.charAt(0) ?? '?')}
     </div>
   );
 }
@@ -68,10 +69,8 @@ export function ExercisePicker({ title = 'Add exercises', multi = true, onClose,
     <button key={e.id} className="list-item" onClick={() => toggle(e.id)} aria-pressed={selected.includes(e.id)}>
       <ExerciseInitial exercise={e} selected={selected.includes(e.id)} />
       <div className="grow">
-        <div style={{ fontWeight: 600 }} className="truncate">
-          {e.name}
-        </div>
-        <div className="small muted">
+        <div className="title truncate">{e.name}</div>
+        <div className="sub">
           {MUSCLE_LABELS[e.primary]} · {EQUIPMENT_LABELS[e.equipment]}
           {usage.get(e.id) ? ` · ${usage.get(e.id)!.count}×` : ''}
         </div>
@@ -87,12 +86,12 @@ export function ExercisePicker({ title = 'Add exercises', multi = true, onClose,
         full
         headerExtra={
           <button className="btn btn-sm btn-ghost" onClick={() => setCreating(true)}>
-            <Plus size={16} /> New
+            <Plus size={17} strokeWidth={2.5} /> New
           </button>
         }
         footer={
           multi && (
-            <button className="btn btn-primary btn-block" disabled={!selected.length} onClick={() => onPick(selected)}>
+            <button className="btn btn-primary btn-lg btn-block" disabled={!selected.length} onClick={() => onPick(selected)}>
               {selected.length ? `Add ${selected.length} exercise${selected.length > 1 ? 's' : ''}` : 'Select exercises'}
             </button>
           )
@@ -122,23 +121,19 @@ export function ExercisePicker({ title = 'Add exercises', multi = true, onClose,
         </div>
         {recent.length > 0 && (
           <>
-            <div className="small muted" style={{ fontWeight: 650, margin: '4px 0 6px' }}>
-              RECENT
-            </div>
-            <div className="list" style={{ marginBottom: 14 }}>
+            <div className="list-header" style={{ marginTop: 6 }}>Recent</div>
+            <div className="list with-icons" style={{ marginBottom: 22 }}>
               {recent.map(row)}
             </div>
-            <div className="small muted" style={{ fontWeight: 650, margin: '4px 0 6px' }}>
-              ALL EXERCISES
-            </div>
+            <div className="list-header">All exercises</div>
           </>
         )}
         {filtered.length ? (
-          <div className="list">{filtered.map(row)}</div>
+          <div className="list with-icons">{filtered.map(row)}</div>
         ) : (
           <div className="empty">
             <p>No exercises match.</p>
-            <button className="btn btn-outline" onClick={() => setCreating(true)}>
+            <button className="btn btn-tinted" onClick={() => setCreating(true)}>
               <Plus size={16} /> Create “{query || 'custom exercise'}”
             </button>
           </div>

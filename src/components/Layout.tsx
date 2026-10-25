@@ -1,8 +1,8 @@
 import { BarChart3, ChevronLeft, ClipboardList, Dumbbell, History, Home, Play } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useNow } from '../lib/useNow';
-import { formatElapsed } from '../lib/units';
+import { formatDuration } from '../lib/units';
 import { useStore } from '../store/useStore';
 
 const TABS = [
@@ -26,7 +26,7 @@ export function TabBar() {
   );
 }
 
-/** Pill above the tab bar while a workout is running. */
+/** Floating pill above the tab bar while a workout is running. */
 export function ActiveWorkoutBar() {
   const active = useStore((s) => s.active);
   const rest = useStore((s) => s.rest);
@@ -34,54 +34,82 @@ export function ActiveWorkoutBar() {
   const { pathname } = useLocation();
   if (!active || pathname === '/workout' || rest) return null;
   return (
-    <Link to="/workout" className="floating active-bar">
+    <Link to="/workout" className="floating active-bar" aria-label={`Resume ${active.name}`}>
       <span className="pulse" aria-hidden />
       <div className="grow">
-        <div style={{ fontWeight: 700 }} className="truncate">
+        <div style={{ fontWeight: 600 }} className="truncate">
           {active.name}
         </div>
-        <div className="small tabular" style={{ opacity: 0.85 }}>
-          {formatElapsed(now - active.startedAt)} · tap to resume
-        </div>
+        <div className="small muted rounded-num">{formatDuration((now - active.startedAt) / 1000)}</div>
       </div>
-      <Play size={20} fill="currentColor" />
+      <span className="go" aria-hidden>
+        <Play size={18} fill="currentColor" />
+      </span>
     </Link>
   );
 }
 
+/** True once the page has scrolled past `threshold` px. */
+export function useScrolled(threshold = 36): boolean {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > threshold);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [threshold]);
+  return scrolled;
+}
+
+export function BackButton({ to }: { to?: string }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      className="glass-btn"
+      aria-label="Back"
+      onClick={() => (to ? navigate(to) : window.history.length > 1 ? navigate(-1) : navigate('/'))}
+    >
+      <ChevronLeft size={22} strokeWidth={2.4} />
+    </button>
+  );
+}
+
 interface PageHeaderProps {
-  title: ReactNode;
+  title: string;
   eyebrow?: ReactNode;
   back?: boolean | string;
   actions?: ReactNode;
+  /** Smaller large title for detail screens with long names. */
+  compact?: boolean;
 }
 
-export function PageHeader({ title, eyebrow, back, actions }: PageHeaderProps) {
-  const navigate = useNavigate();
+/**
+ * iOS-style large title. A glass navigation bar holds the back button and
+ * actions; the title shrinks into it once the page scrolls.
+ */
+export function PageHeader({ title, eyebrow, back, actions, compact }: PageHeaderProps) {
+  const scrolled = useScrolled();
   return (
-    <header className="page-header">
-      {back && (
-        <button
-          className="icon-btn filled"
-          aria-label="Back"
-          onClick={() => (typeof back === 'string' ? navigate(back) : window.history.length > 1 ? navigate(-1) : navigate('/'))}
-        >
-          <ChevronLeft size={22} />
-        </button>
-      )}
-      <div className="title">
-        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-        {typeof title === 'string' ? <h1 className={back ? 'truncate' : undefined} style={back ? { fontSize: 22 } : undefined}>{title}</h1> : title}
+    <>
+      <div className={`navbar${scrolled ? ' scrolled' : ''}`}>
+        <div className="navbar-side">{back && <BackButton to={typeof back === 'string' ? back : undefined} />}</div>
+        <div className="navbar-title truncate" aria-hidden>
+          {title}
+        </div>
+        <div className="navbar-side end">{actions}</div>
       </div>
-      {actions && <div className="row">{actions}</div>}
-    </header>
+      <header className={`large-title${compact ? ' compact' : ''}`}>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        <h1>{title}</h1>
+      </header>
+    </>
   );
 }
 
 export function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
     <div className="empty">
-      {icon}
+      <div className="empty-icon">{icon}</div>
       <h3>{title}</h3>
       {children}
     </div>

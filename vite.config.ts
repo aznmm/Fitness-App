@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Forge — Workout Tracker',
         short_name: 'Forge',
         description: 'Log workouts, track strength and see your progress in one place.',
-        theme_color: '#0d0d0d',
-        background_color: '#0d0d0d',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
@@ -28,7 +28,15 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Inter is only a fallback for devices without SF Pro, so fetch it on demand instead of precaching it.
+        globPatterns: ['**/*.{js,css,html,svg,png}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'font',
+            handler: 'CacheFirst',
+            options: { cacheName: 'fonts', expiration: { maxEntries: 20 } },
+          },
+        ],
       },
     }),
   ],

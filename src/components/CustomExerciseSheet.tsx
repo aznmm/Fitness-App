@@ -46,7 +46,7 @@ export function CustomExerciseSheet({ initialName = '', existing, onClose, onSav
       title={existing ? 'Edit exercise' : 'New exercise'}
       onClose={onClose}
       footer={
-        <button className="btn btn-primary btn-block" disabled={!name.trim()} onClick={submit}>
+        <button className="btn btn-primary btn-lg btn-block" disabled={!name.trim()} onClick={submit}>
           Save exercise
         </button>
       }

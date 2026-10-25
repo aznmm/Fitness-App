@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { requestPersistentStorage } from './store/storage';
 import { useStore } from './store/useStore';
+import '@fontsource-variable/inter';
 import './styles.css';
 
 /** Hold rendering until saved data has loaded from IndexedDB. */

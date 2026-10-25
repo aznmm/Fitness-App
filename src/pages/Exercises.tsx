@@ -29,12 +29,12 @@ export function Exercises() {
       <PageHeader
         title="Exercises"
         actions={
-          <button className="btn btn-sm" onClick={() => setCreating(true)}>
-            <Plus size={16} /> Custom
+          <button className="glass-btn accent" onClick={() => setCreating(true)} aria-label="New custom exercise">
+            <Plus size={22} strokeWidth={2.4} />
           </button>
         }
       />
-      <div className="stack" style={{ marginBottom: 12 }}>
+      <div className="stack" style={{ marginBottom: 16, marginTop: -6 }}>
         <label className="search">
           <Search size={18} />
           <input className="input" placeholder={`Search ${list.length} exercises`} value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search exercises" />
@@ -60,18 +60,18 @@ export function Exercises() {
       </div>
 
       {filtered.length ? (
-        <div className="list">
+        <div className="list with-icons">
           {filtered.map((e) => {
             const u = usage.get(e.id);
             return (
               <Link key={e.id} to={`/exercises/${e.id}`} className="list-item">
                 <ExerciseInitial exercise={e} />
                 <div className="grow">
-                  <div style={{ fontWeight: 600 }} className="truncate">
+                  <div className="title truncate">
                     {e.name}
-                    {e.custom && <span className="badge" style={{ marginLeft: 6 }}>Custom</span>}
+                    {e.custom && <span className="badge accent" style={{ marginLeft: 8 }}>Custom</span>}
                   </div>
-                  <div className="small muted truncate">
+                  <div className="sub truncate">
                     {MUSCLE_LABELS[e.primary]} · {EQUIPMENT_LABELS[e.equipment]}
                     {u ? ` · ${u.count}× · ${relativeDayInline(u.last)}` : ''}
                   </div>
@@ -84,7 +84,7 @@ export function Exercises() {
       ) : (
         <div className="empty">
           <p>No exercises match.</p>
-          <button className="btn btn-outline" onClick={() => setCreating(true)}>
+          <button className="btn btn-tinted" onClick={() => setCreating(true)}>
             <Plus size={16} /> Create custom exercise
           </button>
         </div>

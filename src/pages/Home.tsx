@@ -1,10 +1,11 @@
-import { Dumbbell, Flame, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Check, ChevronRight, Dumbbell, Flame, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { confirm } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
 import { StrengthScoreCard } from '../components/StrengthScoreCard';
 import { WorkoutCard } from '../components/WorkoutCard';
+import { muscleClass } from '../data/exercises';
 import { addDays, formatDate, greeting, sameDay, startOfWeek } from '../lib/dates';
 import { finished, weekStreak, weeklyStats } from '../lib/stats';
 import { formatVolume } from '../lib/units';
@@ -56,7 +57,7 @@ export function Home() {
         eyebrow={formatDate(Date.now(), { weekday: 'long', month: 'long', day: 'numeric' })}
         title={greeting()}
         actions={
-          <Link to="/settings" className="icon-btn filled" aria-label="Settings">
+          <Link to="/settings" className="glass-btn" aria-label="Settings">
             <SettingsIcon size={20} />
           </Link>
         }
@@ -65,11 +66,11 @@ export function Home() {
       <StrengthScoreCard />
 
       <div className="card">
-        <div className="spread" style={{ marginBottom: 12 }}>
-          <h3>This week</h3>
+        <div className="spread" style={{ marginBottom: 14 }}>
+          <div className="card-title">This week</div>
           {streak > 0 && (
             <span className="badge gold">
-              <Flame size={12} /> {streak} week streak
+              <Flame size={13} /> {streak}-week streak
             </span>
           )}
         </div>
@@ -79,27 +80,31 @@ export function Home() {
             return (
               <div className="day" key={d}>
                 {formatDate(d, { weekday: 'narrow' })}
-                <div className={`dot${trained ? ' on' : ''}${sameDay(d, Date.now()) ? ' today' : ''}`}>{new Date(d).getDate()}</div>
+                <div className={`bubble${trained ? ' on' : ''}${sameDay(d, Date.now()) ? ' today' : ''}`}>
+                  {trained ? <Check size={17} strokeWidth={3} aria-label="Workout logged" /> : new Date(d).getDate()}
+                </div>
               </div>
             );
           })}
         </div>
-        <div className="stat-grid" style={{ marginTop: 14 }}>
-          <div>
-            <div className="small muted">Workouts</div>
-            <div style={{ fontWeight: 700, fontSize: 18 }}>
+        <div className="divider" />
+        <div className="metrics">
+          <div className="metric">
+            <div className="label">Workouts</div>
+            <div className="value">
               {thisWeek.workouts}
-              <span className="muted small"> / {settings.weeklyGoal}</span>
+              <small>/{settings.weeklyGoal}</small>
             </div>
           </div>
-          <div>
-            <div className="small muted">Sets</div>
-            <div style={{ fontWeight: 700, fontSize: 18 }}>{thisWeek.sets}</div>
+          <div className="metric">
+            <div className="label">Sets</div>
+            <div className="value">{thisWeek.sets}</div>
           </div>
-          <div>
-            <div className="small muted">Volume</div>
-            <div style={{ fontWeight: 700, fontSize: 18 }} className="truncate">
-              {formatVolume(thisWeek.volume, settings.unit, true)}
+          <div className="metric">
+            <div className="label">Volume</div>
+            <div className="value">
+              {formatVolume(thisWeek.volume, settings.unit, true).replace(` ${settings.unit}`, '')}
+              <small>{settings.unit}</small>
             </div>
           </div>
         </div>
@@ -107,12 +112,12 @@ export function Home() {
 
       <section className="section">
         {active ? (
-          <Link to="/workout" className="btn btn-primary btn-lg btn-block">
+          <Link to="/workout" className="btn btn-hero btn-lg btn-block">
             <Play size={20} fill="currentColor" /> Resume {active.name}
           </Link>
         ) : (
-          <button className="btn btn-primary btn-lg btn-block" onClick={() => start()}>
-            <Plus size={22} /> Start empty workout
+          <button className="btn btn-hero btn-lg btn-block" onClick={() => start()}>
+            <Plus size={22} strokeWidth={2.5} /> Start workout
           </button>
         )}
       </section>
@@ -120,34 +125,45 @@ export function Home() {
       <section className="section">
         <div className="section-head">
           <h2>Routines</h2>
-          <Link to="/routines" className="small" style={{ fontWeight: 600 }}>
-            See all
-          </Link>
+          <Link to="/routines">See all</Link>
         </div>
         {quickRoutines.length ? (
-          <div className="chips" style={{ gap: 10 }}>
-            {quickRoutines.map((r) => (
-              <button key={r.id} className="card" style={{ flex: 'none', width: 200, textAlign: 'left', margin: 0 }} onClick={() => start(r.id)}>
-                <div className="spread">
-                  <h3 className="truncate">{r.name}</h3>
-                  <Play size={16} className="muted" />
-                </div>
-                <div className="small muted truncate" style={{ marginTop: 4 }}>
-                  {r.exercises.map((e) => exerciseName(byId, e.exerciseId)).join(', ') || 'No exercises'}
-                </div>
-              </button>
-            ))}
+          <div className="chips" style={{ gap: 12 }}>
+            {quickRoutines.map((r) => {
+              const groups = [...new Set(r.exercises.map((e) => muscleClass(byId.get(e.exerciseId)?.primary)))].filter(Boolean);
+              return (
+                <button key={r.id} className="card routine-card" onClick={() => start(r.id)} aria-label={`Start ${r.name}`}>
+                  <div className="spread">
+                    <div className="muscle-dots" aria-hidden>
+                      {groups.slice(0, 5).map((g) => (
+                        <span key={g} className={`dot ${g}`} />
+                      ))}
+                    </div>
+                    <span className="play-btn" aria-hidden>
+                      <Play size={15} fill="currentColor" />
+                    </span>
+                  </div>
+                  <h3 className="truncate" style={{ marginTop: 10 }}>
+                    {r.name}
+                  </h3>
+                  <div className="small muted truncate" style={{ marginTop: 2 }}>
+                    {r.exercises.map((e) => exerciseName(byId, e.exerciseId)).join(', ') || 'No exercises'}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         ) : (
           <Link to="/routines" className="card link">
-            <div className="row">
-              <div className="avatar accent">
-                <Plus size={20} />
+            <div className="row" style={{ gap: 14 }}>
+              <div className="tile">
+                <Plus size={22} />
               </div>
-              <div>
-                <div style={{ fontWeight: 650 }}>Create a routine</div>
+              <div className="grow">
+                <div style={{ fontWeight: 600 }}>Create a routine</div>
                 <div className="small muted">Or pick a ready-made program</div>
               </div>
+              <ChevronRight size={20} className="faint" />
             </div>
           </Link>
         )}
@@ -155,18 +171,14 @@ export function Home() {
 
       <section className="section">
         <div className="section-head">
-          <h2>Recent workouts</h2>
-          {done.length > 3 && (
-            <Link to="/history" className="small" style={{ fontWeight: 600 }}>
-              See all
-            </Link>
-          )}
+          <h2>Recent</h2>
+          {done.length > 3 && <Link to="/history">See all</Link>}
         </div>
         {done.length ? (
           done.slice(0, 3).map((w) => <WorkoutCard key={w.id} workout={w} />)
         ) : (
           <div className="card">
-            <EmptyState icon={<Dumbbell size={36} />} title="No workouts yet">
+            <EmptyState icon={<Dumbbell size={30} />} title="No workouts yet">
               <p className="small">Start a workout and log your first sets — your history and progress will show up here.</p>
             </EmptyState>
           </div>

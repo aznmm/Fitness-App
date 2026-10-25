@@ -1,7 +1,8 @@
-import { ClipboardPlus, MoreHorizontal, Pencil, RotateCcw, Trash2, Trophy } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { ChevronRight, ClipboardPlus, MoreHorizontal, Pencil, RotateCcw, Trash2, Trophy } from 'lucide-react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
+import { ExerciseInitial } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
 import { describeSet, WorkoutEditor } from '../components/WorkoutEditor';
@@ -91,24 +92,35 @@ export function WorkoutDetail() {
       {summary ? (
         <div className="summary-hero">
           <div className="trophy">
-            <Trophy size={36} />
+            <Trophy size={44} strokeWidth={2.2} />
           </div>
           <h1>Workout complete</h1>
-          <p className="secondary" style={{ margin: '6px 0 0' }}>
-            Nice work — that's workout #{number}.
+          <p className="secondary" style={{ margin: '8px 0 0', fontSize: 17 }}>
+            Nice work — that's workout <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>#{number}</span>
+            {prs.length > 0 && (
+              <>
+                {' '}
+                with{' '}
+                <span style={{ color: 'var(--gold)', fontWeight: 600 }}>
+                  {prs.length} new PR{prs.length > 1 ? 's' : ''}
+                </span>
+              </>
+            )}
+            .
           </p>
         </div>
       ) : (
         <PageHeader
           back
+          compact
           eyebrow={`${formatDate(workout.startedAt, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })} · ${formatTime(workout.startedAt)}`}
           title={workout.name}
           actions={
             <>
-              <button className="icon-btn filled" aria-label="Edit workout" onClick={() => setParams({ edit: '1' })}>
-                <Pencil size={18} />
+              <button className="glass-btn" aria-label="Edit workout" onClick={() => setParams({ edit: '1' })}>
+                <Pencil size={17} />
               </button>
-              <button className="icon-btn filled" aria-label="More" onClick={() => setMenu(true)}>
+              <button className="glass-btn" aria-label="More" onClick={() => setMenu(true)}>
                 <MoreHorizontal size={20} />
               </button>
             </>
@@ -116,14 +128,17 @@ export function WorkoutDetail() {
         />
       )}
 
-      <div className="stat-grid" style={{ marginTop: summary ? 20 : 0 }}>
+      <div className="stat-grid" style={{ marginTop: summary ? 24 : 0 }}>
         <div className="stat">
           <div className="label">Duration</div>
           <div className="value">{formatElapsed(workoutDurationMs(workout))}</div>
         </div>
         <div className="stat">
           <div className="label">Volume</div>
-          <div className="value">{formatVolume(workoutVolume(workout), unit, true)}</div>
+          <div className="value">
+            {formatVolume(workoutVolume(workout), unit, true).replace(` ${unit}`, '')}
+            <small>{unit}</small>
+          </div>
         </div>
         <div className="stat">
           <div className="label">Sets</div>
@@ -139,19 +154,17 @@ export function WorkoutDetail() {
               <Trophy size={12} /> {prs.length}
             </span>
           </div>
-          <div className="list">
+          <div className="list with-icons">
             {prs.map((pr, i) => (
               <div className="list-item" key={i}>
-                <div className="avatar" style={{ background: 'var(--gold-soft)', color: 'var(--gold)' }}>
-                  <Trophy size={18} />
+                <div className="tile" style={{ '--tile': 'var(--gold)' } as CSSProperties}>
+                  <Trophy size={19} />
                 </div>
                 <div className="grow">
-                  <div style={{ fontWeight: 600 }} className="truncate">
-                    {exerciseName(byId, pr.exerciseId)}
-                  </div>
-                  <div className="small muted">{PR_LABEL[pr.kind]}</div>
+                  <div className="title truncate">{exerciseName(byId, pr.exerciseId)}</div>
+                  <div className="sub">{PR_LABEL[pr.kind]}</div>
                 </div>
-                <div className="tabular" style={{ fontWeight: 700 }}>
+                <div className="rounded-num" style={{ fontWeight: 700 }}>
                   {prValue(pr, byId.get(pr.exerciseId), unit, bodyweight)}
                 </div>
               </div>
@@ -161,7 +174,7 @@ export function WorkoutDetail() {
       )}
 
       <section className="section">
-        <h2 style={{ marginBottom: 10 }}>Exercises</h2>
+        <h2 style={{ marginBottom: 12 }}>Exercises</h2>
         {workout.exercises.map((we) => {
           const ex = byId.get(we.exerciseId);
           const type = ex?.type ?? 'weight_reps';
@@ -169,16 +182,18 @@ export function WorkoutDetail() {
           let n = 0;
           return (
             <div className="card" key={we.id}>
-              <Link to={`/exercises/${we.exerciseId}`} style={{ fontWeight: 700 }}>
-                {ex?.name ?? 'Unknown exercise'}
+              <Link to={`/exercises/${we.exerciseId}`} className="row" style={{ gap: 12, color: 'var(--text)' }}>
+                <ExerciseInitial exercise={ex} small />
+                <h3 className="grow truncate">{ex?.name ?? 'Unknown exercise'}</h3>
+                <ChevronRight size={18} className="faint" />
               </Link>
-              <div className="stack-sm" style={{ marginTop: 8 }}>
+              <div className="stack-sm" style={{ marginTop: 12, gap: 8 }}>
                 {we.sets.map((s) => (
                   <div className="set-line" key={s.id}>
-                    <span className="n">{s.kind === 'warmup' ? 'W' : ++n}</span>
+                    <span className={`n${s.kind === 'warmup' ? ' warmup' : ''}`}>{s.kind === 'warmup' ? 'W' : ++n}</span>
                     <span className="grow">{describeSet(s, type, unit)}</span>
                     {(type === 'weight_reps' || (type === 'reps' && bodyweight)) && s.kind !== 'warmup' && (
-                      <span className="muted small">{formatWeight(setE1RM(s, type, bodyweight), unit)}</span>
+                      <span className="muted small rounded-num">{formatWeight(setE1RM(s, type, bodyweight), unit)}</span>
                     )}
                     {prSets.has(s.id) && <Trophy size={14} style={{ color: 'var(--gold)' }} aria-label="Personal record" />}
                   </div>
@@ -203,7 +218,7 @@ export function WorkoutDetail() {
             Done
           </button>
           {!workout.routineId && (
-            <button className="btn btn-outline btn-block" onClick={saveAsRoutine}>
+            <button className="btn btn-tinted btn-lg btn-block" onClick={saveAsRoutine}>
               <ClipboardPlus size={18} /> Save as routine
             </button>
           )}
@@ -258,14 +273,16 @@ function EditWorkout({ workout, onChange, onDone }: { workout: Workout; onChange
 
   return (
     <div className="page no-tabs">
-      <div className="sticky-header">
-        <div className="spread">
-          <h2>Edit workout</h2>
+      <div className="navbar solid">
+        <div />
+        <div className="navbar-title">Edit workout</div>
+        <div className="navbar-side end">
           <button className="btn btn-primary btn-sm" onClick={onDone}>
             Done
           </button>
         </div>
       </div>
+      <div style={{ height: 16 }} />
       <div className="stack">
         <label className="field">
           <span>Name</span>
