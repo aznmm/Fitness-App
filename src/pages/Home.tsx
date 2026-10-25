@@ -209,7 +209,7 @@ function RecoveryCard() {
         <ChevronRight size={20} className="faint" />
       </div>
       <div className="row" style={{ gap: 18, marginTop: 10, alignItems: 'center' }}>
-        <BodyMap values={fatigue} color="var(--heat)" height={128} captions={false} label="Muscle recovery" />
+        <BodyMap values={fatigue} height={128} captions={false} label="Muscle recovery" />
         <div className="grow stack" style={{ gap: 12 }}>
           <div>
             <div className="row small" style={{ gap: 5, color: 'var(--green-text)', fontWeight: 600 }}>

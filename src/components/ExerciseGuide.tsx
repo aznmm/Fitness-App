@@ -1,13 +1,13 @@
 import { GUIDES } from '../data/guides';
 import { MUSCLE_LABELS } from '../data/exercises';
 import type { Exercise, Muscle } from '../types';
-import { BodyMap } from './BodyMap';
+import { BodyMap, heatColor } from './BodyMap';
 
-/** Primary muscle in the strong colour, supporting muscles in the soft one. */
+/** Heat-map colours: primary muscle at the hottest step, supporting muscles cooler. */
 export function workedFills(exercise: Exercise): Partial<Record<Muscle, string>> {
   const fills: Partial<Record<Muscle, string>> = {};
-  for (const m of exercise.secondary) fills[m] = 'var(--map-secondary)';
-  fills[exercise.primary] = 'var(--map-primary)';
+  for (const m of exercise.secondary) fills[m] = heatColor(2);
+  fills[exercise.primary] = heatColor(4);
   return fills;
 }
 
@@ -27,12 +27,12 @@ export function ExerciseGuide({ exercise, mapHeight = 220 }: { exercise: Exercis
           />
           <div className="legend" style={{ marginTop: 12 }}>
             <span>
-              <span className="swatch" style={{ background: 'var(--map-primary)' }} />
+              <span className="swatch" style={{ background: heatColor(4) }} />
               Primary: {MUSCLE_LABELS[exercise.primary]}
             </span>
             {exercise.secondary.length > 0 && (
               <span>
-                <span className="swatch" style={{ background: 'var(--map-secondary)' }} />
+                <span className="swatch" style={{ background: heatColor(2) }} />
                 Secondary: {exercise.secondary.map((m) => MUSCLE_LABELS[m]).join(', ')}
               </span>
             )}

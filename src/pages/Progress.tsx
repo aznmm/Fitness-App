@@ -1,7 +1,7 @@
 import { ChevronRight, CircleCheck, Clock, Flame, Info, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BodyMap } from '../components/BodyMap';
+import { BodyMap, HeatLegend, heatColor, heatStep } from '../components/BodyMap';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
 import { ExerciseInitial } from '../components/ExercisePicker';
@@ -9,7 +9,7 @@ import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
 import { ScoreRing } from '../components/ScoreRing';
 import { ScoreDelta } from '../components/StrengthScoreCard';
-import { MUSCLE_LABELS, muscleClass } from '../data/exercises';
+import { MUSCLE_LABELS } from '../data/exercises';
 import { exerciseRecords } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
 import { groupFatigue, MAP_MUSCLES, muscleFatigue, muscleSets, type RecoveryStatus } from '../lib/muscles';
@@ -349,25 +349,13 @@ function MuscleSection() {
       <div className="card">
         <BodyMap
           values={mapValues}
-          color={mode === 'sets' ? 'var(--accent)' : 'var(--heat)'}
           height={250}
           label={mode === 'sets' ? 'Working sets per muscle' : 'Muscle fatigue right now'}
         />
         {mode === 'sets' ? (
           <>
-            <div className="legend" style={{ marginTop: 12 }}>
-              <span>
-                <span className="swatch" style={{ background: 'var(--fill-strong)' }} />
-                None
-              </span>
-              <span>
-                <span className="swatch" style={{ background: 'var(--accent)', opacity: 0.45 }} />
-                A few sets
-              </span>
-              <span>
-                <span className="swatch" style={{ background: 'var(--accent)' }} />
-                20+ sets / week
-              </span>
+            <div style={{ marginTop: 12 }}>
+              <HeatLegend none="None" low="1 set" high="15+ sets a week" />
             </div>
             <div className="divider" />
             <div className="spread" style={{ marginBottom: 12 }}>
@@ -383,14 +371,11 @@ function MuscleSection() {
             </div>
             <div className="stack-sm" style={{ gap: 8 }}>
               {rows.map(({ m, n }) => (
-                <div className={`hbar-row ${muscleClass(m)}`} key={m}>
-                  <span className="row" style={{ gap: 8 }}>
-                    <span className="dot" aria-hidden />
-                    {MUSCLE_LABELS[m]}
-                  </span>
+                <div className="hbar-row" key={m}>
+                  <span>{MUSCLE_LABELS[m]}</span>
                   <div className="hbar-track">
                     <div className="band" style={{ left: `${(BAND[0] / max) * 100}%`, width: `${((BAND[1] - BAND[0]) / max) * 100}%` }} />
-                    {n > 0 && <div className="fill" style={{ width: `${(n / max) * 100}%` }} />}
+                    {n > 0 && <div className="fill" style={{ width: `${(n / max) * 100}%`, background: heatColor(heatStep(n / 20)) }} />}
                   </div>
                   <span className="rounded-num" style={{ textAlign: 'right', fontWeight: 600 }}>
                     {trimNumber(n)}
@@ -413,19 +398,8 @@ function MuscleSection() {
 function RecoveryList({ fatigue }: { fatigue: Partial<Record<Muscle, number>> }) {
   return (
     <>
-      <div className="legend" style={{ marginTop: 12 }}>
-        <span>
-          <span className="swatch" style={{ background: 'var(--fill-strong)' }} />
-          Fresh
-        </span>
-        <span>
-          <span className="swatch" style={{ background: 'var(--heat)', opacity: 0.5 }} />
-          Recovering
-        </span>
-        <span>
-          <span className="swatch" style={{ background: 'var(--heat)' }} />
-          Just trained
-        </span>
+      <div style={{ marginTop: 12 }}>
+        <HeatLegend none="Recovered" low="Recovering" high="Just trained" />
       </div>
       <div className="divider" />
       <div className="stack-sm" style={{ gap: 10 }}>

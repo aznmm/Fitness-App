@@ -33,10 +33,12 @@
   --gold-tint: rgba(255, 176, 32, 0.16);
   --red: #ff453a;
   --red-tint: rgba(255, 69, 58, 0.16);
-  --heat: #ff7a45;
-  /* Muscles worked: strong primary, soft secondary (one warm hue) */
-  --map-primary: #ff5a36;
-  --map-secondary: #b8644f;
+  /* Heat scale for body maps: 1 = a little, 4 = the most */
+  --heat-1: #f2b940;
+  --heat-2: #f38d35;
+  --heat-3: #f0612f;
+  --heat-4: #dc2c2c;
+  --heat: var(--heat-3);
 
   --glass: rgba(28, 28, 30, 0.8);
   --glass-strong: rgba(40, 40, 42, 0.94);
@@ -90,9 +92,11 @@
     --gold-tint: rgba(255, 149, 0, 0.13);
     --red: #ff3b30;
     --red-tint: rgba(255, 59, 48, 0.1);
-    --heat: #f05a28;
-    --map-primary: #d9381e;
-    --map-secondary: #f2967a;
+    --heat-1: #e9a93c;
+    --heat-2: #e8702e;
+    --heat-3: #cc3a28;
+    --heat-4: #9c1a22;
+    --heat: var(--heat-3);
     --glass: rgba(255, 255, 255, 0.8);
     --glass-strong: rgba(255, 255, 255, 0.94);
     --glass-edge: rgba(0, 0, 0, 0.06);
@@ -132,9 +136,11 @@
   --gold-tint: rgba(255, 149, 0, 0.13);
   --red: #ff3b30;
   --red-tint: rgba(255, 59, 48, 0.1);
-  --heat: #f05a28;
-  --map-primary: #d9381e;
-  --map-secondary: #f2967a;
+  --heat-1: #e9a93c;
+  --heat-2: #e8702e;
+  --heat-3: #cc3a28;
+  --heat-4: #9c1a22;
+  --heat: var(--heat-3);
   --glass: rgba(255, 255, 255, 0.8);
   --glass-strong: rgba(255, 255, 255, 0.94);
   --glass-edge: rgba(0, 0, 0, 0.06);
@@ -2200,6 +2206,11 @@ a.list-item:active {
   gap: 6px 14px;
   font-size: 12px;
   color: var(--text-2);
+}
+
+.heat-steps {
+  display: inline-flex;
+  gap: 2px;
 }
 
 .legend .swatch {
