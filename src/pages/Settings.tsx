@@ -1,10 +1,11 @@
-import { Bell, CalendarCheck, Download, FileSpreadsheet, Moon, Ruler, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { Bell, CalendarCheck, Disc3, Download, FileSpreadsheet, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
 import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
 import { toDateInput } from '../lib/dates';
-import { formatDuration } from '../lib/units';
+import { BAR_OPTIONS, defaultBarKg } from '../lib/progression';
+import { formatDuration, fromKg, toKg } from '../lib/units';
 import { useExercises, useStore } from '../store/useStore';
 import type { Settings as SettingsType } from '../types';
 
@@ -127,6 +128,33 @@ export function Settings() {
         </Row>
       </div>
       <div className="list-footer">Standards set what counts as intermediate for your strength score.</div>
+
+      <div className="list-header" style={{ marginTop: 28 }}>
+        Training
+      </div>
+      <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--accent-2)"><Target size={17} /></IconTile>} label="Smart targets">
+          <Switch label="Smart targets" checked={settings.smartSuggestions} onChange={set('smartSuggestions')} />
+        </Row>
+        <Row icon={<IconTile color="#8e8e93"><Disc3 size={17} /></IconTile>} label="Barbell weight">
+          <select
+            className="select"
+            style={compactSelect}
+            value={Math.round(fromKg(settings.barKg ?? defaultBarKg(settings.unit), settings.unit))}
+            onChange={(e) => update({ barKg: toKg(Number(e.target.value), settings.unit) })}
+            aria-label="Barbell weight"
+          >
+            {[...new Set([...BAR_OPTIONS[settings.unit], Math.round(fromKg(settings.barKg ?? defaultBarKg(settings.unit), settings.unit))])]
+              .sort((a, b) => b - a)
+              .map((b) => (
+                <option key={b} value={b}>
+                  {b} {settings.unit}
+                </option>
+              ))}
+          </select>
+        </Row>
+      </div>
+      <div className="list-footer">Smart targets suggest today's weight and reps from your last session. The bar weight is used for warm-ups and the plate calculator.</div>
 
       <div className="list-header" style={{ marginTop: 28 }}>
         Rest timer

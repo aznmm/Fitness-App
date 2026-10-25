@@ -1,12 +1,15 @@
-import { ArrowDown, ArrowUp, Check, MessageSquare, MoreHorizontal, Plus, Repeat, Timer, Trash2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Disc3, Flame, MessageSquare, MoreHorizontal, Plus, Repeat, Target, Timer, Trash2, Trophy } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MUSCLE_LABELS } from '../data/exercises';
 import { exerciseRecords, lastPerformance, setPRs, type ExerciseRecords } from '../lib/calc';
 import { primeAudio } from '../lib/feedback';
+import { defaultBarKg, suggestNext, warmupSets, type Suggestion } from '../lib/progression';
 import {
   addExercises,
   addSet,
+  addWarmups,
+  applyTarget,
   moveExercise,
   patchExercise,
   patchSet,
@@ -30,6 +33,7 @@ import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } fr
 import { toast } from './Dialogs';
 import { ExerciseInitial, ExercisePicker } from './ExercisePicker';
 import { NumberInput } from './NumberInput';
+import { PlateCalculator } from './PlateCalculator';
 import { Sheet } from './Sheet';
 
 interface EditorProps {
@@ -102,6 +106,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   const startRest = useStore((s) => s.startRest);
   const bodyweight = useBodyweight();
   const [menu, setMenu] = useState(false);
+  const [plates, setPlates] = useState(false);
   const [showNotes, setShowNotes] = useState(!!we.notes);
 
   const type = exercise?.type ?? 'weight_reps';
@@ -114,6 +119,14 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
     [history, exercise, bodyweight, before],
   );
   const restSec = we.restSec ?? settings.defaultRestSec;
+  const suggestion = useMemo(
+    () => (exercise && settings.smartSuggestions ? suggestNext(exercise, history, before, settings.unit, we.target) : null),
+    [exercise, history, before, settings.unit, settings.smartSuggestions, we.target],
+  );
+  const loadable = type === 'weight_reps' && exercise?.equipment !== 'bodyweight';
+  const firstWorkingKg =
+    we.sets.find((s) => s.kind !== 'warmup' && s.weight)?.weight ?? suggestion?.weight ?? Math.max(0, ...previous.working.map((s) => s.weight ?? 0));
+  const barKg = settings.barKg ?? defaultBarKg(settings.unit);
 
   const onSetDone = useCallback(() => {
     if (!live) return;
@@ -126,6 +139,8 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   // Warm-ups line up with last time's warm-ups, working sets with working sets.
   const prevFor = (list: WorkoutSet[], i: number) => list[i] ?? list[list.length - 1];
   const hasHistory = previous.warmup.length + previous.working.length > 0;
+  // Working sets aim for the suggestion; without one, a routine target only applies on a first-ever session.
+  const goal = suggestion ?? (hasHistory ? undefined : we.target);
 
   return (
     <section className="ex-card" aria-label={exercise?.name}>
@@ -155,6 +170,8 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
         </div>
       )}
 
+      {suggestion && <TargetStrip suggestion={suggestion} type={type} unit={settings.unit} onApply={() => onChange(applyTarget(we.id, suggestion))} />}
+
       <SetHeader type={type} unit={settings.unit} />
       {we.sets.map((set) => {
         const warmup = set.kind === 'warmup';
@@ -169,7 +186,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             type={type}
             unit={settings.unit}
             prev={prev}
-            target={hasHistory ? undefined : we.target}
+            goal={warmup ? undefined : goal}
             records={records}
             bodyweight={bodyweight}
             onChange={onChange}
@@ -211,6 +228,26 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
                   ))}
               </select>
             </label>
+            {loadable && firstWorkingKg > 0 && (
+              <button
+                onClick={() => {
+                  onChange(addWarmups(we.id, warmupSets(exercise!, firstWorkingKg, settings.unit, barKg)));
+                  setMenu(false);
+                }}
+              >
+                <Flame size={18} /> Add warm-up sets
+              </button>
+            )}
+            {exercise?.equipment === 'barbell' && (
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  setPlates(true);
+                }}
+              >
+                <Disc3 size={18} /> Plate calculator
+              </button>
+            )}
             <button
               onClick={() => {
                 setMenu(false);
@@ -251,9 +288,31 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
           </div>
         </Sheet>
       )}
+      {plates && <PlateCalculator initialKg={firstWorkingKg || undefined} onClose={() => setPlates(false)} />}
     </section>
   );
 });
+
+function TargetStrip({ suggestion, type, unit, onApply }: { suggestion: Suggestion; type: Exercise['type']; unit: Unit; onApply: () => void }) {
+  return (
+    <div className={`target-strip ${suggestion.reason}`}>
+      <Target size={18} className="target-icon" aria-hidden />
+      <div className="grow">
+        <div className="target-value rounded-num">
+          {type === 'duration'
+            ? formatDuration(suggestion.duration)
+            : suggestion.weight === undefined && suggestion.reps
+              ? `${suggestion.reps} reps`
+              : describeSet(suggestion, type, unit)}
+        </div>
+        <div className="target-note">{suggestion.note}</div>
+      </div>
+      <button className="btn btn-sm btn-tinted" onClick={onApply}>
+        Use
+      </button>
+    </div>
+  );
+}
 
 function columnsFor(type: Exercise['type']): number {
   return type === 'duration' ? 1 : 2;
@@ -303,14 +362,15 @@ interface SetRowProps {
   type: Exercise['type'];
   unit: Unit;
   prev?: WorkoutSet;
-  target?: WorkoutExercise['target'];
+  /** Today's aim for this set: the smart suggestion or a routine target. */
+  goal?: Pick<WorkoutSet, 'weight' | 'reps' | 'duration'>;
   records?: ExerciseRecords;
   bodyweight?: number;
   onChange: (fn: WorkoutUpdater) => void;
   onDone: () => void;
 }
 
-const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, target, records, bodyweight, onChange, onDone }: SetRowProps) {
+const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
   const patch = (p: Partial<WorkoutSet>) => onChange(patchSet(weId, set.id, p));
   const fmtWeight = useCallback((kg: number) => trimNumber(fromKg(kg, unit), 2), [unit]);
   const parseWeight = useCallback((s: string) => {
@@ -327,13 +387,10 @@ const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, targe
     return Number.isInteger(n) ? n : undefined;
   }, []);
 
-  // Placeholders: last time's numbers, else the routine's targets.
-  const ph = {
-    weight: prev?.weight ?? target?.weight,
-    reps: prev?.reps ?? target?.reps,
-    duration: prev?.duration,
-    distance: prev?.distance,
-  };
+  // Placeholders: today's goal when there is one, else last time's numbers.
+  const ph = goal
+    ? { weight: goal.weight, reps: goal.reps, duration: goal.duration ?? prev?.duration, distance: prev?.distance }
+    : { weight: prev?.weight, reps: prev?.reps, duration: prev?.duration, distance: prev?.distance };
 
   const toggleDone = () => {
     if (set.done) {

@@ -126,6 +126,10 @@ export interface Settings {
   restSound: boolean;
   theme: Theme;
   weeklyGoal: number;
+  /** Show a suggested target (weight × reps) for each exercise. */
+  smartSuggestions: boolean;
+  /** Empty barbell weight in kg; defaults to 45 lb / 20 kg for the unit. */
+  barKg?: number;
 }
 
 export interface RestTimer {

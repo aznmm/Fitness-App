@@ -1831,6 +1831,49 @@ a.list-item:active {
   margin-top: 8px;
 }
 
+.target-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -2px 0 12px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 14px;
+  background: var(--accent-tint);
+}
+
+.target-strip .target-icon {
+  color: var(--accent);
+  flex: none;
+}
+
+.target-strip.increase {
+  background: var(--green-tint);
+}
+
+.target-strip.increase .target-icon {
+  color: var(--green-text);
+}
+
+.target-strip.deload {
+  background: var(--gold-tint);
+}
+
+.target-strip.deload .target-icon {
+  color: var(--gold);
+}
+
+.target-value {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.target-note {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.3;
+}
+
 /* ---------- Charts ---------- */
 .chart {
   position: relative;

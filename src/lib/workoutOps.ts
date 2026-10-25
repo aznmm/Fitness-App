@@ -93,6 +93,24 @@ export const addSet =
   (w) =>
     mapExercise(w, weId, (we) => ({ ...we, sets: [...we.sets, blankSet(we.sets[we.sets.length - 1])] }));
 
+/** Put warm-up sets in front of the working sets (replacing any existing warm-ups). */
+export const addWarmups =
+  (weId: string, sets: Pick<WorkoutSet, 'weight' | 'reps'>[]): WorkoutUpdater =>
+  (w) =>
+    mapExercise(w, weId, (we) => ({
+      ...we,
+      sets: [...sets.map((s) => ({ ...blankSet(), kind: 'warmup' as const, ...s })), ...we.sets.filter((s) => s.kind !== 'warmup')],
+    }));
+
+/** Fill every unfinished working set with the suggested target. */
+export const applyTarget =
+  (weId: string, target: Pick<WorkoutSet, 'weight' | 'reps' | 'duration'>): WorkoutUpdater =>
+  (w) =>
+    mapExercise(w, weId, (we) => ({
+      ...we,
+      sets: we.sets.map((s) => (s.done || s.kind === 'warmup' ? s : { ...s, ...target })),
+    }));
+
 export const removeSet =
   (weId: string, setId: string): WorkoutUpdater =>
   (w) =>

@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restSound: true,
   theme: 'system',
   weeklyGoal: 3,
+  smartSuggestions: true,
 };
 
 export interface AppData {
