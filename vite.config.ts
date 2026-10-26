@@ -10,10 +10,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      // globPatterns below already picks up every icon in public/.
+      includeManifestIcons: false,
       manifest: {
         name: 'Forge — Workout Tracker',
         short_name: 'Forge',
+        // Pins the app's identity to today's start URL so installs survive a future start_url change.
+        id: '/Fitness-App/',
         description: 'Log workouts, track strength and see your progress in one place.',
         theme_color: '#000000',
         background_color: '#000000',
@@ -28,8 +31,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Inter is only a fallback for devices without SF Pro, so fetch it on demand instead of precaching it.
-        globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // Inter is only a fallback for devices without SF Pro (e.g. Android). Precache the Latin
+        // subset so the first offline launch still uses it; other subsets are fetched on demand.
+        globPatterns: ['**/*.{js,css,html,svg,png}', 'assets/inter-latin-wght-normal-*.woff2'],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === 'font',
