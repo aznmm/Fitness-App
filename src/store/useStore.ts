@@ -5,6 +5,7 @@ import { BUILT_IN_EXERCISES } from '../data/exercises';
 import { uid } from '../lib/id';
 import { datePlanId, weekdayPlanId } from '../lib/plans';
 import { stepsId } from '../lib/steps';
+import { mergeDocs } from '../sync/merge';
 import { createWorkout, pruneIncomplete, routineFromWorkout, type WorkoutUpdater } from '../lib/workoutOps';
 import type { BodyWeightEntry, Exercise, Plan, RestTimer, Routine, Settings, StepEntry, Workout } from '../types';
 import { appStorage } from './storage';
@@ -79,6 +80,8 @@ export interface AppActions {
 
   updateSettings(patch: Partial<Settings>): void;
   replaceAll(data: Partial<AppData>): void;
+  /** Add a backup's records to what's here; the newer copy of each record wins. */
+  mergeIn(data: Partial<AppData>): void;
   /** Delete everything (also on other devices once synced). */
   resetAll(): void;
 }
@@ -281,6 +284,46 @@ export const useStore = create<AppState>()(
             settingsUpdatedAt: Date.now(),
             deleted,
           };
+        });
+      },
+
+      mergeIn(data) {
+        set((s) => {
+          // Records in the backup win over earlier deletes of the same ids on this device.
+          const incoming = new Set(
+            [...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? []), ...(data.plans ?? []), ...(data.steps ?? [])].map(
+              (x) => x.id,
+            ),
+          );
+          const localDeleted = Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !incoming.has(id)));
+          const merged = mergeDocs(
+            {
+              version: 1,
+              workouts: s.workouts,
+              routines: s.routines,
+              customExercises: s.customExercises,
+              bodyweights: s.bodyweights,
+              plans: s.plans,
+              steps: s.steps,
+              settings: s.settings,
+              settingsUpdatedAt: s.settingsUpdatedAt,
+              deleted: localDeleted,
+            },
+            {
+              version: 1,
+              workouts: data.workouts ?? [],
+              routines: data.routines ?? [],
+              customExercises: data.customExercises ?? [],
+              bodyweights: data.bodyweights ?? [],
+              plans: data.plans ?? [],
+              steps: data.steps ?? [],
+              settings: { ...DEFAULT_SETTINGS, ...data.settings },
+              settingsUpdatedAt: data.settingsUpdatedAt ?? 0,
+              deleted: data.deleted ?? {},
+            },
+          );
+          const { version: _version, ...rest } = merged;
+          return rest;
         });
       },
 

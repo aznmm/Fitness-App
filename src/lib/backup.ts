@@ -33,6 +33,7 @@ export function parseBackup(text: string): Partial<AppData> {
   for (const key of arrays) {
     if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error(`Backup field "${key}" is malformed.`);
   }
+  const deleted = d.deleted && typeof d.deleted === 'object' && !Array.isArray(d.deleted) ? d.deleted : {};
   return {
     workouts: d.workouts ?? [],
     routines: d.routines ?? [],
@@ -42,7 +43,33 @@ export function parseBackup(text: string): Partial<AppData> {
     steps: d.steps ?? [],
     active: d.active ?? null,
     settings: d.settings,
+    settingsUpdatedAt: typeof d.settingsUpdatedAt === 'number' ? d.settingsUpdatedAt : 0,
+    deleted,
   };
+}
+
+/** True on phones and tablets, where the share sheet is the way to save a file. */
+function prefersShareSheet(): boolean {
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+}
+
+/**
+ * Save a file. On phones this opens the share sheet ("Save to Files", AirDrop…), because a plain
+ * download does nothing in an iPhone home-screen app. Elsewhere it downloads as usual.
+ */
+export async function saveFile(filename: string, content: string, type: string): Promise<void> {
+  if (prefersShareSheet() && typeof navigator.canShare === 'function') {
+    const file = new File([content], filename, { type });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
+      }
+    }
+  }
+  downloadFile(filename, content, type);
 }
 
 function csvCell(v: string | number | undefined): string {

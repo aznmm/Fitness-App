@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeBackup, parseBackup } from '../lib/backup';
 import { parseCount, parseStepsText, recentSteps, stepsOn } from '../lib/steps';
 import { useStore } from '../store/useStore';
@@ -41,6 +41,7 @@ describe('parseStepsText', () => {
 
 describe('steps in the store', () => {
   beforeEach(() => useStore.getState().resetAll());
+  afterEach(() => vi.useRealTimers());
 
   it('saves, replaces and deletes days', () => {
     const s = useStore.getState();
@@ -70,5 +71,24 @@ describe('steps in the store', () => {
     expect(after.steps[0].count).toBe(4000);
     expect(after.plans[0].routineId).toBe('r1');
     expect(after.settings.stepGoal).toBe(8000);
+  });
+
+  it('adds steps and plans from a backup to what is here', () => {
+    // Real edits are never in the same millisecond as an earlier delete; keep the test from racing that.
+    let t = Date.now();
+    const tick = () => vi.setSystemTime((t += 1000));
+    vi.useFakeTimers({ now: t });
+    const s = useStore.getState();
+    s.saveSteps([{ date: '2026-10-20', count: 9000 }], 'health');
+    s.setWeekdayPlan(1, 'r1');
+    const text = JSON.stringify(makeBackup(useStore.getState()));
+    tick();
+    s.resetAll();
+    tick();
+    s.saveSteps([{ date: '2026-10-21', count: 3000 }], 'manual');
+    s.mergeIn(parseBackup(text));
+    const after = useStore.getState();
+    expect(after.steps.map((e) => e.count)).toEqual([9000, 3000]);
+    expect(after.plans.map((p) => p.id)).toEqual(['weekday:1']);
   });
 });

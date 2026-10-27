@@ -1,10 +1,11 @@
-import { Bell, CalendarCheck, ChevronRight, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
-import { useRef, type ReactNode } from 'react';
+import { Bell, CalendarCheck, ChevronRight, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
+import { RestoreSheet } from '../components/RestoreSheet';
 import { SyncSettings } from '../components/SyncSettings';
-import { downloadFile, makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
+import { makeBackup, saveFile, workoutsToCsv } from '../lib/backup';
 import { toDateInput } from '../lib/dates';
 import { BAR_OPTIONS, defaultBarKg } from '../lib/progression';
 import { formatDuration, fromKg, toKg } from '../lib/units';
@@ -59,39 +60,28 @@ const compactSelect = { width: 'auto', minHeight: 34, padding: '4px 30px 4px 12p
 export function Settings() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
-  const replaceAll = useStore((s) => s.replaceAll);
   const resetAll = useStore((s) => s.resetAll);
   const workoutCount = useStore((s) => s.workouts.length);
   const routineCount = useStore((s) => s.routines.length);
   const { byId } = useExercises();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [restoring, setRestoring] = useState(false);
   const set = <K extends keyof SettingsType>(k: K) => (v: SettingsType[K]) => update({ [k]: v } as Partial<SettingsType>);
 
   const exportJson = () => {
-    const s = useStore.getState();
-    downloadFile(`forge-backup-${toDateInput(Date.now())}.json`, JSON.stringify(makeBackup(s)), 'application/json');
+    void saveFile(`forge-backup-${toDateInput(Date.now())}.json`, JSON.stringify(makeBackup(useStore.getState())), 'application/json');
+  };
+
+  const copyBackup = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(makeBackup(useStore.getState())));
+      toast('Backup copied. Paste it under Restore.');
+    } catch {
+      toast('Could not copy. Use Export backup instead.');
+    }
   };
 
   const exportCsv = () => {
-    downloadFile(`forge-workouts-${toDateInput(Date.now())}.csv`, workoutsToCsv(useStore.getState(), byId, settings.unit), 'text/csv');
-  };
-
-  const importJson = async (file: File) => {
-    try {
-      const data = parseBackup(await file.text());
-      const ok = await confirm({
-        title: 'Restore backup?',
-        message: `This replaces everything on this device with ${data.workouts?.length ?? 0} workouts and ${data.routines?.length ?? 0} routines from the file.`,
-        confirmLabel: 'Restore',
-        danger: true,
-      });
-      if (ok) {
-        replaceAll(data);
-        toast('Backup restored');
-      }
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not read that file');
-    }
+    void saveFile(`forge-workouts-${toDateInput(Date.now())}.csv`, workoutsToCsv(useStore.getState(), byId, settings.unit), 'text/csv');
   };
 
   const reset = async () => {
@@ -216,7 +206,13 @@ export function Settings() {
           </IconTile>
           <span className="grow title">Export backup</span>
         </button>
-        <button className="list-item" onClick={() => fileRef.current?.click()}>
+        <button className="list-item" onClick={copyBackup}>
+          <IconTile color="var(--m-back)">
+            <Copy size={17} />
+          </IconTile>
+          <span className="grow title">Copy backup</span>
+        </button>
+        <button className="list-item" onClick={() => setRestoring(true)}>
           <IconTile color="var(--accent)">
             <Upload size={17} />
           </IconTile>
@@ -237,7 +233,7 @@ export function Settings() {
         </button>
       </div>
       <div className="list-footer">
-        Everything is stored on this device ({workoutCount} workouts, {routineCount} routines). Export a backup regularly, or to move to another phone.
+        Everything is stored on this device ({workoutCount} workouts, {routineCount} routines). Export a backup regularly, or to move to another phone. On iPhone, Safari and the home-screen app keep separate data: copy a backup in one and restore it in the other.
       </div>
 
       <div className="list" style={{ marginTop: 28 }}>
@@ -245,17 +241,7 @@ export function Settings() {
           <Trash2 size={18} /> Delete all data
         </button>
       </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json,.json"
-        hidden
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void importJson(f);
-          e.target.value = '';
-        }}
-      />
+      {restoring && <RestoreSheet onClose={() => setRestoring(false)} />}
 
       <p className="tiny faint" style={{ textAlign: 'center', marginTop: 32 }}>
         Forge · workout tracker
