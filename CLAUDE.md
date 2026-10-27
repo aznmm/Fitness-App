@@ -22,6 +22,8 @@ Run typecheck, tests and build before pushing. For UI changes, also check the ap
 
 - `src/lib/`: pure logic (1RM/PRs, strength score, progression, muscles/recovery, stats, CSV import, units, dates). Unit-tested in `src/test/`.
 - `src/store/useStore.ts`: app state. Records carry `updatedAt` and deletes add tombstones to `deleted`; both are needed for sync merging.
+- Day plans (`plans`) and steps (`steps`) are synced records with fixed ids (`date:YYYY-MM-DD`, `weekday:N`, `steps:YYYY-MM-DD`); a record saved after its tombstone wins, so a re-planned day comes back. Logic in `src/lib/plans.ts` and `src/lib/steps.ts`.
+- Apple Health steps arrive through the "Forge Steps" iPhone Shortcut (clipboard); see `docs/steps-shortcut.md`. A web app can't read HealthKit directly.
 - `src/sync/`: optional Supabase sync (merge-based). Off until `VITE_SUPABASE_URL`/`VITE_SUPABASE_KEY` are set in `.env.production`; see `docs/sync-setup.md`.
 - `src/data/`: exercise library, programs, how-to guides (every built-in exercise needs a guide; a test enforces it).
 - `src/styles.css`: design tokens at the top, redefined for light mode in both the `prefers-color-scheme` block and the `[data-theme='light']` block. Add any new token to all three.

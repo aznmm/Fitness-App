@@ -1121,10 +1121,19 @@ a.list-item:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font: inherit;
   font-size: 12px;
   color: var(--text-2);
   font-weight: 600;
+  border: none;
+  background: none;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.week-strip .day:active .bubble {
+  transform: scale(0.9);
 }
 
 .week-strip .bubble {
@@ -1148,6 +1157,168 @@ a.list-item:active {
 .week-strip .bubble.today:not(.on) {
   box-shadow: inset 0 0 0 2px var(--accent);
   color: var(--accent);
+}
+
+.week-strip .bubble.selected:not(.on) {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: none;
+}
+
+.week-strip .bubble.today.selected:not(.on) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.week-strip .bubble.on.selected {
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--accent);
+}
+
+.week-strip .bubble {
+  transition: transform 0.2s var(--ease), background 0.2s, box-shadow 0.2s;
+}
+
+.plan-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  visibility: hidden;
+}
+
+.plan-dot.on {
+  visibility: visible;
+}
+
+/* Selected day on Home */
+.day-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.day-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px 8px 10px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--fill-2);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.2s var(--ease), background 0.2s;
+}
+
+a.day-row:active,
+button.day-row:active {
+  transform: scale(0.98);
+}
+
+.day-row .title {
+  display: block;
+  font-weight: 600;
+}
+
+.day-row .sub {
+  display: block;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.day-row.planned {
+  background: var(--accent-tint);
+}
+
+.day-row.missed {
+  background: var(--fill-2);
+}
+
+.day-row.rest {
+  min-height: 48px;
+  padding-left: 14px;
+}
+
+.day-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.day-row.planned .day-icon {
+  background: var(--card);
+}
+
+.day-icon.done {
+  color: #fff;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+}
+
+/* ---------- Steps ---------- */
+.step-count {
+  font-family: var(--font-rounded);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.step-count small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.mini-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.mini-bars > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 46px;
+}
+
+.mini-bars i {
+  width: 100%;
+  max-width: 14px;
+  border-radius: 4px;
+  background: var(--fill-strong);
+}
+
+.mini-bars i.hit {
+  background: var(--green);
+}
+
+.mini-bars span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.mini-bars span.today {
+  color: var(--text);
 }
 
 /* ---------- Calendar ---------- */
@@ -1216,7 +1387,8 @@ a.list-item:active {
   max-width: 480px;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   height: var(--tabbar-h);
   padding: 5px;
   border-radius: 999px;

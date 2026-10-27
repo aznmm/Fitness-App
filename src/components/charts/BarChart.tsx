@@ -14,6 +14,8 @@ interface Props {
   height?: number;
   formatValue?: (v: number) => string;
   label: string;
+  /** Draws a goal line; bars that reach it turn green. */
+  goal?: number;
 }
 
 const PAD = { top: 22, right: 4, bottom: 22, left: 40 };
@@ -27,12 +29,12 @@ function column(x: number, y: number, w: number, h: number): string {
 }
 
 /** Single-series column chart; each column is its own hover/focus target. */
-export function BarChart({ bars, height = 170, formatValue = compact, label }: Props) {
+export function BarChart({ bars, height = 170, formatValue = compact, label, goal }: Props) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   if (!bars.length) return null;
 
-  const max = Math.max(...bars.map((b) => b.value), 0);
+  const max = Math.max(...bars.map((b) => b.value), goal ?? 0, 0);
   const ticks = niceTicks(0, max || 1, 3);
   const top = ticks[ticks.length - 1];
   const innerW = Math.max(10, width - PAD.left - PAD.right);
@@ -55,6 +57,14 @@ export function BarChart({ bars, height = 170, formatValue = compact, label }: P
             </text>
           </g>
         ))}
+        {goal !== undefined && goal > 0 && (
+          <g aria-hidden>
+            <line x1={PAD.left} x2={width - PAD.right} y1={sy(goal)} y2={sy(goal)} stroke="var(--green)" strokeWidth={1.5} strokeDasharray="4 4" />
+            <text className="tick" x={width - PAD.right} y={sy(goal) - 6} textAnchor="end" style={{ fill: 'var(--green-text)', fontWeight: 650 }}>
+              Goal
+            </text>
+          </g>
+        )}
         {bars.map((b, i) => {
           const cx = PAD.left + slot * i + slot / 2;
           const h = Math.max(0, sy(0) - sy(b.value));
@@ -74,7 +84,7 @@ export function BarChart({ bars, height = 170, formatValue = compact, label }: P
               {h > 0 && (
                 <path
                   d={column(cx - barW / 2, sy(b.value), barW, h)}
-                  fill="var(--accent)"
+                  fill={goal && b.value >= goal ? 'var(--green)' : 'var(--accent)'}
                   opacity={active === null || active === i ? 1 : 0.45}
                 />
               )}

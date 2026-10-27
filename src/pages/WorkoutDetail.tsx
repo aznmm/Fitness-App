@@ -50,7 +50,7 @@ export function WorkoutDetail() {
   const number = useMemo(() => (workout ? workouts.filter((w) => w.endedAt && w.startedAt <= workout.startedAt).length : 0), [workout, workouts]);
   const onChange = useCallback((fn: WorkoutUpdater) => id && updateWorkout(id, fn), [id, updateWorkout]);
 
-  if (!workout) return <Navigate to="/history" replace />;
+  if (!workout) return <Navigate to="/progress?view=history" replace />;
 
   const prsByExercise = new Map<string, WorkoutPR[]>();
   for (const pr of prs) prsByExercise.set(pr.exerciseId, [...(prsByExercise.get(pr.exerciseId) ?? []), pr]);
@@ -60,7 +60,7 @@ export function WorkoutDetail() {
     const ok = await confirm({ title: 'Delete workout?', message: 'This removes it from your history and stats.', confirmLabel: 'Delete', danger: true });
     if (ok) {
       deleteWorkout(workout.id);
-      navigate('/history', { replace: true });
+      navigate('/progress?view=history', { replace: true });
     }
   };
 
@@ -74,7 +74,7 @@ export function WorkoutDetail() {
     if (countDoneSets(workout) === 0) {
       deleteWorkout(workout.id);
       toast('Empty workout removed');
-      navigate('/history', { replace: true });
+      navigate('/progress?view=history', { replace: true });
       return;
     }
     // Drop any sets added but never ticked.

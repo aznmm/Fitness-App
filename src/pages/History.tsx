@@ -1,7 +1,7 @@
-import { CalendarDays, ChevronLeft, ChevronRight, History as HistoryIcon, List, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, History as HistoryIcon, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EmptyState, PageHeader } from '../components/Layout';
+import { EmptyState } from '../components/Layout';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { workoutPRs } from '../lib/calc';
 import { addDays, addMonths, formatDate, sameDay, startOfDay, startOfMonth, startOfWeek } from '../lib/dates';
@@ -9,20 +9,11 @@ import { uid } from '../lib/id';
 import { finished } from '../lib/stats';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 
-export function History() {
-  const workouts = useStore((s) => s.workouts);
+/** Backfills a workout on a past day (default today) and opens it for editing. */
+export function useLogPastWorkout() {
   const addWorkout = useStore((s) => s.addWorkout);
-  const bodyweight = useBodyweight();
-  const { byId } = useExercises();
   const navigate = useNavigate();
-  const [view, setView] = useState<'list' | 'calendar'>('list');
-  const [month, setMonth] = useState(() => startOfMonth(Date.now()));
-  const [day, setDay] = useState<number | null>(null);
-
-  const done = useMemo(() => finished(workouts), [workouts]);
-  const prCounts = useMemo(() => new Map(done.map((w) => [w.id, workoutPRs(w, workouts, byId, bodyweight).length])), [done, workouts, byId, bodyweight]);
-
-  const logPast = () => {
+  return (day?: number | null) => {
     const d = new Date(day ?? Date.now());
     d.setHours(18, 0, 0, 0);
     const startedAt = Math.min(d.getTime(), Date.now() - 3600_000);
@@ -30,6 +21,20 @@ export function History() {
     addWorkout({ id, name: 'Workout', startedAt, endedAt: startedAt + 3600_000, exercises: [] });
     navigate(`/history/${id}?edit=1`);
   };
+}
+
+/** Every finished workout, as a list or a month calendar. Shown on the Progress tab. */
+export function HistoryView() {
+  const workouts = useStore((s) => s.workouts);
+  const bodyweight = useBodyweight();
+  const { byId } = useExercises();
+  const logPastWorkout = useLogPastWorkout();
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [month, setMonth] = useState(() => startOfMonth(Date.now()));
+  const [day, setDay] = useState<number | null>(null);
+
+  const done = useMemo(() => finished(workouts), [workouts]);
+  const prCounts = useMemo(() => new Map(done.map((w) => [w.id, workoutPRs(w, workouts, byId, bodyweight).length])), [done, workouts, byId, bodyweight]);
 
   const groups = useMemo(() => {
     const list = day !== null ? done.filter((w) => sameDay(w.startedAt, day)) : done;
@@ -43,30 +48,29 @@ export function History() {
   }, [done, day]);
 
   return (
-    <div className="page">
-      <PageHeader
-        title="History"
-        actions={
-          <>
-            <button
-              className="glass-btn"
-              aria-label={view === 'list' ? 'Calendar view' : 'List view'}
-              onClick={() => {
-                setView(view === 'list' ? 'calendar' : 'list');
-                setDay(null);
-              }}
-            >
-              {view === 'list' ? <CalendarDays size={20} /> : <List size={20} />}
-            </button>
-            <button className="glass-btn accent" onClick={logPast} aria-label="Log a past workout">
-              <Plus size={22} strokeWidth={2.4} />
-            </button>
-          </>
-        }
-      />
+    <div>
+      <div className="spread" style={{ marginBottom: 16 }}>
+        <div className="seg" role="group" aria-label="History view" style={{ minWidth: 168 }}>
+          <button
+            aria-pressed={view === 'list'}
+            onClick={() => {
+              setView('list');
+              setDay(null);
+            }}
+          >
+            List
+          </button>
+          <button aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>
+            Calendar
+          </button>
+        </div>
+        <button className="btn btn-sm btn-tinted" onClick={() => logPastWorkout(day)}>
+          <Plus size={16} strokeWidth={2.6} /> Log past
+        </button>
+      </div>
 
       {done.length > 0 && (
-        <div className="small muted" style={{ marginTop: -12, marginBottom: 16 }}>
+        <div className="small muted" style={{ marginBottom: 12, paddingLeft: 4 }}>
           <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
             {done.length}
           </span>{' '}
@@ -78,7 +82,7 @@ export function History() {
 
       {done.length === 0 ? (
         <EmptyState icon={<HistoryIcon size={30} />} title="No workouts yet">
-          <p className="small">Finished workouts show up here. Tap + to backfill an old session.</p>
+          <p className="small">Finished workouts show up here. Tap Log past to backfill an old session.</p>
         </EmptyState>
       ) : groups.length === 0 ? (
         <p className="muted small" style={{ textAlign: 'center', marginTop: 16 }}>

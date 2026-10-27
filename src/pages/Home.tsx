@@ -1,16 +1,20 @@
-import { Check, ChevronRight, CircleCheck, Clock, Dumbbell, Flame, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { ChevronRight, CircleCheck, Clock, Dumbbell, Play, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BodyMap } from '../components/BodyMap';
 import { confirm } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
+import { PlanSheet } from '../components/PlanSheet';
+import { StartWorkoutSheet } from '../components/StartWorkoutSheet';
+import { StepsCard } from '../components/Steps';
 import { StrengthScoreCard } from '../components/StrengthScoreCard';
+import { WeekPlanner } from '../components/WeekPlanner';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { muscleClass } from '../data/exercises';
-import { addDays, formatDate, greeting, sameDay, startOfWeek } from '../lib/dates';
+import { formatDate, greeting, sameDay } from '../lib/dates';
 import { groupFatigue, muscleFatigue } from '../lib/muscles';
-import { finished, weekStreak, weeklyStats } from '../lib/stats';
-import { formatVolume } from '../lib/units';
+import { planFor } from '../lib/plans';
+import { finished } from '../lib/stats';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import type { Routine } from '../types';
 
@@ -41,16 +45,18 @@ export function useStartWorkout() {
 export function Home() {
   const workouts = useStore((s) => s.workouts);
   const routines = useStore((s) => s.routines);
+  const plans = useStore((s) => s.plans);
   const active = useStore((s) => s.active);
-  const settings = useStore((s) => s.settings);
   const { byId } = useExercises();
   const start = useStartWorkout();
+  const [picker, setPicker] = useState(false);
+  const [planDay, setPlanDay] = useState<number | null>(null);
 
   const done = useMemo(() => finished(workouts), [workouts]);
-  const thisWeek = useMemo(() => weeklyStats(workouts, 1)[0], [workouts]);
-  const streak = useMemo(() => weekStreak(workouts), [workouts]);
-  const weekStart = startOfWeek(Date.now());
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const now = Date.now();
+  const todayPlan = planFor(plans, routines, now, now);
+  const todayDone = !!todayPlan && done.some((w) => sameDay(w.startedAt, now) && w.routineId === todayPlan.routine.id);
+  const upNext = todayPlan && !todayDone && todayPlan.routine.exercises.length ? todayPlan.routine : null;
   const quickRoutines = [...routines].sort((a, b) => (b.lastUsedAt ?? b.createdAt) - (a.lastUsedAt ?? a.createdAt)).slice(0, 6);
 
   return (
@@ -65,66 +71,34 @@ export function Home() {
         }
       />
 
-      <StrengthScoreCard />
+      <WeekPlanner onPlan={setPlanDay} />
 
-      <div className="card">
-        <div className="spread" style={{ marginBottom: 14 }}>
-          <div className="card-title">This week</div>
-          {streak > 0 && (
-            <span className="badge gold">
-              <Flame size={13} /> {streak}-week streak
-            </span>
-          )}
-        </div>
-        <div className="week-strip">
-          {days.map((d) => {
-            const trained = done.some((w) => sameDay(w.startedAt, d));
-            return (
-              <div className="day" key={d}>
-                {formatDate(d, { weekday: 'narrow' })}
-                <div className={`bubble${trained ? ' on' : ''}${sameDay(d, Date.now()) ? ' today' : ''}`}>
-                  {trained ? <Check size={17} strokeWidth={3} aria-label="Workout logged" /> : new Date(d).getDate()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="divider" />
-        <div className="metrics">
-          <div className="metric">
-            <div className="label">Workouts</div>
-            <div className="value">
-              {thisWeek.workouts}
-              <small>/{settings.weeklyGoal}</small>
-            </div>
-          </div>
-          <div className="metric">
-            <div className="label">Sets</div>
-            <div className="value">{thisWeek.sets}</div>
-          </div>
-          <div className="metric">
-            <div className="label">Volume</div>
-            <div className="value">
-              {formatVolume(thisWeek.volume, settings.unit, true).replace(` ${settings.unit}`, '')}
-              <small>{settings.unit}</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <RecoveryCard />
-
-      <section className="section">
+      <section className="section" style={{ marginTop: 20 }}>
         {active ? (
           <Link to="/workout" className="btn btn-hero btn-lg btn-block">
             <Play size={20} fill="currentColor" /> Resume {active.name}
           </Link>
+        ) : upNext ? (
+          <>
+            <button className="btn btn-hero btn-lg btn-block" onClick={() => start(upNext.id)}>
+              <Play size={20} fill="currentColor" /> <span className="truncate">Start {upNext.name}</span>
+            </button>
+            <button className="btn btn-ghost btn-block" style={{ marginTop: 6 }} onClick={() => setPicker(true)}>
+              Choose a different workout
+            </button>
+          </>
         ) : (
-          <button className="btn btn-hero btn-lg btn-block" onClick={() => start()}>
+          <button className="btn btn-hero btn-lg btn-block" onClick={() => setPicker(true)}>
             <Plus size={22} strokeWidth={2.5} /> Start workout
           </button>
         )}
       </section>
+
+      <div className="section" style={{ marginTop: 20 }}>
+        <StepsCard />
+        <StrengthScoreCard />
+        <RecoveryCard />
+      </div>
 
       <section className="section">
         <div className="section-head">
@@ -176,7 +150,7 @@ export function Home() {
       <section className="section">
         <div className="section-head">
           <h2>Recent</h2>
-          {done.length > 3 && <Link to="/history">See all</Link>}
+          {done.length > 3 && <Link to="/progress?view=history">See all</Link>}
         </div>
         {done.length ? (
           done.slice(0, 3).map((w) => <WorkoutCard key={w.id} workout={w} />)
@@ -188,6 +162,18 @@ export function Home() {
           </div>
         )}
       </section>
+
+      {picker && (
+        <StartWorkoutSheet
+          plan={todayDone ? null : todayPlan}
+          onClose={() => setPicker(false)}
+          onStart={(id) => {
+            setPicker(false);
+            void start(id);
+          }}
+        />
+      )}
+      {planDay !== null && <PlanSheet target={{ date: planDay }} onClose={() => setPlanDay(null)} />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { ChevronRight, CircleCheck, Clock, Flame, Info, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, HeatLegend, heatColor, heatStep } from '../components/BodyMap';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
@@ -8,28 +8,154 @@ import { ExerciseInitial } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
 import { ScoreRing } from '../components/ScoreRing';
+import { formatSteps, StepsSheet } from '../components/Steps';
 import { ScoreDelta } from '../components/StrengthScoreCard';
 import { MUSCLE_LABELS } from '../data/exercises';
-import { exerciseRecords } from '../lib/calc';
+import { exerciseRecords, workoutDurationMs, workoutVolume } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
 import { groupFatigue, MAP_MUSCLES, muscleFatigue, muscleSets, type RecoveryStatus } from '../lib/muscles';
-import { exerciseUsage, setsPerMuscle, VOLUME_MUSCLES, weeklyStats } from '../lib/stats';
+import { exerciseUsage, finished, setsPerMuscle, VOLUME_MUSCLES, weekStreak, weeklyStats } from '../lib/stats';
+import { recentSteps } from '../lib/steps';
 import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
-import { formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
+import { formatElapsed, formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
 import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Muscle } from '../types';
+import { HistoryView } from './History';
 
+/** Dashboard: an overview of training, steps and strength, plus the full workout history. */
 export function Progress() {
+  const [params, setParams] = useSearchParams();
+  const view = params.get('view') === 'history' ? 'history' : 'overview';
+  const show = (v: typeof view) => setParams(v === 'history' ? { view: v } : {}, { replace: true });
+
   return (
     <div className="page">
       <PageHeader title="Progress" />
-      <StrengthSection />
-      <BodyweightSection />
-      <WeeklySection />
-      <MuscleSection />
-      <RecordsSection />
+      <div className="seg" role="group" aria-label="Progress view" style={{ marginBottom: 20 }}>
+        <button aria-pressed={view === 'overview'} onClick={() => show('overview')}>
+          Overview
+        </button>
+        <button aria-pressed={view === 'history'} onClick={() => show('history')}>
+          History
+        </button>
+      </div>
+      {view === 'history' ? (
+        <HistoryView />
+      ) : (
+        <>
+          <SummarySection />
+          <StrengthSection />
+          <StepsSection />
+          <WeeklySection />
+          <MuscleSection />
+          <BodyweightSection />
+          <RecordsSection />
+        </>
+      )}
     </div>
+  );
+}
+
+/** Last 30 days at a glance. */
+function SummarySection() {
+  const workouts = useStore((s) => s.workouts);
+  const steps = useStore((s) => s.steps);
+  const unit = useStore((s) => s.settings.unit);
+  const stats = useMemo(() => {
+    const since = Date.now() - 30 * DAY_MS;
+    const recent = finished(workouts).filter((w) => w.startedAt >= since);
+    const week = recentSteps(steps, 7).filter((d) => d.logged);
+    return {
+      workouts: recent.length,
+      volume: recent.reduce((a, w) => a + workoutVolume(w), 0),
+      time: recent.reduce((a, w) => a + workoutDurationMs(w), 0),
+      streak: weekStreak(workouts),
+      steps: week.length ? week.reduce((a, d) => a + d.count, 0) / week.length : undefined,
+    };
+  }, [workouts, steps]);
+
+  return (
+    <section style={{ marginBottom: 12 }}>
+      <div className="stat-grid two">
+        <div className="stat">
+          <div className="label">Workouts · 30 days</div>
+          <div className="value">{stats.workouts}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Time · 30 days</div>
+          <div className="value">{stats.time ? formatElapsed(stats.time) : '–'}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Week streak</div>
+          <div className="value">
+            {stats.streak}
+            <small>{stats.streak === 1 ? 'week' : 'weeks'}</small>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="label">Steps · 7-day avg</div>
+          <div className="value">{stats.steps !== undefined ? formatSteps(stats.steps) : '–'}</div>
+        </div>
+      </div>
+      {stats.volume > 0 && (
+        <p className="tiny muted" style={{ margin: '8px 4px 0' }}>
+          {formatVolume(stats.volume, unit)} lifted in the last month.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function StepsSection() {
+  const entries = useStore((s) => s.steps);
+  const goal = useStore((s) => s.settings.stepGoal);
+  const [range, setRange] = useState<7 | 30>(7);
+  const [open, setOpen] = useState(false);
+  const days = useMemo(() => recentSteps(entries, range), [entries, range]);
+  if (!entries.length) return null;
+  const logged = days.filter((d) => d.logged);
+  const avg = logged.length ? logged.reduce((a, d) => a + d.count, 0) / logged.length : 0;
+  const hit = logged.filter((d) => d.count >= goal).length;
+
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>Steps</h2>
+        <button className="link-btn" onClick={() => setOpen(true)}>
+          Update
+        </button>
+      </div>
+      <div className="card">
+        <div className="spread" style={{ marginBottom: 10 }}>
+          <div>
+            <div className="step-count">{formatSteps(avg)}</div>
+            <div className="small muted">
+              a day on average · goal hit {hit} of {logged.length} day{logged.length === 1 ? '' : 's'}
+            </div>
+          </div>
+          <div className="seg" role="group" aria-label="Steps range">
+            <button aria-pressed={range === 7} onClick={() => setRange(7)}>
+              7D
+            </button>
+            <button aria-pressed={range === 30} onClick={() => setRange(30)}>
+              30D
+            </button>
+          </div>
+        </div>
+        <BarChart
+          label={`Daily steps, last ${range} days`}
+          goal={goal}
+          bars={days.map((d) => ({
+            key: d.date,
+            tick: range === 7 ? formatDate(d.date, { weekday: 'narrow' }) : formatDate(d.date, { month: 'numeric', day: 'numeric' }),
+            value: d.count,
+            title: relativeDay(d.date),
+          }))}
+        />
+      </div>
+      {open && <StepsSheet onClose={() => setOpen(false)} />}
+    </section>
   );
 }
 

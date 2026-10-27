@@ -121,6 +121,33 @@ export interface BodyWeightEntry {
   updatedAt?: number;
 }
 
+/**
+ * A routine planned for a day. A `date` plan covers one day; a `weekday` plan
+ * repeats every week from today on. A date plan overrides the weekly one, and
+ * `routineId: null` means nothing is planned (e.g. skipping one week).
+ */
+export interface Plan {
+  /** `date:YYYY-MM-DD` or `weekday:N`, so each slot has one record. */
+  id: string;
+  /** Local date, YYYY-MM-DD. */
+  date?: string;
+  /** 0 = Monday … 6 = Sunday. */
+  weekday?: number;
+  routineId: string | null;
+  updatedAt?: number;
+}
+
+/** Step count for one day. */
+export interface StepEntry {
+  /** `steps:YYYY-MM-DD`. */
+  id: string;
+  /** Local date, YYYY-MM-DD. */
+  date: string;
+  count: number;
+  source: 'health' | 'manual';
+  updatedAt?: number;
+}
+
 export type Theme = 'system' | 'light' | 'dark';
 
 export interface Settings {
@@ -135,6 +162,8 @@ export interface Settings {
   smartSuggestions: boolean;
   /** Empty barbell weight in kg; defaults to 45 lb / 20 kg for the unit. */
   barKg?: number;
+  /** Daily step goal. */
+  stepGoal: number;
 }
 
 export interface RestTimer {

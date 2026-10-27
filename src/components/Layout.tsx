@@ -1,27 +1,31 @@
-import { BarChart3, ChevronLeft, ClipboardList, Dumbbell, History, Home, Play } from 'lucide-react';
+import { BarChart3, ChevronLeft, ClipboardList, Dumbbell, Home, Play } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNow } from '../lib/useNow';
 import { formatDuration } from '../lib/units';
 import { useStore } from '../store/useStore';
 
+/** `match` lists the path prefixes that light the tab up. */
 const TABS = [
-  { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/routines', label: 'Routines', icon: ClipboardList },
-  { to: '/history', label: 'History', icon: History },
-  { to: '/exercises', label: 'Exercises', icon: Dumbbell },
-  { to: '/progress', label: 'Progress', icon: BarChart3 },
+  { to: '/', label: 'Home', icon: Home, match: [] as string[] },
+  { to: '/routines', label: 'Routines', icon: ClipboardList, match: ['/routines'] },
+  { to: '/progress', label: 'Progress', icon: BarChart3, match: ['/progress', '/history'] },
+  { to: '/exercises', label: 'Exercises', icon: Dumbbell, match: ['/exercises'] },
 ];
 
 export function TabBar() {
+  const { pathname } = useLocation();
   return (
     <nav className="tabbar" aria-label="Main">
-      {TABS.map(({ to, label, icon: Icon, end }) => (
-        <NavLink key={to} to={to} end={end} className={({ isActive }) => `tab${isActive ? ' active' : ''}`}>
-          <Icon size={22} strokeWidth={2} />
-          {label}
-        </NavLink>
-      ))}
+      {TABS.map(({ to, label, icon: Icon, match }) => {
+        const active = to === '/' ? pathname === '/' : match.some((m) => pathname.startsWith(m));
+        return (
+          <Link key={to} to={to} className={`tab${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined}>
+            <Icon size={22} strokeWidth={2} />
+            {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
