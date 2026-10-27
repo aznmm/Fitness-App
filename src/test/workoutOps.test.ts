@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addExercises, addSet, createWorkout, pruneIncomplete, routineFromWorkout } from '../lib/workoutOps';
+import { addExercises, addSet, createWorkout, insertSet, pruneIncomplete, removeSet, routineFromWorkout } from '../lib/workoutOps';
 import type { Routine } from '../types';
 import { byId, NOW, set, workout } from './helpers';
 
@@ -31,6 +31,17 @@ describe('workout operations', () => {
     const w = workout(NOW, { squat: [set(100, 5)] });
     const next = addSet(w.exercises[0].id)(w);
     expect(next.exercises[0].sets[1]).toMatchObject({ weight: 100, reps: 5, done: false });
+  });
+
+  it('deletes a set and puts it back in place on undo', () => {
+    const w = workout(NOW, { squat: [set(100, 5), set(105, 5), set(110, 5)] });
+    const we = w.exercises[0];
+    const middle = we.sets[1];
+    const without = removeSet(we.id, middle.id)(w);
+    expect(without.exercises[0].sets.map((s) => s.weight)).toEqual([100, 110]);
+    const back = insertSet(we.id, middle, 1)(without);
+    expect(back.exercises[0].sets.map((s) => s.weight)).toEqual([100, 105, 110]);
+    expect(insertSet(we.id, middle, 1)(back)).toEqual(back); // undoing twice is harmless
   });
 
   it('prunes unfinished sets and empty exercises', () => {

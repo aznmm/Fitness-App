@@ -11,9 +11,15 @@ interface ConfirmOptions {
   danger?: boolean;
 }
 
+/** A button in the toast, e.g. Undo. */
+interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 interface DialogState {
   confirm: (ConfirmOptions & { resolve: (ok: boolean) => void }) | null;
-  toast: { id: number; message: string } | null;
+  toast: { id: number; message: string; action?: ToastAction } | null;
 }
 
 const useDialogs = create<DialogState>(() => ({ confirm: null, toast: null }));
@@ -26,8 +32,8 @@ export function confirm(opts: ConfirmOptions): Promise<boolean> {
   });
 }
 
-export function toast(message: string): void {
-  useDialogs.setState({ toast: { id: Date.now(), message } });
+export function toast(message: string, action?: ToastAction): void {
+  useDialogs.setState({ toast: { id: Date.now(), message, action } });
 }
 
 export function DialogHost() {
@@ -35,7 +41,8 @@ export function DialogHost() {
 
   useEffect(() => {
     if (!t) return;
-    const timer = setTimeout(() => useDialogs.setState({ toast: null }), 2600);
+    // Leave time to reach an Undo button.
+    const timer = setTimeout(() => useDialogs.setState({ toast: null }), t.action ? 4500 : 2600);
     return () => clearTimeout(timer);
   }, [t]);
 
@@ -73,6 +80,17 @@ export function DialogHost() {
         <div className="toast" role="status" key={t.id}>
           <CircleCheck size={18} />
           {t.message}
+          {t.action && (
+            <button
+              className="toast-action"
+              onClick={() => {
+                t.action!.run();
+                useDialogs.setState({ toast: null });
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
         </div>
       )}
     </>,
