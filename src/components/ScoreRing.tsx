@@ -7,10 +7,12 @@ interface Props {
   stroke?: number;
   children?: ReactNode;
   label: string;
+  /** Gradient start and end colours. */
+  colors?: [string, string];
 }
 
 /** Activity-ring style gauge with a gradient arc that animates in. */
-export function ScoreRing({ progress, size = 128, stroke = 14, children, label }: Props) {
+export function ScoreRing({ progress, size = 128, stroke = 14, children, label, colors = ['var(--accent-2)', 'var(--accent)'] }: Props) {
   const gradientId = `ring-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const [shown, setShown] = useState(0);
   useEffect(() => {
@@ -26,11 +28,11 @@ export function ScoreRing({ progress, size = 128, stroke = 14, children, label }
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--accent-2)" />
-            <stop offset="100%" stopColor="var(--accent)" />
+            <stop offset="0%" stopColor={colors[0]} />
+            <stop offset="100%" stopColor={colors[1]} />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--accent)" strokeOpacity={0.18} strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={colors[1]} strokeOpacity={0.18} strokeWidth={stroke} />
         <circle
           className="arc"
           cx={size / 2}

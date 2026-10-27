@@ -1,4 +1,4 @@
-import type { BodyWeightEntry, Exercise, Routine, Settings, Workout } from '../types';
+import type { BodyWeightEntry, Exercise, Plan, Routine, Settings, StepEntry, Workout } from '../types';
 
 /** Everything that syncs between devices. The in-progress workout stays local. */
 export interface SyncDoc {
@@ -7,6 +7,8 @@ export interface SyncDoc {
   routines: Routine[];
   customExercises: Exercise[];
   bodyweights: BodyWeightEntry[];
+  plans: Plan[];
+  steps: StepEntry[];
   settings: Settings;
   settingsUpdatedAt: number;
   /** Tombstones: id → deletion time, so deletes propagate instead of reappearing. */
@@ -15,7 +17,11 @@ export interface SyncDoc {
 
 type Stamped = { id: string; updatedAt?: number };
 
-/** Union by id; the newer copy wins (ties keep `a`). Tombstoned ids are dropped. */
+/**
+ * Union by id; the newer copy wins (ties keep `a`). Records deleted after their
+ * last change are dropped; a record saved again after its delete (a re-planned
+ * day, re-entered steps) comes back.
+ */
 export function mergeById<T extends Stamped>(a: T[], b: T[], deleted: Record<string, number>): T[] {
   const out = new Map<string, T>();
   for (const item of b) out.set(item.id, item);
@@ -23,7 +29,7 @@ export function mergeById<T extends Stamped>(a: T[], b: T[], deleted: Record<str
     const other = out.get(item.id);
     if (!other || (item.updatedAt ?? 0) >= (other.updatedAt ?? 0)) out.set(item.id, item);
   }
-  return [...out.values()].filter((item) => !(item.id in deleted));
+  return [...out.values()].filter((item) => !(item.id in deleted) || (item.updatedAt ?? 0) > deleted[item.id]);
 }
 
 export function mergeTombstones(a: Record<string, number>, b: Record<string, number>): Record<string, number> {
@@ -43,6 +49,8 @@ export function mergeDocs(local: SyncDoc, remote: SyncDoc | null | undefined): S
     routines: mergeById(local.routines, remote.routines ?? [], deleted),
     customExercises: mergeById(local.customExercises, remote.customExercises ?? [], deleted),
     bodyweights: mergeById(local.bodyweights, remote.bodyweights ?? [], deleted).sort((x, y) => x.date - y.date),
+    plans: mergeById(local.plans, remote.plans ?? [], deleted),
+    steps: mergeById(local.steps, remote.steps ?? [], deleted).sort((x, y) => x.date.localeCompare(y.date)),
     settings: newerSettings ? { ...local.settings, ...remote.settings } : local.settings,
     settingsUpdatedAt: Math.max(local.settingsUpdatedAt ?? 0, remote.settingsUpdatedAt ?? 0),
     deleted,

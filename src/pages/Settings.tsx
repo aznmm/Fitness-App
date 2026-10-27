@@ -1,4 +1,4 @@
-import { Bell, CalendarCheck, ChevronRight, Copy, Disc3, FileInput, Download, FileSpreadsheet, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { Bell, CalendarCheck, ChevronRight, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
@@ -124,8 +124,19 @@ export function Settings() {
             ))}
           </select>
         </Row>
+        <Row icon={<IconTile color="var(--green)"><Footprints size={17} /></IconTile>} label="Daily step goal">
+          <select className="select" style={compactSelect} value={settings.stepGoal} onChange={(e) => update({ stepGoal: Number(e.target.value) })} aria-label="Daily step goal">
+            {[...new Set([...Array.from({ length: 24 }, (_, i) => (i + 2) * 1000), settings.stepGoal])]
+              .sort((a, b) => a - b)
+              .map((n) => (
+                <option key={n} value={n}>
+                  {n.toLocaleString()}
+                </option>
+              ))}
+          </select>
+        </Row>
       </div>
-      <div className="list-footer">Standards set what counts as intermediate for your strength score.</div>
+      <div className="list-footer">Standards set what counts as intermediate for your strength score. Steps come from Apple Health via a Shortcut; tap the Steps card on Home to set it up.</div>
 
       <div className="list-header" style={{ marginTop: 28 }}>
         Training

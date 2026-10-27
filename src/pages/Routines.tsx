@@ -1,12 +1,15 @@
 import { ChevronRight, ClipboardList, Play, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, type CSSProperties } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
+import { PlanSheet, weekdayName } from '../components/PlanSheet';
+import { useCreateRoutine, useRoutineTile } from '../components/StartWorkoutSheet';
 import { Sheet } from '../components/Sheet';
 import { muscleClass } from '../data/exercises';
 import { PROGRAMS, type Program } from '../data/programs';
 import { relativeDayInline } from '../lib/dates';
+import { weekdayOf, weeklyRoutineId } from '../lib/plans';
 import { uid } from '../lib/id';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import { useStartWorkout } from './Home';
@@ -17,15 +20,9 @@ export function Routines() {
   const routines = useStore((s) => s.routines);
   const saveRoutine = useStore((s) => s.saveRoutine);
   const { byId } = useExercises();
-  const navigate = useNavigate();
   const start = useStartWorkout();
+  const create = useCreateRoutine();
   const [program, setProgram] = useState<Program | null>(null);
-
-  const create = () => {
-    const id = uid();
-    saveRoutine({ id, name: 'New routine', exercises: [], createdAt: Date.now() });
-    navigate(`/routines/${id}?new=1`);
-  };
 
   const addProgram = (p: Program) => {
     const now = Date.now();
@@ -47,7 +44,7 @@ export function Routines() {
       <PageHeader
         title="Routines"
         actions={
-          <button className="glass-btn accent" onClick={create} aria-label="New routine">
+          <button className="glass-btn accent" onClick={() => create()} aria-label="New routine">
             <Plus size={22} strokeWidth={2.4} />
           </button>
         }
@@ -57,7 +54,7 @@ export function Routines() {
         <div className="card">
           <EmptyState icon={<ClipboardList size={30} />} title="No routines yet">
             <p className="small">Routines are reusable workout templates. Build your own or start from a program below.</p>
-            <button className="btn btn-tinted" style={{ marginTop: 14 }} onClick={create}>
+            <button className="btn btn-tinted" style={{ marginTop: 14 }} onClick={() => create()}>
               <Plus size={18} strokeWidth={2.5} /> New routine
             </button>
           </EmptyState>
@@ -98,6 +95,8 @@ export function Routines() {
           ))}
         </div>
       )}
+
+      {routines.length > 0 && <WeeklyPlan />}
 
       <section className="section">
         <div className="section-head">
@@ -156,5 +155,48 @@ export function Routines() {
         </Sheet>
       )}
     </div>
+  );
+}
+
+/** The repeating weekly schedule: one routine (or rest) per weekday. */
+function WeeklyPlan() {
+  const plans = useStore((s) => s.plans);
+  const routines = useStore((s) => s.routines);
+  const tile = useRoutineTile();
+  const [editing, setEditing] = useState<number | null>(null);
+  const today = weekdayOf(Date.now());
+
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>Weekly plan</h2>
+        <span className="small muted">Repeats every week</span>
+      </div>
+      <div className="list with-icons">
+        {[0, 1, 2, 3, 4, 5, 6].map((wd) => {
+          const id = weeklyRoutineId(plans, wd);
+          const routine = routines.find((r) => r.id === id);
+          return (
+            <button className="list-item" key={wd} onClick={() => setEditing(wd)} style={{ minHeight: 52 }}>
+              <span
+                className={`tile sm${routine ? ` solid ${tile(routine)}` : ''}`}
+                style={{ width: 40, fontSize: 12, ...(routine ? {} : ({ '--tile': 'var(--text-2)' } as CSSProperties)) }}
+              >
+                {weekdayName(wd, 'short')}
+              </span>
+              <span className="grow">
+                <span className={`title truncate${routine ? '' : ' muted'}`} style={{ display: 'block' }}>
+                  {routine?.name ?? 'Rest'}
+                </span>
+                {wd === today && <span className="sub">Today</span>}
+              </span>
+              <ChevronRight size={18} className="chev" />
+            </button>
+          );
+        })}
+      </div>
+      <div className="list-footer">Planned days show on Home, ready to start with one tap. Change a single day from the week on Home.</div>
+      {editing !== null && <PlanSheet target={{ weekday: editing }} onClose={() => setEditing(null)} />}
+    </section>
   );
 }

@@ -6,7 +6,6 @@ import { RestTimerBar } from './components/RestTimerBar';
 import { ActiveWorkout } from './pages/ActiveWorkout';
 import { ExerciseDetail } from './pages/ExerciseDetail';
 import { Exercises } from './pages/Exercises';
-import { History } from './pages/History';
 import { Import } from './pages/Import';
 import { Home } from './pages/Home';
 import { Progress } from './pages/Progress';
@@ -52,7 +51,7 @@ function Shell() {
         <Route path="/workout" element={<ActiveWorkout />} />
         <Route path="/routines" element={<Routines />} />
         <Route path="/routines/:id" element={<RoutineEditor />} />
-        <Route path="/history" element={<History />} />
+        <Route path="/history" element={<Navigate to="/progress?view=history" replace />} />
         <Route path="/history/:id" element={<WorkoutDetail />} />
         <Route path="/exercises" element={<Exercises />} />
         <Route path="/exercises/:id" element={<ExerciseDetail />} />

@@ -11,6 +11,8 @@ const doc = (patch: Partial<SyncDoc> = {}): SyncDoc => ({
   routines: [],
   customExercises: [],
   bodyweights: [],
+  plans: [],
+  steps: [],
   settings: DEFAULT_SETTINGS,
   settingsUpdatedAt: 0,
   deleted: {},
@@ -43,6 +45,28 @@ describe('mergeDocs', () => {
     const stillThere = doc({ workouts: [w] });
     expect(mergeDocs(deletedHere, stillThere).workouts).toEqual([]);
     expect(mergeDocs(stillThere, deletedHere).workouts).toEqual([]);
+  });
+
+  it('brings back a record saved again after it was deleted', () => {
+    const replanned = doc({ plans: [{ id: 'date:2026-10-21', date: '2026-10-21', routineId: 'r', updatedAt: 5 }], deleted: { 'date:2026-10-21': 3 } });
+    const stale = doc({ deleted: { 'date:2026-10-21': 3 } });
+    expect(mergeDocs(stale, replanned).plans).toHaveLength(1);
+    expect(mergeDocs(replanned, stale).plans).toHaveLength(1);
+    const deletedLater = doc({ deleted: { 'date:2026-10-21': 9 } });
+    expect(mergeDocs(deletedLater, replanned).plans).toEqual([]);
+  });
+
+  it('merges steps and plans from another device', () => {
+    const phone = doc({ steps: [{ id: 'steps:2026-10-21', date: '2026-10-21', count: 5000, source: 'health', updatedAt: 2 }] });
+    const laptop = doc({
+      steps: [{ id: 'steps:2026-10-21', date: '2026-10-21', count: 4000, source: 'manual', updatedAt: 1 }],
+      plans: [{ id: 'weekday:0', weekday: 0, routineId: 'r', updatedAt: 1 }],
+    });
+    const merged = mergeDocs(laptop, phone);
+    expect(merged.steps.map((e) => e.count)).toEqual([5000]);
+    expect(merged.plans).toHaveLength(1);
+    // Docs saved before plans and steps existed still merge.
+    expect(mergeDocs(phone, { ...laptop, plans: undefined, steps: undefined } as unknown as SyncDoc).steps).toHaveLength(1);
   });
 
   it('keeps the newest settings', () => {
@@ -83,7 +107,7 @@ function fakeBackend(initial: SyncDoc | null = null) {
 
 describe('sync engine', () => {
   beforeEach(() => {
-    useStore.setState({ workouts: [], routines: [], customExercises: [], bodyweights: [], deleted: {}, settingsUpdatedAt: 0, settings: DEFAULT_SETTINGS });
+    useStore.setState({ workouts: [], routines: [], customExercises: [], bodyweights: [], plans: [], steps: [], deleted: {}, settingsUpdatedAt: 0, settings: DEFAULT_SETTINGS });
   });
 
   it('uploads local data and pulls down the cloud copy', async () => {

@@ -137,7 +137,7 @@ export function Import() {
     const incoming = withoutDuplicates(toAppWorkouts(result.workouts, (n) => idFor.get(n)!), existing);
     importWorkouts(incoming, created);
     toast(`Imported ${incoming.length} workout${incoming.length === 1 ? '' : 's'}`);
-    navigate('/history', { replace: true });
+    navigate('/progress?view=history', { replace: true });
   };
 
   return (

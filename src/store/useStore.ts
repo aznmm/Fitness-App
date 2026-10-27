@@ -3,9 +3,11 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { BUILT_IN_EXERCISES } from '../data/exercises';
 import { uid } from '../lib/id';
+import { datePlanId, weekdayPlanId } from '../lib/plans';
+import { stepsId } from '../lib/steps';
 import { mergeDocs } from '../sync/merge';
 import { createWorkout, pruneIncomplete, routineFromWorkout, type WorkoutUpdater } from '../lib/workoutOps';
-import type { BodyWeightEntry, Exercise, RestTimer, Routine, Settings, Workout } from '../types';
+import type { BodyWeightEntry, Exercise, Plan, RestTimer, Routine, Settings, StepEntry, Workout } from '../types';
 import { appStorage } from './storage';
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   weeklyGoal: 3,
   smartSuggestions: true,
+  stepGoal: 10_000,
 };
 
 export interface AppData {
@@ -25,6 +28,9 @@ export interface AppData {
   routines: Routine[];
   customExercises: Exercise[];
   bodyweights: BodyWeightEntry[];
+  /** Routines planned for dates and weekdays. */
+  plans: Plan[];
+  steps: StepEntry[];
   settings: Settings;
   rest: RestTimer | null;
   /** When settings last changed, so synced devices keep the newest. */
@@ -61,6 +67,17 @@ export interface AppActions {
   addBodyweight(weightKg: number, date?: number): void;
   deleteBodyweight(id: string): void;
 
+  /** Plan a routine (or nothing, to skip a weekly plan) on a YYYY-MM-DD date. */
+  setDatePlan(date: string, routineId: string | null): void;
+  /** Remove a date's own plan so the weekly schedule applies again. */
+  clearDatePlan(date: string): void;
+  /** Put a routine on the weekly schedule, or take the weekday off it with null. */
+  setWeekdayPlan(weekday: number, routineId: string | null): void;
+
+  /** Record daily step counts, replacing what was there for those dates. */
+  saveSteps(entries: { date: string; count: number }[], source: StepEntry['source']): void;
+  deleteSteps(date: string): void;
+
   updateSettings(patch: Partial<Settings>): void;
   replaceAll(data: Partial<AppData>): void;
   /** Add a backup's records to what's here; the newer copy of each record wins. */
@@ -77,6 +94,8 @@ const EMPTY: AppData = {
   routines: [],
   customExercises: [],
   bodyweights: [],
+  plans: [],
+  steps: [],
   settings: DEFAULT_SETTINGS,
   rest: null,
   settingsUpdatedAt: 0,
@@ -201,6 +220,43 @@ export const useStore = create<AppState>()(
         set((s) => ({ bodyweights: s.bodyweights.filter((b) => b.id !== id), deleted: tombstone(s.deleted, id) }));
       },
 
+      setDatePlan(date, routineId) {
+        const plan = stamp({ id: datePlanId(date), date, routineId });
+        set((s) => ({ plans: [...s.plans.filter((p) => p.id !== plan.id), plan] }));
+      },
+
+      clearDatePlan(date) {
+        const id = datePlanId(date);
+        set((s) => (s.plans.some((p) => p.id === id) ? { plans: s.plans.filter((p) => p.id !== id), deleted: tombstone(s.deleted, id) } : {}));
+      },
+
+      setWeekdayPlan(weekday, routineId) {
+        const id = weekdayPlanId(weekday);
+        set((s) => {
+          const rest = s.plans.filter((p) => p.id !== id);
+          return routineId ? { plans: [...rest, stamp({ id, weekday, routineId })] } : { plans: rest, deleted: tombstone(s.deleted, id) };
+        });
+      },
+
+      saveSteps(entries, source) {
+        set((s) => {
+          const byDate = new Map(s.steps.map((e) => [e.date, e]));
+          let changed = false;
+          for (const { date, count } of entries) {
+            const old = byDate.get(date);
+            if (old && old.count === count && old.source === source) continue;
+            byDate.set(date, stamp({ id: stepsId(date), date, count, source }));
+            changed = true;
+          }
+          return changed ? { steps: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)) } : {};
+        });
+      },
+
+      deleteSteps(date) {
+        const id = stepsId(date);
+        set((s) => ({ steps: s.steps.filter((e) => e.id !== id), deleted: tombstone(s.deleted, id) }));
+      },
+
       updateSettings(patch) {
         set((s) => ({ settings: { ...s.settings, ...patch }, settingsUpdatedAt: Date.now() }));
       },
@@ -208,7 +264,11 @@ export const useStore = create<AppState>()(
       replaceAll(data) {
         set((s) => {
           // Restored records win over earlier deletes of the same ids.
-          const restored = new Set([...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? [])].map((x) => x.id));
+          const restored = new Set(
+            [...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? []), ...(data.plans ?? []), ...(data.steps ?? [])].map(
+              (x) => x.id,
+            ),
+          );
           const deleted = Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !restored.has(id)));
           const stampAll = <T extends object>(xs: T[] | undefined) => (xs ?? []).map(stamp);
           return {
@@ -218,6 +278,8 @@ export const useStore = create<AppState>()(
             routines: stampAll(data.routines),
             customExercises: stampAll(data.customExercises),
             bodyweights: stampAll(data.bodyweights),
+            plans: stampAll(data.plans),
+            steps: stampAll(data.steps),
             settings: { ...DEFAULT_SETTINGS, ...data.settings },
             settingsUpdatedAt: Date.now(),
             deleted,
@@ -228,16 +290,33 @@ export const useStore = create<AppState>()(
       mergeIn(data) {
         set((s) => {
           // Records in the backup win over earlier deletes of the same ids on this device.
-          const incoming = new Set([...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? [])].map((x) => x.id));
+          const incoming = new Set(
+            [...(data.workouts ?? []), ...(data.routines ?? []), ...(data.customExercises ?? []), ...(data.bodyweights ?? []), ...(data.plans ?? []), ...(data.steps ?? [])].map(
+              (x) => x.id,
+            ),
+          );
           const localDeleted = Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !incoming.has(id)));
           const merged = mergeDocs(
-            { version: 1, workouts: s.workouts, routines: s.routines, customExercises: s.customExercises, bodyweights: s.bodyweights, settings: s.settings, settingsUpdatedAt: s.settingsUpdatedAt, deleted: localDeleted },
+            {
+              version: 1,
+              workouts: s.workouts,
+              routines: s.routines,
+              customExercises: s.customExercises,
+              bodyweights: s.bodyweights,
+              plans: s.plans,
+              steps: s.steps,
+              settings: s.settings,
+              settingsUpdatedAt: s.settingsUpdatedAt,
+              deleted: localDeleted,
+            },
             {
               version: 1,
               workouts: data.workouts ?? [],
               routines: data.routines ?? [],
               customExercises: data.customExercises ?? [],
               bodyweights: data.bodyweights ?? [],
+              plans: data.plans ?? [],
+              steps: data.steps ?? [],
               settings: { ...DEFAULT_SETTINGS, ...data.settings },
               settingsUpdatedAt: data.settingsUpdatedAt ?? 0,
               deleted: data.deleted ?? {},
@@ -251,7 +330,7 @@ export const useStore = create<AppState>()(
       resetAll() {
         set((s) => ({
           ...EMPTY,
-          deleted: tombstone(s.deleted, ...[...s.workouts, ...s.routines, ...s.customExercises, ...s.bodyweights].map((x) => x.id)),
+          deleted: tombstone(s.deleted, ...[...s.workouts, ...s.routines, ...s.customExercises, ...s.bodyweights, ...s.plans, ...s.steps].map((x) => x.id)),
         }));
       },
     }),
@@ -259,12 +338,14 @@ export const useStore = create<AppState>()(
       name: 'forge-data',
       version: 1,
       storage: createJSONStorage(() => appStorage),
-      partialize: ({ workouts, active, routines, customExercises, bodyweights, settings, rest, settingsUpdatedAt, deleted }) => ({
+      partialize: ({ workouts, active, routines, customExercises, bodyweights, plans, steps, settings, rest, settingsUpdatedAt, deleted }) => ({
         workouts,
         active,
         routines,
         customExercises,
         bodyweights,
+        plans,
+        steps,
         settings,
         rest,
         settingsUpdatedAt,

@@ -30,6 +30,8 @@ export function localDoc(s: AppState = useStore.getState()): SyncDoc {
     routines: s.routines,
     customExercises: s.customExercises,
     bodyweights: s.bodyweights,
+    plans: s.plans,
+    steps: s.steps,
     settings: s.settings,
     settingsUpdatedAt: s.settingsUpdatedAt,
     deleted: s.deleted,
@@ -108,6 +110,8 @@ export async function connect(b: SyncBackend): Promise<void> {
       s.routines !== prev.routines ||
       s.customExercises !== prev.customExercises ||
       s.bodyweights !== prev.bodyweights ||
+      s.plans !== prev.plans ||
+      s.steps !== prev.steps ||
       s.settings !== prev.settings ||
       s.deleted !== prev.deleted
     ) {

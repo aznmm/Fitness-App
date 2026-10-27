@@ -29,7 +29,7 @@ export function parseBackup(text: string): Partial<AppData> {
     throw new Error('That file is not a Forge backup.');
   }
   const d = b.data as Partial<AppData>;
-  const arrays: (keyof AppData)[] = ['workouts', 'routines', 'customExercises', 'bodyweights'];
+  const arrays: (keyof AppData)[] = ['workouts', 'routines', 'customExercises', 'bodyweights', 'plans', 'steps'];
   for (const key of arrays) {
     if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error(`Backup field "${key}" is malformed.`);
   }
@@ -39,6 +39,8 @@ export function parseBackup(text: string): Partial<AppData> {
     routines: d.routines ?? [],
     customExercises: d.customExercises ?? [],
     bodyweights: d.bodyweights ?? [],
+    plans: d.plans ?? [],
+    steps: d.steps ?? [],
     active: d.active ?? null,
     settings: d.settings,
     settingsUpdatedAt: typeof d.settingsUpdatedAt === 'number' ? d.settingsUpdatedAt : 0,

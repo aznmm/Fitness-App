@@ -11,6 +11,15 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 
 ## Features
 
+**Plan your week**
+- Home shows the week: tap any day to see what you did or what's planned, and swipe or use the arrows to browse past and future weeks
+- Plan a routine on a day, or put it on a **weekly plan** (e.g. Push every Monday) from Home or the Routines tab; skip a single week when you need to
+- Today's planned routine starts with one tap; **Start workout** otherwise asks which routine you're doing (or an empty workout)
+
+**Steps**
+- Daily step count against a goal you set, with a 7-day view on Home and 7/30-day charts on Progress
+- Pulls steps from **Apple Health** through an iPhone Shortcut (see [docs/steps-shortcut.md](docs/steps-shortcut.md)), or type them in
+
 **Workout logging**
 - Start an empty workout or one from a routine; a live timer runs in the header
 - Log weight × reps, bodyweight reps (+ added weight), timed holds, or distance + time for cardio
@@ -37,8 +46,9 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - One-tap import of ready-made programs: Full Body, Upper/Lower, Push/Pull/Legs, Strength 5×5
 - Save any finished workout as a routine, or repeat it
 
-**History & progress**
-- Workout history as a list or a calendar, with PRs per workout; edit or backfill past workouts
+**Progress dashboard**
+- 30-day summary: workouts, time trained, week streak and average steps
+- Workout history (list or calendar) lives in the Progress tab, with PRs per workout; edit or backfill past workouts
 - Per-exercise charts (est. 1RM, heaviest, volume), rep-max table and full set history
 - Weekly volume / workouts / sets charts
 - **Muscle map**: front/back body diagram of your weekly sets per muscle, against the 10–20 sets/week growth range
