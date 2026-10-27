@@ -64,6 +64,8 @@
   --tabbar-h: 66px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
+  /* Floating bars sit inside the home-indicator area, like iOS tab bars, not above it */
+  --float-bottom: max(10px, calc(var(--safe-bottom) - 14px));
 
   font-family: var(--font);
 }
@@ -288,7 +290,7 @@ h3 {
 }
 
 .page {
-  padding: var(--safe-top) 16px calc(var(--tabbar-h) + var(--safe-bottom) + 110px);
+  padding: var(--safe-top) 16px calc(var(--tabbar-h) + var(--float-bottom) + 120px);
   animation: page-in 0.38s var(--ease);
 }
 
@@ -1382,7 +1384,7 @@ button.day-row:active {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 10px);
+  bottom: var(--float-bottom);
   width: calc(100% - 28px);
   max-width: 480px;
   z-index: 30;
@@ -1440,7 +1442,7 @@ button.day-row:active {
 }
 
 .active-bar {
-  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 20px);
+  bottom: calc(var(--tabbar-h) + var(--float-bottom) + 10px);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1488,7 +1490,7 @@ button.day-row:active {
 
 /* Rest timer, styled like a Live Activity */
 .rest-bar {
-  bottom: calc(var(--safe-bottom) + 14px);
+  bottom: calc(var(--float-bottom) + 4px);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1502,7 +1504,7 @@ button.day-row:active {
 }
 
 .rest-bar.with-tabs {
-  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 20px);
+  bottom: calc(var(--tabbar-h) + var(--float-bottom) + 10px);
 }
 
 .rest-bar .time {
