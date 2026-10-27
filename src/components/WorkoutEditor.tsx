@@ -10,6 +10,7 @@ import {
   addSet,
   addWarmups,
   applyTarget,
+  insertSet,
   moveExercise,
   patchExercise,
   patchSet,
@@ -33,6 +34,7 @@ import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } fr
 import { toast } from './Dialogs';
 import { ExerciseGuide } from './ExerciseGuide';
 import { ExerciseInitial, ExercisePicker } from './ExercisePicker';
+import { SwipeToDelete } from './SwipeToDelete';
 import { NumberInput } from './NumberInput';
 import { PlateCalculator } from './PlateCalculator';
 import { Sheet } from './Sheet';
@@ -175,7 +177,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
       {suggestion && <TargetStrip suggestion={suggestion} type={type} unit={settings.unit} onApply={() => onChange(applyTarget(we.id, suggestion))} />}
 
       <SetHeader type={type} unit={settings.unit} />
-      {we.sets.map((set) => {
+      {we.sets.map((set, index) => {
         const warmup = set.kind === 'warmup';
         const number = warmup ? 0 : ++workingIndex;
         const prev = warmup ? prevFor(previous.warmup, warmupIndex++) : prevFor(previous.working, number - 1);
@@ -184,6 +186,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             key={set.id}
             weId={we.id}
             set={set}
+            index={index}
             number={number}
             type={type}
             unit={settings.unit}
@@ -375,6 +378,8 @@ const KIND_LABEL: Record<SetKind, string> = { normal: '', warmup: 'W', drop: 'D'
 interface SetRowProps {
   weId: string;
   set: WorkoutSet;
+  /** Position in the exercise's sets, to put it back on undo. */
+  index: number;
   number: number;
   type: Exercise['type'];
   unit: Unit;
@@ -387,8 +392,12 @@ interface SetRowProps {
   onDone: () => void;
 }
 
-const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
+const SetRow = memo(function SetRow({ weId, set, index, number, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
   const patch = (p: Partial<WorkoutSet>) => onChange(patchSet(weId, set.id, p));
+  const remove = () => {
+    onChange(removeSet(weId, set.id));
+    toast(set.kind === 'warmup' ? 'Warm-up set deleted' : `Set ${number} deleted`, { label: 'Undo', run: () => onChange(insertSet(weId, set, index)) });
+  };
   const fmtWeight = useCallback((kg: number) => trimNumber(fromKg(kg, unit), 2), [unit]);
   const parseWeight = useCallback((s: string) => {
     const n = Number(s.replace(',', '.'));
@@ -485,56 +494,58 @@ const SetRow = memo(function SetRow({ weId, set, number, type, unit, prev, goal,
   );
 
   return (
-    <div className={`set-grid set-row${set.done ? ' done' : ''}${cols1 ? ' cols-1' : ''}`}>
-      <div className={`set-badge ${set.kind}`}>
-        {KIND_LABEL[set.kind] || number}
-        <select
-          aria-label={`Set ${number || 'warm-up'} options`}
-          value={set.kind}
-          onChange={(e) => {
-            if (e.target.value === 'delete') onChange(removeSet(weId, set.id));
-            else patch({ kind: e.target.value as SetKind });
-          }}
+    <SwipeToDelete onDelete={remove} label={`Delete set ${number || 'warm-up'}`}>
+      <div className={`set-grid set-row${set.done ? ' done' : ''}${cols1 ? ' cols-1' : ''}`}>
+        <div className={`set-badge ${set.kind}`}>
+          {KIND_LABEL[set.kind] || number}
+          <select
+            aria-label={`Set ${number || 'warm-up'} options`}
+            value={set.kind}
+            onChange={(e) => {
+              if (e.target.value === 'delete') remove();
+              else patch({ kind: e.target.value as SetKind });
+            }}
+          >
+            <option value="normal">Normal set</option>
+            <option value="warmup">Warm-up set</option>
+            <option value="drop">Drop set</option>
+            <option value="failure">Failure set</option>
+            <option value="delete">Delete set</option>
+          </select>
+        </div>
+        <button
+          className="prev"
+          disabled={!prev}
+          onClick={() => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance })}
+          aria-label={prev ? `Copy previous: ${describeSet(prev, type, unit)}` : 'No previous set'}
         >
-          <option value="normal">Normal set</option>
-          <option value="warmup">Warm-up set</option>
-          <option value="drop">Drop set</option>
-          <option value="failure">Failure set</option>
-          <option value="delete">Delete set</option>
-        </select>
-      </div>
-      <button
-        className="prev"
-        disabled={!prev}
-        onClick={() => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance })}
-        aria-label={prev ? `Copy previous: ${describeSet(prev, type, unit)}` : 'No previous set'}
-      >
-        {prs.length ? (
-          <span className="pr-tag">
-            <Trophy size={11} strokeWidth={2.5} /> PR
-          </span>
-        ) : prev ? (
-          describeSet(prev, type, unit)
+          {prs.length ? (
+            <span className="pr-tag">
+              <Trophy size={11} strokeWidth={2.5} /> PR
+            </span>
+          ) : prev ? (
+            describeSet(prev, type, unit)
+          ) : (
+            '—'
+          )}
+        </button>
+        {type === 'weight_reps' || type === 'reps' ? (
+          <>
+            {weightInput}
+            {repsInput}
+          </>
+        ) : type === 'duration' ? (
+          durationInput
         ) : (
-          '—'
+          <>
+            {distanceInput}
+            {durationInput}
+          </>
         )}
-      </button>
-      {type === 'weight_reps' || type === 'reps' ? (
-        <>
-          {weightInput}
-          {repsInput}
-        </>
-      ) : type === 'duration' ? (
-        durationInput
-      ) : (
-        <>
-          {distanceInput}
-          {durationInput}
-        </>
-      )}
-      <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
-        <Check size={19} strokeWidth={3.2} />
-      </button>
-    </div>
+        <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
+          <Check size={19} strokeWidth={3.2} />
+        </button>
+      </div>
+    </SwipeToDelete>
   );
 });

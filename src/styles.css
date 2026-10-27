@@ -1889,6 +1889,46 @@ button.day-row:active {
   background: var(--green-tint);
 }
 
+/* Swipe a set left to delete it */
+.swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  touch-action: pan-y;
+}
+
+.swipe-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 12px;
+  background: var(--red);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  /* Hidden while closed so it can't peek through the rounded corners; stays until the row slides shut */
+  visibility: hidden;
+  transition: visibility 0s 0.3s;
+}
+
+.swipe.open .swipe-action {
+  visibility: visible;
+  transition: none;
+}
+
+.swipe-content {
+  position: relative;
+  background: var(--card);
+  transition: transform 0.3s var(--ease);
+}
+
 .set-badge {
   position: relative;
   width: 28px;
@@ -2202,12 +2242,24 @@ button.day-row:active {
   font-size: 15px;
   box-shadow: var(--shadow-float), inset 0 0 0 0.5px var(--glass-edge);
   animation: toast-in 0.45s var(--spring);
+  width: max-content;
   max-width: calc(100% - 32px);
 }
 
 .toast svg {
   color: var(--green);
   flex: none;
+}
+
+.toast-action {
+  margin: -6px -10px -6px 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
 }
 
 @keyframes toast-in {

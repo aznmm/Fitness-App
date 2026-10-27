@@ -116,6 +116,14 @@ export const removeSet =
   (w) =>
     mapExercise(w, weId, (we) => ({ ...we, sets: we.sets.filter((s) => s.id !== setId) }));
 
+/** Put a set back at its old position, e.g. to undo a delete. */
+export const insertSet =
+  (weId: string, set: WorkoutSet, index: number): WorkoutUpdater =>
+  (w) =>
+    mapExercise(w, weId, (we) =>
+      we.sets.some((s) => s.id === set.id) ? we : { ...we, sets: [...we.sets.slice(0, index), set, ...we.sets.slice(index)] },
+    );
+
 export const patchSet =
   (weId: string, setId: string, patch: Partial<WorkoutSet>): WorkoutUpdater =>
   (w) =>
