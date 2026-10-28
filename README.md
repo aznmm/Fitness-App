@@ -23,9 +23,10 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 **Workout logging**
 - Start an empty workout or one from a routine; a live timer runs in the header
 - Log weight × reps, bodyweight reps (+ added weight), timed holds, or distance + time for cardio
+- **One tick per exercise**: the ✓ next to an exercise completes all its sets, filling empty ones from your target or last time. Ticking single sets still works, and sets you typed numbers into can be saved as done when you finish
 - **Previous** column shows what you did last time; empty fields auto-fill from it when you tick ✓
 - Warm-up, drop and failure sets (tap the set number)
-- Rest timer starts automatically after each set, with ±15s / skip, a beep and a vibration
+- Rest timer: start one any time from the timer button next to Finish, and choose whether it starts by itself after each set; ±15s / skip, a beep and a vibration
 - 🏆 PR badges as you beat your best estimated 1RM, weight, reps, time or distance
 - Per-exercise notes and rest times, replace / reorder / remove exercises
 - Minimise a workout and keep browsing — a bar at the bottom brings you back
@@ -57,7 +58,9 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - Bodyweight log with trend chart
 
 **Your data**
-- ~90 built-in exercises, plus your own custom ones
+- ~140 built-in exercises, plus your own custom ones: free weights, cables, a big range of machines (Smith, plate-loaded, assisted pull-up/dip, where you log the assistance), and 30 cardio activities
+- **Cardio**: runs, walks, jogs, rides, swims, rowing, hikes, stairs, HIIT and sports, logged as distance, time and calories with pace (/mi or /km), speed (mph or km/h), /500m splits for rowing and /100 yd or m for swimming
+- Every exercise shows the muscle it works (or an activity icon for cardio) instead of a letter
 - lb or kg (switch any time — everything converts)
 - Stored on your device (IndexedDB). Export / restore a JSON backup, or export every set as CSV for spreadsheets
 - **Import history** from other apps' CSV exports: Strong and Hevy are recognised automatically, and any other spreadsheet can be mapped column by column, with exercise names matched to the library

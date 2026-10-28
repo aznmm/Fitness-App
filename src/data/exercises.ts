@@ -1,19 +1,23 @@
 import type { Equipment, Exercise, ExerciseType, Muscle } from '../types';
 
-function ex(
-  id: string,
-  name: string,
-  primary: Muscle,
-  secondary: Muscle[],
-  equipment: Equipment,
-  opts: { type?: ExerciseType; standard?: number } = {},
-): Exercise {
-  return { id, name, primary, secondary, equipment, type: opts.type ?? 'weight_reps', standard: opts.standard };
+type Opts = Partial<Pick<Exercise, 'standard' | 'assisted' | 'metric' | 'distanceScale'>> & { type?: ExerciseType };
+
+function ex(id: string, name: string, primary: Muscle, secondary: Muscle[], equipment: Equipment, opts: Opts = {}): Exercise {
+  const { type = 'weight_reps', ...rest } = opts;
+  const out: Exercise = { id, name, primary, secondary, equipment, type };
+  for (const [k, v] of Object.entries(rest)) if (v !== undefined) Object.assign(out, { [k]: v });
+  return out;
 }
 
 const reps = { type: 'reps' } as const;
 const hold = { type: 'duration' } as const;
+/** Assisted machines: the weight entered is the assistance. */
+const assisted = { type: 'reps', assisted: true } as const;
 const cardio = { type: 'distance_duration' } as const;
+const pace = { ...cardio, metric: 'pace' } as const;
+const speed = { ...cardio, metric: 'speed' } as const;
+/** Timed cardio and sports, logged as time and calories. */
+const session = { type: 'duration' } as const;
 
 /**
  * Built-in exercise library. `standard` is an approximate intermediate-level
@@ -31,6 +35,12 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('cable-fly', 'Cable Fly', 'chest', [], 'cable'),
   ex('db-fly', 'Dumbbell Fly', 'chest', [], 'dumbbell'),
   ex('pec-deck', 'Pec Deck', 'chest', [], 'machine'),
+  ex('incline-chest-press-machine', 'Incline Chest Press Machine', 'chest', ['shoulders', 'triceps'], 'machine'),
+  ex('decline-chest-press-machine', 'Decline Chest Press Machine', 'chest', ['triceps'], 'machine'),
+  ex('smith-bench-press', 'Smith Machine Bench Press', 'chest', ['triceps', 'shoulders'], 'machine'),
+  ex('smith-incline-press', 'Smith Machine Incline Press', 'chest', ['shoulders', 'triceps'], 'machine'),
+  ex('low-cable-fly', 'Low-to-High Cable Fly', 'chest', ['shoulders'], 'cable'),
+  ex('assisted-dip', 'Assisted Dip', 'chest', ['triceps', 'shoulders'], 'machine', assisted),
   ex('push-up', 'Push-Up', 'chest', ['triceps', 'shoulders'], 'bodyweight', reps),
   ex('dip', 'Dip', 'chest', ['triceps', 'shoulders'], 'bodyweight', { ...reps, standard: 1.45 }),
 
@@ -41,6 +51,15 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('t-bar-row', 'T-Bar Row', 'back', ['lats', 'biceps'], 'barbell', { standard: 1.0 }),
   ex('seated-cable-row', 'Seated Cable Row', 'back', ['lats', 'biceps'], 'cable', { standard: 1.0 }),
   ex('machine-row', 'Machine Row', 'back', ['lats', 'biceps'], 'machine'),
+  ex('chest-supported-row', 'Chest-Supported Row', 'back', ['lats', 'biceps'], 'machine'),
+  ex('high-row-machine', 'High Row Machine', 'lats', ['back', 'biceps'], 'machine'),
+  ex('low-row-machine', 'Low Row Machine', 'back', ['lats', 'biceps'], 'machine'),
+  ex('machine-lat-pulldown', 'Machine Lat Pulldown', 'lats', ['biceps'], 'machine'),
+  ex('close-grip-pulldown', 'Close-Grip Lat Pulldown', 'lats', ['biceps'], 'cable'),
+  ex('pullover-machine', 'Pullover Machine', 'lats', ['chest'], 'machine'),
+  ex('assisted-pull-up', 'Assisted Pull-Up', 'lats', ['biceps', 'back'], 'machine', assisted),
+  ex('assisted-chin-up', 'Assisted Chin-Up', 'lats', ['biceps'], 'machine', assisted),
+  ex('back-extension-machine', 'Back Extension Machine', 'back', ['glutes'], 'machine'),
   ex('pull-up', 'Pull-Up', 'lats', ['biceps', 'back'], 'bodyweight', { ...reps, standard: 1.3 }),
   ex('chin-up', 'Chin-Up', 'lats', ['biceps'], 'bodyweight', { ...reps, standard: 1.35 }),
   ex('lat-pulldown', 'Lat Pulldown', 'lats', ['biceps'], 'cable', { standard: 0.95 }),
@@ -55,6 +74,8 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('push-press', 'Push Press', 'shoulders', ['triceps', 'quads'], 'barbell', { standard: 0.9 }),
   ex('db-shoulder-press', 'Dumbbell Shoulder Press', 'shoulders', ['triceps'], 'dumbbell', { standard: 0.3 }),
   ex('machine-shoulder-press', 'Machine Shoulder Press', 'shoulders', ['triceps'], 'machine', { standard: 0.7 }),
+  ex('smith-shoulder-press', 'Smith Machine Shoulder Press', 'shoulders', ['triceps'], 'machine'),
+  ex('lateral-raise-machine', 'Lateral Raise Machine', 'shoulders', [], 'machine'),
   ex('arnold-press', 'Arnold Press', 'shoulders', ['triceps'], 'dumbbell', { standard: 0.27 }),
   ex('lateral-raise', 'Lateral Raise', 'shoulders', [], 'dumbbell', { standard: 0.14 }),
   ex('cable-lateral-raise', 'Cable Lateral Raise', 'shoulders', [], 'cable'),
@@ -77,6 +98,10 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('close-grip-bench', 'Close-Grip Bench Press', 'triceps', ['chest', 'shoulders'], 'barbell', { standard: 1.0 }),
   ex('db-kickback', 'Triceps Kickback', 'triceps', [], 'dumbbell'),
   ex('wrist-curl', 'Wrist Curl', 'forearms', [], 'dumbbell'),
+  ex('bicep-curl-machine', 'Biceps Curl Machine', 'biceps', [], 'machine'),
+  ex('machine-preacher-curl', 'Machine Preacher Curl', 'biceps', [], 'machine'),
+  ex('tricep-extension-machine', 'Triceps Extension Machine', 'triceps', [], 'machine'),
+  ex('seated-dip-machine', 'Seated Dip Machine', 'triceps', ['chest'], 'machine'),
 
   // Legs
   ex('squat', 'Squat', 'quads', ['glutes', 'hamstrings'], 'barbell', { standard: 1.5 }),
@@ -88,17 +113,24 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('lunge', 'Dumbbell Lunge', 'quads', ['glutes', 'hamstrings'], 'dumbbell', { standard: 0.35 }),
   ex('step-up', 'Step-Up', 'quads', ['glutes'], 'dumbbell'),
   ex('leg-extension', 'Leg Extension', 'quads', [], 'machine', { standard: 1.0 }),
+  ex('smith-squat', 'Smith Machine Squat', 'quads', ['glutes', 'hamstrings'], 'machine'),
+  ex('pendulum-squat', 'Pendulum Squat', 'quads', ['glutes'], 'machine'),
+  ex('belt-squat', 'Belt Squat', 'quads', ['glutes'], 'machine'),
   ex('romanian-deadlift', 'Romanian Deadlift', 'hamstrings', ['glutes', 'back'], 'barbell', { standard: 1.4 }),
   ex('db-romanian-deadlift', 'Dumbbell Romanian Deadlift', 'hamstrings', ['glutes'], 'dumbbell', { standard: 0.55 }),
   ex('sumo-deadlift', 'Sumo Deadlift', 'glutes', ['quads', 'hamstrings', 'back'], 'barbell', { standard: 1.8 }),
   ex('lying-leg-curl', 'Lying Leg Curl', 'hamstrings', [], 'machine', { standard: 0.7 }),
   ex('seated-leg-curl', 'Seated Leg Curl', 'hamstrings', [], 'machine', { standard: 0.8 }),
+  ex('standing-leg-curl', 'Standing Leg Curl', 'hamstrings', [], 'machine'),
   ex('hip-thrust', 'Hip Thrust', 'glutes', ['hamstrings'], 'barbell', { standard: 1.8 }),
   ex('glute-bridge', 'Glute Bridge', 'glutes', ['hamstrings'], 'bodyweight', reps),
+  ex('hip-thrust-machine', 'Hip Thrust Machine', 'glutes', ['hamstrings'], 'machine'),
+  ex('glute-kickback-machine', 'Glute Kickback Machine', 'glutes', ['hamstrings'], 'machine'),
   ex('hip-abduction', 'Hip Abduction', 'glutes', [], 'machine'),
   ex('hip-adduction', 'Hip Adduction', 'quads', [], 'machine'),
   ex('standing-calf-raise', 'Standing Calf Raise', 'calves', [], 'machine', { standard: 1.5 }),
   ex('seated-calf-raise', 'Seated Calf Raise', 'calves', [], 'machine'),
+  ex('leg-press-calf-raise', 'Leg Press Calf Raise', 'calves', [], 'machine'),
 
   // Full body / power
   ex('power-clean', 'Power Clean', 'glutes', ['quads', 'traps', 'shoulders'], 'barbell', { standard: 1.0 }),
@@ -114,17 +146,48 @@ export const BUILT_IN_EXERCISES: Exercise[] = [
   ex('ab-wheel', 'Ab Wheel Rollout', 'abs', ['lats'], 'other', reps),
   ex('russian-twist', 'Russian Twist', 'abs', [], 'bodyweight', reps),
   ex('dead-bug', 'Dead Bug', 'abs', [], 'bodyweight', reps),
+  ex('ab-crunch-machine', 'Ab Crunch Machine', 'abs', [], 'machine'),
+  ex('torso-rotation', 'Torso Rotation Machine', 'abs', [], 'machine'),
+  ex('captains-chair', "Captain's Chair Leg Raise", 'abs', [], 'machine', reps),
 
   // Cardio
-  ex('running', 'Running', 'cardio', ['quads', 'calves'], 'other', cardio),
-  ex('treadmill', 'Treadmill', 'cardio', ['quads', 'calves'], 'machine', cardio),
-  ex('walking', 'Walking', 'cardio', [], 'other', cardio),
-  ex('cycling', 'Cycling', 'cardio', ['quads'], 'machine', cardio),
-  ex('rowing-machine', 'Rowing Machine', 'cardio', ['back', 'quads'], 'machine', cardio),
-  ex('elliptical', 'Elliptical', 'cardio', [], 'machine', cardio),
-  ex('swimming', 'Swimming', 'cardio', ['back', 'shoulders'], 'other', cardio),
-  ex('stair-climber', 'Stair Climber', 'cardio', ['glutes', 'quads'], 'machine', hold),
-  ex('jump-rope', 'Jump Rope', 'cardio', ['calves'], 'other', hold),
+  // Runs and walks (pace per mile/km)
+  ex('running', 'Running', 'cardio', ['quads', 'calves'], 'other', pace),
+  ex('jogging', 'Jogging', 'cardio', ['quads', 'calves'], 'other', pace),
+  ex('treadmill', 'Treadmill Run', 'cardio', ['quads', 'calves'], 'machine', pace),
+  ex('trail-running', 'Trail Running', 'cardio', ['quads', 'calves', 'glutes'], 'other', pace),
+  ex('sprints', 'Sprints', 'cardio', ['quads', 'hamstrings', 'glutes'], 'other', { ...speed, distanceScale: 'metres' }),
+  ex('walking', 'Walking', 'cardio', [], 'other', pace),
+  ex('treadmill-walk', 'Treadmill Walk', 'cardio', [], 'machine', pace),
+  ex('incline-walk', 'Incline Treadmill Walk', 'cardio', ['glutes', 'calves'], 'machine', pace),
+  ex('hiking', 'Hiking', 'cardio', ['quads', 'glutes', 'calves'], 'other', pace),
+  ex('rucking', 'Rucking', 'cardio', ['quads', 'glutes', 'traps'], 'other', pace),
+
+  // Bikes (speed)
+  ex('cycling', 'Cycling', 'cardio', ['quads'], 'other', speed),
+  ex('stationary-bike', 'Stationary Bike', 'cardio', ['quads'], 'machine', speed),
+  ex('mountain-biking', 'Mountain Biking', 'cardio', ['quads', 'glutes'], 'other', speed),
+  ex('spin-class', 'Spin Class', 'cardio', ['quads'], 'machine', session),
+  ex('air-bike', 'Air Bike', 'cardio', ['quads', 'shoulders'], 'machine', session),
+
+  // Water, ergs and machines
+  ex('rowing-machine', 'Rowing Machine', 'cardio', ['back', 'quads'], 'machine', { ...cardio, metric: 'split500', distanceScale: 'metres' }),
+  ex('ski-erg', 'Ski Erg', 'cardio', ['lats', 'triceps', 'abs'], 'machine', { ...cardio, metric: 'split500', distanceScale: 'metres' }),
+  ex('swimming', 'Swimming', 'cardio', ['back', 'shoulders'], 'other', { ...cardio, metric: 'split100', distanceScale: 'pool' }),
+  ex('kayaking', 'Kayaking', 'cardio', ['back', 'shoulders'], 'other', speed),
+  ex('elliptical', 'Elliptical', 'cardio', [], 'machine', speed),
+  ex('stair-climber', 'Stair Climber', 'cardio', ['glutes', 'quads'], 'machine', session),
+
+  // Conditioning and sports (time + calories)
+  ex('jump-rope', 'Jump Rope', 'cardio', ['calves'], 'other', session),
+  ex('hiit', 'HIIT', 'cardio', ['quads'], 'other', session),
+  ex('battle-ropes', 'Battle Ropes', 'cardio', ['shoulders', 'abs'], 'other', session),
+  ex('boxing', 'Boxing', 'cardio', ['shoulders', 'abs'], 'other', session),
+  ex('dance', 'Dance', 'cardio', [], 'other', session),
+  ex('basketball', 'Basketball', 'cardio', ['quads', 'calves'], 'other', session),
+  ex('soccer', 'Soccer', 'cardio', ['quads', 'hamstrings'], 'other', session),
+  ex('tennis', 'Tennis', 'cardio', ['shoulders'], 'other', session),
+  ex('pickleball', 'Pickleball', 'cardio', [], 'other', session),
 ];
 
 export const MUSCLE_LABELS: Record<Muscle, string> = {

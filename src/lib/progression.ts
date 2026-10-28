@@ -64,6 +64,9 @@ export function suggestNext(
     return null;
   }
 
+  // Cardio sessions and sports vary too much day to day for a target to help.
+  if (exercise.primary === 'cardio' && exercise.type !== 'reps') return null;
+
   if (exercise.type === 'duration') {
     const best = Math.max(...last.map((s) => s.duration ?? 0));
     if (!best) return null;
@@ -73,7 +76,8 @@ export function suggestNext(
   if (exercise.type === 'reps') {
     const bestReps = Math.max(...last.map((s) => s.reps ?? 0));
     if (!bestReps) return null;
-    const added = Math.max(0, ...last.map((s) => s.weight ?? 0));
+    // Assisted machines store assistance as negative weight: keep last time's lowest assistance.
+    const added = exercise.assisted ? Math.max(...last.map((s) => s.weight ?? 0)) : Math.max(0, ...last.map((s) => s.weight ?? 0));
     return { weight: added || undefined, reps: bestReps + 1, reason: 'more-reps', note: 'One more rep than your best set last time' };
   }
 

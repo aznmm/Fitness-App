@@ -6,10 +6,10 @@ import type { Muscle } from '../types';
  * the silhouette; muscles are filled by intensity (0–1).
  */
 
-type Region = { muscle: Muscle; d: string };
+export type Region = { muscle: Muscle; d: string };
 
 // Coordinates are for one 200×440 figure; the right side is mirrored at x=100.
-const FRONT: Region[] = [
+export const FRONT: Region[] = [
   { muscle: 'shoulders', d: 'M83 71 C70 68 55 72 48 84 C43 94 43 106 46 117 C52 113 58 105 62 97 C66 89 72 81 84 77 Z' },
   { muscle: 'chest', d: 'M99 79 L99 122 C91 128 77 127 69 119 C63 111 63 97 67 88 C73 80 86 76 99 79 Z' },
   { muscle: 'biceps', d: 'M47 121 C44 133 42 148 44 161 C48 167 56 165 60 157 C62 145 62 132 60 120 C56 117 50 117 47 121 Z' },
@@ -22,7 +22,7 @@ const FRONT: Region[] = [
   { muscle: 'calves', d: 'M68 346 C64 368 64 394 68 412 C72 418 79 418 81 412 C85 393 87 370 85 346 C79 350 73 350 68 346 Z' },
 ];
 
-const BACK: Region[] = [
+export const BACK: Region[] = [
   { muscle: 'traps', d: 'M99 58 C92 62 84 67 72 73 C81 81 91 95 99 112 Z' },
   { muscle: 'shoulders', d: 'M70 74 C60 72 50 77 46 88 C43 98 44 108 46 117 C52 113 58 105 62 97 C64 89 67 81 75 79 Z' },
   { muscle: 'lats', d: 'M72 92 C66 116 69 148 81 174 C87 168 94 158 99 148 L99 120 C91 113 81 100 72 92 Z' },
@@ -35,7 +35,7 @@ const BACK: Region[] = [
 ];
 
 /** Neutral body parts that complete the silhouette. */
-const SILHOUETTE = [
+export const SILHOUETTE = [
   'M100 6 C88 6 81 16 81 30 C81 44 89 55 100 55 Z', // head
   'M91 50 L99 50 L99 70 L86 70 C89 64 91 58 91 50 Z', // neck
   'M38 220 C32 226 31 238 36 244 C41 246 46 240 47 230 C47 224 44 219 38 220 Z', // hand
@@ -44,7 +44,7 @@ const SILHOUETTE = [
   'M67 414 C62 420 62 428 70 430 L84 430 C86 424 84 418 81 414 Z', // foot
 ];
 
-const BACK_SILHOUETTE = [
+export const BACK_SILHOUETTE = [
   'M100 6 C88 6 81 16 81 30 C81 44 89 55 100 55 Z',
   'M91 50 L99 50 L99 58 C94 62 90 64 86 66 C89 62 91 56 91 50 Z',
   'M38 220 C32 226 31 238 36 244 C41 246 46 240 47 230 C47 224 44 219 38 220 Z',

@@ -44,8 +44,11 @@ export interface AppActions {
   startWorkout(opts?: { routineId?: string; template?: Routine; name?: string }): Workout;
   updateActive(fn: WorkoutUpdater): void;
   discardWorkout(): void;
-  /** Saves the active workout. Returns null if no sets were completed. */
-  finishWorkout(): Workout | null;
+  /**
+   * Saves the active workout. Returns null if no sets were completed. With
+   * `keepEntries`, unticked sets that have numbers entered are saved as done.
+   */
+  finishWorkout(opts?: { keepEntries?: boolean }): Workout | null;
 
   addWorkout(w: Workout): void;
   /** Bulk import (e.g. from another app's CSV export). */
@@ -134,10 +137,10 @@ export const useStore = create<AppState>()(
         set({ active: null, rest: null });
       },
 
-      finishWorkout() {
+      finishWorkout(opts) {
         const { active } = get();
         if (!active) return null;
-        const saved = stamp({ ...pruneIncomplete(active), endedAt: Date.now() });
+        const saved = stamp({ ...pruneIncomplete(active, opts?.keepEntries), endedAt: Date.now() });
         if (!saved.exercises.length) return null;
         set((s) => ({ workouts: [...s.workouts, saved], active: null, rest: null }));
         return saved;

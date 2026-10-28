@@ -85,20 +85,22 @@ interface PageHeaderProps {
   actions?: ReactNode;
   /** Smaller large title for detail screens with long names. */
   compact?: boolean;
+  /** What the glass bar shows once the large title scrolls away; defaults to the title. */
+  navTitle?: ReactNode;
 }
 
 /**
  * iOS-style large title. A glass navigation bar holds the back button and
  * actions; the title shrinks into it once the page scrolls.
  */
-export function PageHeader({ title, eyebrow, back, actions, compact }: PageHeaderProps) {
+export function PageHeader({ title, eyebrow, back, actions, compact, navTitle }: PageHeaderProps) {
   const scrolled = useScrolled();
   return (
     <>
       <div className={`navbar${scrolled ? ' scrolled' : ''}`}>
         <div className="navbar-side">{back && <BackButton to={typeof back === 'string' ? back : undefined} />}</div>
         <div className="navbar-title truncate" aria-hidden>
-          {title}
+          {navTitle ?? title}
         </div>
         <div className="navbar-side end">{actions}</div>
       </div>

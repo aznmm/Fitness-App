@@ -6,6 +6,7 @@ import { useExercises, useStore } from '../store/useStore';
 import type { Exercise } from '../types';
 import { CustomExerciseSheet } from './CustomExerciseSheet';
 import { Sheet } from './Sheet';
+import { ExerciseIcon } from './MuscleIcon';
 
 export function filterExercises(list: Exercise[], query: string, muscleFilter: string | null): Exercise[] {
   const q = query.trim().toLowerCase();
@@ -19,10 +20,11 @@ export function filterExercises(list: Exercise[], query: string, muscleFilter: s
 }
 
 /** Muscle-coloured tile with the exercise's initial (or a check when selected). */
-export function ExerciseInitial({ exercise, selected, small }: { exercise?: Exercise; selected?: boolean; small?: boolean }) {
+/** Coloured tile showing the muscle an exercise works (or an activity icon for cardio). */
+export function ExerciseTile({ exercise, selected, small }: { exercise?: Exercise; selected?: boolean; small?: boolean }) {
   return (
     <div className={`tile ${muscleClass(exercise?.primary)}${selected ? ' selected' : ''}${small ? ' sm' : ''}`} aria-hidden>
-      {selected ? <Check size={small ? 16 : 20} strokeWidth={3} /> : (exercise?.name.charAt(0) ?? '?')}
+      {selected ? <Check size={small ? 16 : 20} strokeWidth={3} /> : <ExerciseIcon exercise={exercise} size={small ? 24 : 32} />}
     </div>
   );
 }
@@ -67,7 +69,7 @@ export function ExercisePicker({ title = 'Add exercises', multi = true, onClose,
 
   const row = (e: Exercise) => (
     <button key={e.id} className="list-item" onClick={() => toggle(e.id)} aria-pressed={selected.includes(e.id)}>
-      <ExerciseInitial exercise={e} selected={selected.includes(e.id)} />
+      <ExerciseTile exercise={e} selected={selected.includes(e.id)} />
       <div className="grow">
         <div className="title truncate">{e.name}</div>
         <div className="sub">

@@ -414,6 +414,21 @@ h3 {
   transform: none;
 }
 
+/* Two-line bar title: the date over today's status */
+.nav-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.nav-sub {
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
 .large-title {
   padding: 2px 0 18px;
 }
@@ -1503,6 +1518,12 @@ button.day-row:active {
   box-shadow: var(--shadow-float), inset 0 0 0 0.5px rgba(255, 255, 255, 0.12);
 }
 
+.rest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
 .rest-bar.with-tabs {
   bottom: calc(var(--tabbar-h) + var(--float-bottom) + 10px);
 }
@@ -1766,7 +1787,18 @@ button.day-row:active {
 
 .alert-actions button + button {
   box-shadow: -0.5px 0 0 var(--separator);
+}
+
+.alert-actions .bold {
   font-weight: 600;
+}
+
+.alert-actions.stacked {
+  grid-template-columns: 1fr;
+}
+
+.alert-actions.stacked button + button {
+  box-shadow: 0 -0.5px 0 var(--separator);
 }
 
 .alert-actions button:active {
@@ -1866,6 +1898,40 @@ button.day-row:active {
   grid-template-columns: 30px minmax(0, 1fr) 96px 40px;
 }
 
+/* Cardio: distance, time and calories, with last time and pace underneath */
+.set-grid.cardio {
+  grid-template-columns: 30px repeat(3, minmax(0, 1fr)) 40px;
+  row-gap: 4px;
+}
+
+.set-grid.cardio.cols-2 {
+  grid-template-columns: 30px repeat(2, minmax(0, 1fr)) 40px;
+}
+
+.set-grid.head.cardio > :nth-child(n + 2) {
+  text-align: center;
+}
+
+.cardio-line {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 2px 2px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardio-line strong {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
 .set-grid.head {
   font-size: 11px;
   font-weight: 600;
@@ -1887,6 +1953,34 @@ button.day-row:active {
 
 .set-row.done {
   background: var(--green-tint);
+}
+
+/* Tick a whole exercise at once */
+.ex-check {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--text-3);
+  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease);
+}
+
+.ex-check:active {
+  transform: scale(0.88);
+}
+
+.ex-check:disabled {
+  opacity: 0.4;
+}
+
+.ex-check.on {
+  background: var(--green);
+  color: #fff;
+  animation: check-pop 0.4s var(--spring);
 }
 
 /* Swipe a set left to delete it */

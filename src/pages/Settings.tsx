@@ -169,7 +169,7 @@ export function Settings() {
         Rest timer
       </div>
       <div className="list with-small-icons">
-        <Row icon={<IconTile color="var(--m-shoulders)"><Zap size={17} /></IconTile>} label="Start automatically">
+        <Row icon={<IconTile color="var(--m-shoulders)"><Zap size={17} /></IconTile>} label="Start after each set">
           <Switch label="Start rest timer automatically" checked={settings.autoRestTimer} onChange={set('autoRestTimer')} />
         </Row>
         <Row icon={<IconTile color="var(--m-cardio)"><Timer size={17} /></IconTile>} label="Default rest">

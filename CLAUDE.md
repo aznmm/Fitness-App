@@ -24,6 +24,8 @@ Run typecheck, tests and build before pushing. For UI changes, also check the ap
 - `src/store/useStore.ts`: app state. Records carry `updatedAt` and deletes add tombstones to `deleted`; both are needed for sync merging.
 - Day plans (`plans`) and steps (`steps`) are synced records with fixed ids (`date:YYYY-MM-DD`, `weekday:N`, `steps:YYYY-MM-DD`); a record saved after its tombstone wins, so a re-planned day comes back. Logic in `src/lib/plans.ts` and `src/lib/steps.ts`.
 - Apple Health steps arrive through the "Forge Steps" iPhone Shortcut (clipboard); see `docs/steps-shortcut.md`. A web app can't read HealthKit directly.
+- Sets count when ticked. Unticked sets with numbers entered are saved as done only if the user chooses so on Finish (`pruneIncomplete(w, true)`); backfilled past workouts always keep them. Values get pre-filled in several places (Use target, warm-ups, Add set), so "has numbers" alone doesn't mean "done".
+- Assisted machines (`assisted: true`, type `reps`) store assistance as negative added weight; cardio (`primary: 'cardio'`) uses `metric`/`distanceScale` and `src/lib/cardio.ts` for pace, speed and splits.
 - `src/sync/`: optional Supabase sync (merge-based). Off until `VITE_SUPABASE_URL`/`VITE_SUPABASE_KEY` are set in `.env.production`; see `docs/sync-setup.md`.
 - `src/data/`: exercise library, programs, how-to guides (every built-in exercise needs a guide; a test enforces it).
 - `src/styles.css`: design tokens at the top, redefined for light mode in both the `prefers-color-scheme` block and the `[data-theme='light']` block. Add any new token to all three.

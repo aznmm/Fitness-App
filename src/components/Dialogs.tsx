@@ -17,8 +17,23 @@ interface ToastAction {
   run: () => void;
 }
 
+interface AlertButton {
+  label: string;
+  value: string;
+  danger?: boolean;
+  /** Bold, like the default action in an iOS alert. */
+  bold?: boolean;
+}
+
+interface AlertState {
+  title: string;
+  message?: string;
+  buttons: AlertButton[];
+  resolve: (value: string | null) => void;
+}
+
 interface DialogState {
-  confirm: (ConfirmOptions & { resolve: (ok: boolean) => void }) | null;
+  confirm: AlertState | null;
   toast: { id: number; message: string; action?: ToastAction } | null;
 }
 
@@ -26,8 +41,31 @@ const useDialogs = create<DialogState>(() => ({ confirm: null, toast: null }));
 
 /** Promise-based replacement for window.confirm that matches the app's look. */
 export function confirm(opts: ConfirmOptions): Promise<boolean> {
+  return showAlert({
+    title: opts.title,
+    message: opts.message,
+    buttons: [
+      { label: opts.cancelLabel ?? 'Cancel', value: 'cancel' },
+      { label: opts.confirmLabel ?? 'OK', value: 'ok', danger: opts.danger, bold: true },
+    ],
+  }).then((v) => v === 'ok');
+}
+
+/**
+ * Alert with several choices, stacked like iOS. Resolves with the chosen
+ * option's value, or null for Cancel or a tap outside.
+ */
+export function choose(opts: { title: string; message?: string; options: Omit<AlertButton, 'value'>[]; cancelLabel?: string }): Promise<number | null> {
+  return showAlert({
+    title: opts.title,
+    message: opts.message,
+    buttons: [...opts.options.map((o, i) => ({ ...o, value: String(i) })), { label: opts.cancelLabel ?? 'Cancel', value: 'cancel' }],
+  }).then((v) => (v === null || v === 'cancel' ? null : Number(v)));
+}
+
+function showAlert(opts: Omit<AlertState, 'resolve'>): Promise<string | null> {
   return new Promise((resolve) => {
-    useDialogs.getState().confirm?.resolve(false);
+    useDialogs.getState().confirm?.resolve(null);
     useDialogs.setState({ confirm: { ...opts, resolve } });
   });
 }
@@ -48,30 +86,36 @@ export function DialogHost() {
 
   useEffect(() => {
     if (!c) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close(null);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const close = (ok: boolean) => {
-    c?.resolve(ok);
+  const close = (value: string | null) => {
+    c?.resolve(value);
     useDialogs.setState({ confirm: null });
   };
 
   return createPortal(
     <>
       {c && (
-        <div className="alert-wrap" onPointerDown={(e) => e.target === e.currentTarget && close(false)}>
+        <div className="alert-wrap" onPointerDown={(e) => e.target === e.currentTarget && close(null)}>
           <div className="alert" role="alertdialog" aria-modal="true" aria-labelledby="alert-title">
             <div className="alert-body">
               <h2 id="alert-title">{c.title}</h2>
               {c.message && <p>{c.message}</p>}
             </div>
-            <div className="alert-actions">
-              <button onClick={() => close(false)}>{c.cancelLabel ?? 'Cancel'}</button>
-              <button className={c.danger ? 'danger' : undefined} onClick={() => close(true)} autoFocus>
-                {c.confirmLabel ?? 'OK'}
-              </button>
+            <div className={`alert-actions${c.buttons.length > 2 ? ' stacked' : ''}`}>
+              {c.buttons.map((b, i) => (
+                <button
+                  key={b.value}
+                  className={[b.danger && 'danger', b.bold && 'bold'].filter(Boolean).join(' ') || undefined}
+                  onClick={() => close(b.value)}
+                  autoFocus={i === (c.buttons.length > 2 ? 0 : c.buttons.length - 1)}
+                >
+                  {b.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

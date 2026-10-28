@@ -1,4 +1,4 @@
-import { Check, ClipboardList, Moon, Plus } from 'lucide-react';
+import { Check, Moon, Plus } from 'lucide-react';
 import { useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, toDateInput } from '../lib/dates';
@@ -7,7 +7,7 @@ import { useStore } from '../store/useStore';
 import type { Routine } from '../types';
 import { toast } from './Dialogs';
 import { Sheet } from './Sheet';
-import { useCreateRoutine, useRoutineTile } from './StartWorkoutSheet';
+import { RoutineTile, useCreateRoutine } from './StartWorkoutSheet';
 
 /** A day to plan, or a weekday on the repeating schedule. */
 export type PlanTarget = { date: number } | { weekday: number };
@@ -134,10 +134,9 @@ export function PlanSheet({ target, onClose }: { target: PlanTarget; onClose: ()
 }
 
 function RoutineOption({ routine, selected, onClick }: { routine: Routine; selected: boolean; onClick: () => void }) {
-  const tile = useRoutineTile();
   return (
     <button className="list-item" onClick={onClick} aria-pressed={selected}>
-      <span className={`tile ${tile(routine)}`}>{routine.exercises.length ? routine.name.trim().charAt(0).toUpperCase() : <ClipboardList size={19} />}</span>
+      <RoutineTile routine={routine} />
       <span className="grow">
         <span className="title truncate" style={{ display: 'block' }}>
           {routine.name}

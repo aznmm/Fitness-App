@@ -2,17 +2,18 @@ import { ChevronRight, ClipboardPlus, MoreHorizontal, Pencil, RotateCcw, Trash2,
 import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
-import { ExerciseInitial } from '../components/ExercisePicker';
+import { ExerciseTile } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
 import { describeSet, WorkoutEditor } from '../components/WorkoutEditor';
 import { setE1RM, workoutDurationMs, workoutPRs, workoutSetCount, workoutVolume, type PRKind, type WorkoutPR } from '../lib/calc';
 import { formatDate, formatTime, fromDateInput, toDateInput } from '../lib/dates';
 import { formatElapsed, formatVolume, formatWeight } from '../lib/units';
-import { countDoneSets, routineFromWorkout, type WorkoutUpdater } from '../lib/workoutOps';
+import { pruneIncomplete, routineFromWorkout, type WorkoutUpdater } from '../lib/workoutOps';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, Unit, Workout } from '../types';
 import { useStartWorkout } from './Home';
+import { cardioRate } from '../lib/cardio';
 
 const PR_LABEL: Record<PRKind, string> = {
   e1rm: 'Est. 1RM',
@@ -25,7 +26,7 @@ const PR_LABEL: Record<PRKind, string> = {
 function prValue(pr: WorkoutPR, ex: Exercise | undefined, unit: Unit, bw?: number): string {
   const type = ex?.type ?? 'weight_reps';
   if (pr.kind === 'e1rm') return formatWeight(setE1RM(pr.set, type, bw), unit);
-  return describeSet(pr.set, type, unit);
+  return describeSet(pr.set, ex ?? type, unit);
 }
 
 export function WorkoutDetail() {
@@ -71,17 +72,15 @@ export function WorkoutDetail() {
   };
 
   const finishEditing = () => {
-    if (countDoneSets(workout) === 0) {
+    // Backfilling is typing numbers in: any set with numbers counts, ticked or not.
+    const kept = pruneIncomplete(workout, true);
+    if (!kept.exercises.length) {
       deleteWorkout(workout.id);
       toast('Empty workout removed');
       navigate('/progress?view=history', { replace: true });
       return;
     }
-    // Drop any sets added but never ticked.
-    updateWorkout(workout.id, (w) => ({
-      ...w,
-      exercises: w.exercises.map((we) => ({ ...we, sets: we.sets.filter((s) => s.done) })).filter((we) => we.sets.length),
-    }));
+    updateWorkout(workout.id, (w) => pruneIncomplete(w, true));
     setParams({}, { replace: true });
   };
 
@@ -183,7 +182,7 @@ export function WorkoutDetail() {
           return (
             <div className="card" key={we.id}>
               <Link to={`/exercises/${we.exerciseId}`} className="row" style={{ gap: 12, color: 'var(--text)' }}>
-                <ExerciseInitial exercise={ex} small />
+                <ExerciseTile exercise={ex} small />
                 <h3 className="grow truncate">{ex?.name ?? 'Unknown exercise'}</h3>
                 <ChevronRight size={18} className="faint" />
               </Link>
@@ -191,7 +190,10 @@ export function WorkoutDetail() {
                 {we.sets.map((s) => (
                   <div className="set-line" key={s.id}>
                     <span className={`n${s.kind === 'warmup' ? ' warmup' : ''}`}>{s.kind === 'warmup' ? 'W' : ++n}</span>
-                    <span className="grow">{describeSet(s, type, unit)}</span>
+                    <span className="grow">
+                      {describeSet(s, ex ?? type, unit)}
+                      {ex && type === 'distance_duration' && cardioRate(s, ex, unit) && <span className="muted"> · {cardioRate(s, ex, unit)}</span>}
+                    </span>
                     {(type === 'weight_reps' || (type === 'reps' && bodyweight)) && s.kind !== 'warmup' && (
                       <span className="muted small rounded-num">{formatWeight(setE1RM(s, type, bodyweight), unit)}</span>
                     )}

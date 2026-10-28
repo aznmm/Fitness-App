@@ -129,19 +129,43 @@ export const patchSet =
   (w) =>
     mapExercise(w, weId, (we) => ({ ...we, sets: we.sets.map((s) => (s.id === setId ? { ...s, ...patch } : s)) }));
 
-/** Keep only completed sets; drop exercises left empty. */
-export function pruneIncomplete(w: Workout): Workout {
+/** A set with its main number filled in (reps, time, distance or calories), ticked or not. */
+export function hasEntry(s: WorkoutSet): boolean {
+  return !!s.reps || !!s.duration || !!s.distance || !!s.calories;
+}
+
+/**
+ * Keep completed sets and drop exercises left empty. With `keepEntries`,
+ * unticked sets that have numbers entered are kept too, marked done.
+ */
+export function pruneIncomplete(w: Workout, keepEntries = false): Workout {
   return {
     ...w,
     exercises: w.exercises
-      .map((we) => ({ ...we, sets: we.sets.filter((s) => s.done) }))
+      .map((we) => ({
+        ...we,
+        sets: we.sets.filter((s) => s.done || (keepEntries && hasEntry(s))).map((s) => (s.done ? s : { ...s, done: true })),
+      }))
       .filter((we) => we.sets.length > 0),
   };
 }
 
-export function countIncompleteSets(w: Workout): number {
-  return w.exercises.reduce((n, we) => n + we.sets.filter((s) => !s.done).length, 0);
+/** Sets with numbers entered that haven't been ticked. */
+export function countUntickedEntries(w: Workout): number {
+  return w.exercises.reduce((n, we) => n + we.sets.filter((s) => !s.done && hasEntry(s)).length, 0);
 }
+
+/** Tick several sets of one exercise at once, filling in each set's values. */
+export const completeSets =
+  (weId: string, values: Record<string, Partial<WorkoutSet>>): WorkoutUpdater =>
+  (w) =>
+    mapExercise(w, weId, (we) => ({ ...we, sets: we.sets.map((s) => (values[s.id] ? { ...s, ...values[s.id], done: true } : s)) }));
+
+/** Untick every set of an exercise. */
+export const uncompleteSets =
+  (weId: string): WorkoutUpdater =>
+  (w) =>
+    mapExercise(w, weId, (we) => ({ ...we, sets: we.sets.map((s) => (s.done ? { ...s, done: false } : s)) }));
 
 export function countDoneSets(w: Workout): number {
   return w.exercises.reduce((n, we) => n + we.sets.filter((s) => s.done).length, 0);
