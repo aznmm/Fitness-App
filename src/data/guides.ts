@@ -107,8 +107,8 @@ export const GUIDES: Record<string, Guide> = {
     ['Keep your neck relaxed and chin neutral.', 'Use straps if your grip gives out first.'],
   ),
   'back-extension': g(
-    ['Set up on the back extension bench with the pad just below your hips.', 'Lower your torso by hinging at the hips.', 'Raise back up until your body is in a straight line.'],
-    ['Don\'t hyperextend past straight at the top.', 'Hold a plate to your chest to add weight.'],
+    ['Set up on the hyperextension bench (45° or 90°) with the pad just below your hips and your heels locked in.', 'Lower your torso by hinging at the hips.', 'Raise back up until your body is in a straight line.'],
+    ["Despite the name, don't arch past straight at the top.", 'Hold a plate or dumbbell to your chest to add weight; log it in the +lb column.'],
   ),
 
   // Shoulders
@@ -863,5 +863,47 @@ export const GUIDES: Record<string, Guide> = {
   'pallof-press': g(
     ['Stand side-on to a cable at chest height, holding the handle at your chest.', 'Press the handle straight out in front of you and hold for a second.', 'Bring it back in. Do both sides.'],
     ["Resist the cable's pull: don't let your torso rotate.", 'Brace as if about to be pushed.'],
+  ),
+
+  // Hyperextension family and posterior chain
+  'glute-hyperextension': g(
+    ['Set the pad a little lower than usual and turn your toes out.', 'Round your upper back slightly and lower your torso.', 'Raise up by squeezing your glutes, stopping when your body is straight.'],
+    ['Think "hips into the pad": the glutes do the lifting, not the lower back.', 'Add a plate or band for more load.'],
+  ),
+  'single-leg-back-extension': g(
+    ['Set up on the hyperextension bench and lock in one foot, letting the other float.', 'Lower your torso by hinging at the hip.', 'Raise back up to a straight line. Switch legs after the set.'],
+    ['Log one side; do the same reps on the other.', 'Keep your hips level.'],
+  ),
+  'side-hyperextension': g(
+    ['Lie sideways on the hyperextension bench with your hip on the pad and feet locked in.', 'Lower your torso toward the floor to the side.', 'Raise back up using your obliques. Switch sides after the set.'],
+    ['Cross your arms over your chest or hold a light plate.', 'Move slowly; no bouncing.'],
+  ),
+  'ball-back-extension': g(
+    ['Lie face down over a stability ball with your hips on the ball and feet wide against a wall.', 'Lower your chest around the ball.', 'Lift your chest until your body is straight.'],
+    ['Hands behind your head make it harder, by your sides easier.', 'Squeeze your glutes at the top.'],
+  ),
+  'reverse-hyperextension': g(
+    ['Lie face down on the reverse hyper machine (or a high bench) with your hips at the edge and hold the handles.', 'Swing your legs up behind you until they are in line with your body.', 'Lower under control.'],
+    ['Lift with your glutes and hamstrings, not momentum.', 'Great for the lower back without loading the spine.'],
+  ),
+  'glute-ham-raise': g(
+    ['Set up on a GHD with your knees just behind the pad and feet locked in.', 'Start upright, then lower your body forward until it is parallel to the floor.', 'Pull yourself back up with your hamstrings.'],
+    ['Keep a straight line from knees to shoulders.', 'Use your hands to assist at first if needed.'],
+  ),
+  'ghd-sit-up': g(
+    ['Sit on the GHD with your feet locked in and hips on the pad.', 'Lean back until your torso is parallel to the floor or slightly below.', 'Sit up and reach toward your toes.'],
+    ['Build up slowly: this is very hard on the abs.', "Don't drop below parallel until you're used to it."],
+  ),
+  superman: g(
+    ['Lie face down with your arms stretched overhead.', 'Lift your arms, chest and legs off the floor at the same time.', 'Hold for a second, then lower.'],
+    ['Keep your neck neutral and look at the floor.', 'Squeeze your glutes as you lift.'],
+  ),
+  'bird-dog': g(
+    ['Start on hands and knees.', 'Reach one arm forward and the opposite leg back until both are straight.', 'Return and switch sides.'],
+    ['Keep your hips level, as if balancing a glass on your back.', 'Count each side as a rep, the same way every time.'],
+  ),
+  'jefferson-curl': g(
+    ['Stand on a box holding a light barbell or dumbbell with straight arms.', 'Slowly roll down one vertebra at a time, letting the weight reach past your toes.', 'Roll back up, stacking your spine from the bottom up.'],
+    ['Start very light: this trains spinal flexion on purpose.', 'Move slowly and stop well short of pain.'],
   ),
 };
