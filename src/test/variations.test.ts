@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { filterExercises } from '../components/ExercisePicker';
 import { BUILT_IN_EXERCISES, variationsOf } from '../data/exercises';
 import { matchExercise } from '../lib/importCsv';
 import { replaceExercise } from '../lib/workoutOps';
@@ -16,7 +17,7 @@ describe('exercise variations', () => {
     }
     // Loaded and bodyweight versions log differently; only a few pairs should.
     const mixed = BUILT_IN_EXERCISES.filter((e) => e.variantOf && byId.get(e.variantOf)!.type !== e.type).map((e) => e.id);
-    expect(mixed).toEqual(['smith-glute-bridge']);
+    expect(mixed.sort()).toEqual(['back-extension-machine', 'smith-glute-bridge']);
   });
 
   it('finds the whole family from any member', () => {
@@ -40,6 +41,16 @@ describe('exercise variations', () => {
     expect(m('Hip Thrust (Smith Machine)')).toBe('smith-hip-thrust');
     expect(m('Pull Up (Narrow Grip)')).toBe('pull-up-close');
     expect(m('Squat (Smith Machine)')).toBe('smith-squat');
+    expect(m('Back Extension')).toBe('back-extension');
+    expect(m('Hyperextension')).toBe('back-extension');
+    expect(m('Back Extension (Hyperextension)')).toBe('back-extension');
+    expect(m('Reverse Hyperextension')).toBe('reverse-hyperextension');
+    expect(m('Back Extension (Machine)')).toBe('back-extension-machine');
+  });
+
+  it('finds the hyperextension family by searching "hyper"', () => {
+    const found = filterExercises(BUILT_IN_EXERCISES, 'hyper', null).map((e) => e.id);
+    expect(found).toEqual(expect.arrayContaining(['back-extension', 'glute-hyperextension', 'side-hyperextension', 'reverse-hyperextension']));
   });
 
   it('keeps entered sets when switching to a variation', () => {

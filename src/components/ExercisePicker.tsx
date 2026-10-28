@@ -19,7 +19,6 @@ export function filterExercises(list: Exercise[], query: string, muscleFilter: s
   });
 }
 
-/** Muscle-coloured tile with the exercise's initial (or a check when selected). */
 /** Coloured tile showing the muscle an exercise works (or an activity icon for cardio). */
 export function ExerciseTile({ exercise, selected, small }: { exercise?: Exercise; selected?: boolean; small?: boolean }) {
   return (
