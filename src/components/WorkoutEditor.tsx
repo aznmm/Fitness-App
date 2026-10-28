@@ -183,15 +183,6 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             {live && ` · Rest ${restSec ? formatDuration(restSec) : 'off'}`}
           </span>
         </button>
-        <button
-          className={`ex-check${allDone ? ' on' : ''}`}
-          onClick={toggleExercise}
-          disabled={!we.sets.length}
-          aria-label={allDone ? `Mark ${exercise?.name ?? 'exercise'} not done` : `Complete ${exercise?.name ?? 'exercise'}`}
-          aria-pressed={allDone}
-        >
-          <Check size={19} strokeWidth={3.2} />
-        </button>
         <button className="glass-btn" style={{ width: 34, height: 34 }} aria-label="Exercise options" onClick={() => setMenu(true)}>
           <MoreHorizontal size={19} />
         </button>
@@ -233,9 +224,20 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
         );
       })}
 
-      <button className="btn btn-sm btn-block add-set" onClick={() => onChange(addSet(we.id))}>
-        <Plus size={16} strokeWidth={2.5} /> Add set
-      </button>
+      <div className="ex-actions">
+        <button
+          className={`btn ex-done${allDone ? ' on' : ''}`}
+          onClick={toggleExercise}
+          disabled={!we.sets.length}
+          aria-label={allDone ? `Mark ${exercise?.name ?? 'exercise'} not done` : `Mark ${exercise?.name ?? 'exercise'} done`}
+          aria-pressed={allDone}
+        >
+          <Check size={18} strokeWidth={3} /> {allDone ? 'Completed' : 'Done'}
+        </button>
+        <button className="btn add-set" onClick={() => onChange(addSet(we.id))} aria-label="Add set">
+          <Plus size={20} strokeWidth={2.5} />
+        </button>
+      </div>
 
       {menu && (
         <Sheet title={exercise?.name ?? 'Exercise'} onClose={() => setMenu(false)}>

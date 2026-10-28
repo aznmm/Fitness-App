@@ -50,7 +50,7 @@ export function ActiveWorkout() {
     if (doneSets + unticked === 0) {
       const ok = await confirm({
         title: 'Nothing logged yet',
-        message: 'Enter your sets, or tick the ✓ next to an exercise when you finish it. Discard this empty workout instead?',
+        message: 'Enter your sets, or tap Done under an exercise when you finish it. Discard this empty workout instead?',
         confirmLabel: 'Discard workout',
         cancelLabel: 'Keep going',
         danger: true,
