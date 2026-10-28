@@ -4,8 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, HeatLegend, heatColor, heatStep } from '../components/BodyMap';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
-import { ExerciseInitial } from '../components/ExercisePicker';
+import { ExerciseTile } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
+import { MuscleIcon } from '../components/MuscleIcon';
 import { Sheet } from '../components/Sheet';
 import { ScoreRing } from '../components/ScoreRing';
 import { formatSteps, StepsSheet } from '../components/Steps';
@@ -20,7 +21,7 @@ import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_
 import { formatElapsed, formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
 import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
-import type { Muscle } from '../types';
+import type { Muscle, StrengthGroup } from '../types';
 import { HistoryView } from './History';
 
 /** Dashboard: an overview of training, steps and strength, plus the full workout history. */
@@ -159,6 +160,9 @@ function StepsSection() {
   );
 }
 
+/** The muscle drawn on each strength group's tile. */
+const GROUP_ICON: Record<StrengthGroup, Muscle> = { chest: 'chest', back: 'lats', shoulders: 'shoulders', arms: 'biceps', legs: 'quads' };
+
 function StrengthSection() {
   const { current, history, change, bodyweight } = useStrength();
   const { byId } = useExercises();
@@ -237,7 +241,9 @@ function StrengthSection() {
               const gs = current.groups[g];
               return (
                 <div key={g} className={`list-item m-${g}`} style={{ alignItems: 'flex-start', paddingTop: 14, paddingBottom: 14 }}>
-                  <div className={`tile m-${g}`}>{GROUP_LABELS[g].charAt(0)}</div>
+                  <div className={`tile m-${g}`}>
+                    <MuscleIcon muscle={GROUP_ICON[g]} size={32} />
+                  </div>
                   <div className="grow">
                     <div className="spread">
                       <span className="title">{GROUP_LABELS[g]}</span>
@@ -577,7 +583,7 @@ function RecordsSection() {
       <div className="list with-icons">
         {records.map(({ exercise, rec, last }) => (
           <Link to={`/exercises/${exercise.id}`} className="list-item" key={exercise.id}>
-            <ExerciseInitial exercise={exercise} />
+            <ExerciseTile exercise={exercise} />
             <div className="grow">
               <div className="title truncate">{exercise.name}</div>
               <div className="sub truncate">

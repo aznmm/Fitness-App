@@ -5,7 +5,8 @@ import { relativeDayInline } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { DayPlan } from '../lib/plans';
 import { useExercises, useStore } from '../store/useStore';
-import type { Routine } from '../types';
+import type { Exercise, Routine } from '../types';
+import { ExerciseIcon } from './MuscleIcon';
 import { Sheet } from './Sheet';
 
 /** Creates an empty routine and returns its id; opens the editor unless told not to. */
@@ -20,10 +21,37 @@ export function useCreateRoutine() {
   };
 }
 
-/** Tile colour for a routine: the group of its first exercise. */
-export function useRoutineTile() {
+/** A routine's focus: an exercise from the muscle it trains most (by sets), for its tile. */
+export function useRoutineFocus() {
   const { byId } = useExercises();
-  return (r: Routine) => muscleClass(byId.get(r.exercises[0]?.exerciseId ?? '')?.primary) || 'm-cardio';
+  return (r: Routine): Exercise | undefined => {
+    const sets = new Map<string, number>();
+    let focus: Exercise | undefined;
+    for (const re of r.exercises) {
+      const ex = byId.get(re.exerciseId);
+      if (!ex) continue;
+      const n = (sets.get(ex.primary) ?? 0) + re.sets;
+      sets.set(ex.primary, n);
+      if (!focus || n > (sets.get(focus.primary) ?? 0)) focus = ex;
+    }
+    return focus;
+  };
+}
+
+/** Tile colour class for a routine. */
+export function useRoutineTile() {
+  const focusOf = useRoutineFocus();
+  return (r: Routine) => muscleClass(focusOf(r)?.primary) || 'm-cardio';
+}
+
+/** A routine's tile: its main muscle group, coloured like that group. */
+export function RoutineTile({ routine }: { routine: Routine }) {
+  const focus = useRoutineFocus()(routine);
+  return (
+    <span className={`tile ${muscleClass(focus?.primary) || 'm-cardio'}`} aria-hidden>
+      {focus ? <ExerciseIcon exercise={{ ...focus, secondary: [] }} size={32} /> : <ClipboardList size={19} />}
+    </span>
+  );
 }
 
 interface Props {
@@ -98,11 +126,10 @@ export function StartWorkoutSheet({ plan, onStart, onClose }: Props) {
 }
 
 function RoutineRow({ routine, onStart }: { routine: Routine; onStart: (routineId?: string) => void }) {
-  const tile = useRoutineTile();
   const empty = !routine.exercises.length;
   return (
     <button className="list-item" onClick={() => onStart(routine.id)} disabled={empty} style={empty ? { opacity: 0.5 } : undefined}>
-      <span className={`tile ${tile(routine)}`}>{routine.name.trim().charAt(0).toUpperCase()}</span>
+      <RoutineTile routine={routine} />
       <span className="grow">
         <span className="title truncate" style={{ display: 'block' }}>
           {routine.name}

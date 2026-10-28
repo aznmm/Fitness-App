@@ -28,8 +28,9 @@ export function setE1RM(set: WorkoutSet, type: ExerciseType, bodyweightKg?: numb
   return estimate1RM(effectiveLoad(set, type, bodyweightKg), set.reps ?? 0);
 }
 
+/** Weight × reps. Assistance (negative weight on assisted machines) adds no volume. */
 export function setVolume(set: WorkoutSet): number {
-  return (set.weight ?? 0) * (set.reps ?? 0);
+  return Math.max(0, set.weight ?? 0) * (set.reps ?? 0);
 }
 
 export function workoutVolume(w: Workout): number {
@@ -84,6 +85,10 @@ export interface ExerciseRecords {
   bestSessionVolume: number;
   longestDuration: number;
   longestDistance: number;
+  /** Assisted machines: the smallest assistance used (as negative weight, closest to 0). */
+  leastAssist?: number;
+  /** Cardio: the set with the fastest average speed. */
+  bestRateSet?: WorkoutSet;
 }
 
 export function emptyRecords(): ExerciseRecords {
@@ -105,6 +110,11 @@ export function recordsFromSessions(sessions: ExerciseSession[], type: ExerciseT
       r.mostReps = Math.max(r.mostReps, s.reps ?? 0);
       r.longestDuration = Math.max(r.longestDuration, s.duration ?? 0);
       r.longestDistance = Math.max(r.longestDistance, s.distance ?? 0);
+      if ((s.weight ?? 0) < 0 && (r.leastAssist === undefined || s.weight! > r.leastAssist)) r.leastAssist = s.weight;
+      if (s.distance && s.duration) {
+        const best = r.bestRateSet;
+        if (!best || s.distance / s.duration > best.distance! / best.duration!) r.bestRateSet = s;
+      }
       vol += setVolume(s);
     }
     r.bestSessionVolume = Math.max(r.bestSessionVolume, vol);

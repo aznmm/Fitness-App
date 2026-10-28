@@ -12,7 +12,8 @@ import { EQUIPMENT_LABELS, MUSCLE_LABELS } from '../data/exercises';
 import { exerciseSessions, recordsFromSessions, repMaxes, setE1RM, setVolume, workingSets, type ExerciseSession } from '../lib/calc';
 import { formatDate, relativeDay } from '../lib/dates';
 import { GAUGE_MAX, levelFor, liftScore, standardFor } from '../lib/strength';
-import { formatDistance, formatDuration, formatVolume, formatWeight, fromKg, fromMetres, trimNumber } from '../lib/units';
+import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
+import { formatDuration, formatVolume, formatWeight, fromKg, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, ExerciseType, Unit } from '../types';
 
@@ -23,7 +24,9 @@ interface Metric {
   format: (v: number) => string;
 }
 
-function metricsFor(type: ExerciseType, unit: Unit, bw?: number): Metric[] {
+function metricsFor(exercise: Exercise, unit: Unit, bw?: number): Metric[] {
+  const type: ExerciseType = exercise.type;
+  const spec = distanceSpec(exercise, unit);
   const best = (s: ExerciseSession, f: (x: ExerciseSession['sets'][number]) => number) => Math.max(0, ...workingSets(s.sets).map(f));
   const w = (kg: number) => `${trimNumber(fromKg(kg, unit))} ${unit}`;
   switch (type) {
@@ -40,10 +43,15 @@ function metricsFor(type: ExerciseType, unit: Unit, bw?: number): Metric[] {
         ...(bw ? [{ id: 'e1rm', label: 'Est. 1RM', value: (s: ExerciseSession) => best(s, (x) => setE1RM(x, type, bw)), format: w }] : []),
       ];
     case 'duration':
-      return [{ id: 'time', label: 'Longest', value: (s) => best(s, (x) => x.duration ?? 0), format: formatDuration }];
+      return [
+        { id: 'time', label: exercise.primary === 'cardio' ? 'Time' : 'Longest', value: (s) => best(s, (x) => x.duration ?? 0), format: formatDuration },
+        ...(exercise.primary === 'cardio'
+          ? [{ id: 'kcal', label: 'Calories', value: (s: ExerciseSession) => workingSets(s.sets).reduce((a, x) => a + (x.calories ?? 0), 0), format: (v: number) => `${Math.round(v)} kcal` }]
+          : []),
+      ];
     case 'distance_duration':
       return [
-        { id: 'dist', label: 'Distance', value: (s) => workingSets(s.sets).reduce((a, x) => a + (x.distance ?? 0), 0), format: (v) => formatDistance(v, unit) },
+        { id: 'dist', label: 'Distance', value: (s) => workingSets(s.sets).reduce((a, x) => a + (x.distance ?? 0), 0), format: (v) => formatCardioDistance(v, spec) },
         { id: 'time', label: 'Time', value: (s) => workingSets(s.sets).reduce((a, x) => a + (x.duration ?? 0), 0), format: formatDuration },
       ];
   }
@@ -67,7 +75,7 @@ export function ExerciseDetail() {
 
   const unit = settings.unit;
   const records = recordsFromSessions(sessions, exercise.type, bodyweight);
-  const metrics = metricsFor(exercise.type, unit, bodyweight);
+  const metrics = metricsFor(exercise, unit, bodyweight);
   const metric = metrics.find((m) => m.id === metricId) ?? metrics[0];
   const points = sessions.map((s) => ({ x: s.date, y: metric.value(s) })).filter((p) => p.y > 0);
   const used = workouts.some((w) => w.exercises.some((we) => we.exerciseId === id));
@@ -130,7 +138,7 @@ export function ExerciseDetail() {
             <LineChart
               points={points}
               label={`${exercise.name} ${metric.label} over time`}
-              formatY={(v) => (metric.id === 'vol' ? formatVolume(v, unit, true).replace(` ${unit}`, '') : metric.id === 'time' ? formatDuration(v) : metric.id === 'dist' ? trimNumber(fromMetres(v, unit), 1) : trimNumber(metric.id === 'reps' || metric.id === 'total' ? v : fromKg(v, unit), 0))}
+              formatY={(v) => (metric.id === 'vol' ? formatVolume(v, unit, true).replace(` ${unit}`, '') : metric.id === 'time' ? formatDuration(v) : metric.id === 'dist' ? trimNumber(v / distanceSpec(exercise, unit).metres, 1) : metric.id === 'kcal' ? String(Math.round(v)) : trimNumber(metric.id === 'reps' || metric.id === 'total' ? v : fromKg(v, unit), 0))}
               formatX={(x) => formatDate(x)}
               formatXLong={(x) => `${formatDate(x, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · ${metric.format(points.find((p) => p.x === x)?.y ?? 0)}`}
             />
@@ -190,7 +198,7 @@ export function ExerciseDetail() {
                 {s.sets.map((set) => (
                   <div className="set-line" key={set.id}>
                     <span className={`n${set.kind === 'warmup' ? ' warmup' : ''}`}>{set.kind === 'warmup' ? 'W' : ++n}</span>
-                    <span className="grow">{describeSet(set, exercise.type, unit)}</span>
+                    <span className="grow">{describeSet(set, exercise, unit)}</span>
                     {exercise.type === 'weight_reps' && set.kind !== 'warmup' && (
                       <span className="muted small rounded-num">{formatWeight(setE1RM(set, exercise.type), unit)}</span>
                     )}
@@ -208,7 +216,7 @@ export function ExerciseDetail() {
 }
 
 /** Matches a trailing unit such as " lb" so it can be set smaller than the number. */
-const UNIT_SUFFIX = / (lb|kg|mi|km)$/;
+const UNIT_SUFFIX = / (lb|kg|mi|km|m|yd)$/;
 
 function RecordStats({ exercise, records, unit, bodyweight }: { exercise: Exercise; records: ReturnType<typeof recordsFromSessions>; unit: Unit; bodyweight?: number }) {
   const tiles: [string, string][] = [];
@@ -220,14 +228,16 @@ function RecordStats({ exercise, records, unit, bodyweight }: { exercise: Exerci
       break;
     case 'reps':
       tiles.push(['Most reps', records.mostReps ? String(records.mostReps) : '—']);
-      tiles.push(['Most added', records.heaviest ? formatWeight(records.heaviest, unit) : '—']);
+      if (exercise.assisted) tiles.push(['Least assist', records.leastAssist !== undefined ? formatWeight(Math.abs(records.leastAssist), unit) : '—']);
+      else tiles.push(['Most added', records.heaviest ? formatWeight(records.heaviest, unit) : '—']);
       tiles.push(['Est. 1RM', bodyweight && records.bestE1RM ? formatWeight(records.bestE1RM, unit) : '—']);
       break;
     case 'duration':
       tiles.push(['Longest', records.longestDuration ? formatDuration(records.longestDuration) : '—']);
       break;
     case 'distance_duration':
-      tiles.push(['Longest', records.longestDistance ? formatDistance(records.longestDistance, unit) : '—']);
+      tiles.push(['Longest', records.longestDistance ? formatCardioDistance(records.longestDistance, distanceSpec(exercise, unit)) : '—']);
+      tiles.push(['Best', records.bestRateSet ? (cardioRate(records.bestRateSet, exercise, unit) ?? '—') : '—']);
       break;
   }
   tiles.push(['Sessions', String(records.sessions)]);

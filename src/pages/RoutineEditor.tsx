@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { confirm } from '../components/Dialogs';
-import { ExerciseInitial, ExercisePicker } from '../components/ExercisePicker';
+import { ExerciseTile, ExercisePicker } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { NumberInput } from '../components/NumberInput';
 import { uid } from '../lib/id';
@@ -73,7 +73,7 @@ export function RoutineEditor() {
         {routine.exercises.map((re, i) => (
           <div className="card tight" key={re.id}>
             <div className="row" style={{ gap: 4 }}>
-              <ExerciseInitial exercise={byId.get(re.exerciseId)} small />
+              <ExerciseTile exercise={byId.get(re.exerciseId)} small />
               <h3 className="truncate grow" style={{ marginLeft: 8 }}>
                 {exerciseName(byId, re.exerciseId)}
               </h3>

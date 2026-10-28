@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { addExercises, addSet, createWorkout, insertSet, pruneIncomplete, removeSet, routineFromWorkout } from '../lib/workoutOps';
+import {
+  addExercises,
+  addSet,
+  completeSets,
+  countUntickedEntries,
+  createWorkout,
+  insertSet,
+  pruneIncomplete,
+  removeSet,
+  routineFromWorkout,
+  uncompleteSets,
+} from '../lib/workoutOps';
 import type { Routine } from '../types';
 import { byId, NOW, set, workout } from './helpers';
 
@@ -42,6 +53,30 @@ describe('workout operations', () => {
     const back = insertSet(we.id, middle, 1)(without);
     expect(back.exercises[0].sets.map((s) => s.weight)).toEqual([100, 105, 110]);
     expect(insertSet(we.id, middle, 1)(back)).toEqual(back); // undoing twice is harmless
+  });
+
+  it('ticks a whole exercise at once and can untick it', () => {
+    const w = workout(NOW, { squat: [set(100, 5, { done: false }), set(undefined, undefined, { done: false })] });
+    const we = w.exercises[0];
+    const done = completeSets(we.id, { [we.sets[0].id]: {}, [we.sets[1].id]: { weight: 100, reps: 5 } })(w);
+    expect(done.exercises[0].sets.map((s) => [s.done, s.reps])).toEqual([
+      [true, 5],
+      [true, 5],
+    ]);
+    expect(uncompleteSets(we.id)(done).exercises[0].sets.every((s) => !s.done)).toBe(true);
+  });
+
+  it('can keep unticked sets that have numbers entered', () => {
+    const w = workout(NOW, {
+      squat: [set(100, 5), set(100, 5, { done: false }), set(undefined, undefined, { done: false })],
+      plank: [set(undefined, undefined, { duration: 60, done: false })],
+      'leg-press': [set(200, undefined, { done: false })],
+    });
+    expect(countUntickedEntries(w)).toBe(2);
+    expect(pruneIncomplete(w).exercises.map((we) => we.sets.length)).toEqual([1]);
+    const kept = pruneIncomplete(w, true);
+    expect(kept.exercises.map((we) => we.sets.length)).toEqual([2, 1]);
+    expect(kept.exercises.flatMap((we) => we.sets).every((s) => s.done)).toBe(true);
   });
 
   it('prunes unfinished sets and empty exercises', () => {

@@ -51,10 +51,19 @@ export interface Exercise {
    * the standard is per dumbbell; for `reps` lifts it is total load (bodyweight + added).
    */
   standard?: number;
+  /** Assisted machine (pull-up, dip): the weight entered is assistance, stored as a negative added load. */
+  assisted?: boolean;
+  /** For cardio, how the effort is summarised from distance and time. */
+  metric?: CardioMetric;
+  /** Distance in metres (rowing, sprints) or pool lengths (yd/m) instead of miles/km. */
+  distanceScale?: 'metres' | 'pool';
   custom?: boolean;
   /** Last local change (ms), used to merge synced copies. */
   updatedAt?: number;
 }
+
+/** pace: min per mile/km; speed: mph or km/h; split500: rowing-style time per 500 m; split100: swim time per 100 m/yd. */
+export type CardioMetric = 'pace' | 'speed' | 'split500' | 'split100';
 
 export type SetKind = 'normal' | 'warmup' | 'drop' | 'failure';
 
@@ -68,6 +77,8 @@ export interface WorkoutSet {
   duration?: number;
   /** Metres. */
   distance?: number;
+  /** Energy burned, kcal (cardio). */
+  calories?: number;
   done: boolean;
 }
 

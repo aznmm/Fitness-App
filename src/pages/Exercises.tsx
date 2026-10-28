@@ -2,7 +2,7 @@ import { ChevronRight, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CustomExerciseSheet } from '../components/CustomExerciseSheet';
-import { ExerciseInitial, filterExercises } from '../components/ExercisePicker';
+import { ExerciseTile, filterExercises } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { EQUIPMENT_LABELS, MUSCLE_FILTERS, MUSCLE_LABELS } from '../data/exercises';
 import { relativeDayInline } from '../lib/dates';
@@ -65,7 +65,7 @@ export function Exercises() {
             const u = usage.get(e.id);
             return (
               <Link key={e.id} to={`/exercises/${e.id}`} className="list-item">
-                <ExerciseInitial exercise={e} />
+                <ExerciseTile exercise={e} />
                 <div className="grow">
                   <div className="title truncate">
                     {e.name}

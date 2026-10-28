@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { restFinishedAlert } from '../lib/feedback';
+import { primeAudio, restFinishedAlert } from '../lib/feedback';
 import { formatDuration } from '../lib/units';
 import { useNow } from '../lib/useNow';
 import { useStore } from '../store/useStore';
+import { Sheet } from './Sheet';
 
 const R = 17;
 const C = 2 * Math.PI * R;
@@ -61,5 +62,74 @@ export function RestTimerBar() {
         Skip
       </button>
     </div>
+  );
+}
+
+const QUICK_REST = [30, 60, 90, 120, 180, 300];
+
+/** Start a rest by hand, and choose whether one starts by itself after each set. */
+export function RestSheet({ onClose }: { onClose: () => void }) {
+  const rest = useStore((s) => s.rest);
+  const settings = useStore((s) => s.settings);
+  const updateSettings = useStore((s) => s.updateSettings);
+  const startRest = useStore((s) => s.startRest);
+  const stopRest = useStore((s) => s.stopRest);
+
+  return (
+    <Sheet title="Rest timer" onClose={onClose}>
+      {rest && (
+        <button
+          className="btn btn-plain-danger btn-block"
+          style={{ marginBottom: 12 }}
+          onClick={() => {
+            stopRest();
+            onClose();
+          }}
+        >
+          Stop the current rest
+        </button>
+      )}
+      <div className="list-header">Start a rest now</div>
+      <div className="rest-grid">
+        {QUICK_REST.map((sec) => (
+          <button
+            key={sec}
+            className={`btn ${sec === settings.defaultRestSec ? 'btn-primary' : 'btn-tinted'}`}
+            onClick={() => {
+              primeAudio();
+              startRest(sec);
+              onClose();
+            }}
+          >
+            {formatDuration(sec)}
+          </button>
+        ))}
+      </div>
+
+      <div className="list" style={{ marginTop: 24 }}>
+        <label className="list-item">
+          <span className="grow">
+            <span className="title" style={{ display: 'block' }}>
+              Start after each set
+            </span>
+            <span className="sub">When you tick a set or finish an exercise</span>
+          </span>
+          <span className="switch">
+            <input type="checkbox" checked={settings.autoRestTimer} onChange={(e) => updateSettings({ autoRestTimer: e.target.checked })} aria-label="Start rest timer after each set" />
+            <span />
+          </span>
+        </label>
+        <label className="list-item">
+          <span className="grow title">Sound when rest is over</span>
+          <span className="switch">
+            <input type="checkbox" checked={settings.restSound} onChange={(e) => updateSettings({ restSound: e.target.checked })} aria-label="Rest timer sound" />
+            <span />
+          </span>
+        </label>
+      </div>
+      <p className="tiny muted" style={{ margin: '12px 4px 0' }}>
+        Each exercise's rest length is in its ⋯ menu; the default is in Settings.
+      </p>
+    </Sheet>
   );
 }

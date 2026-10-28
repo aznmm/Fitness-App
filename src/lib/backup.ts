@@ -80,7 +80,7 @@ function csvCell(v: string | number | undefined): string {
 
 /** One row per set — opens cleanly in Excel / Google Sheets. */
 export function workoutsToCsv(data: Pick<AppData, 'workouts'>, exercisesById: Map<string, Exercise>, unit: Unit): string {
-  const header = ['Date', 'Workout', 'Exercise', 'Set', 'Type', `Weight (${unit})`, 'Reps', 'Duration', `Distance (${unit === 'lb' ? 'mi' : 'km'})`, 'Notes'];
+  const header = ['Date', 'Workout', 'Exercise', 'Set', 'Type', `Weight (${unit})`, 'Reps', 'Duration', `Distance (${unit === 'lb' ? 'mi' : 'km'})`, 'Calories', 'Notes'];
   const rows = [header.join(',')];
   const workouts = [...data.workouts].filter((w) => w.endedAt).sort((a, b) => a.startedAt - b.startedAt);
   for (const w of workouts) {
@@ -99,6 +99,7 @@ export function workoutsToCsv(data: Pick<AppData, 'workouts'>, exercisesById: Ma
             s.reps,
             s.duration !== undefined ? formatDuration(s.duration) : undefined,
             s.distance !== undefined ? trimNumber(fromMetres(s.distance, unit), 3) : undefined,
+            s.calories,
             i === 0 ? we.notes : undefined,
           ]
             .map(csvCell)

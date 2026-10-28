@@ -2,7 +2,7 @@ import { AlertTriangle, ChevronDown, ChevronRight, FileUp, Plus, Search } from '
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '../components/Dialogs';
-import { ExerciseInitial, ExercisePicker } from '../components/ExercisePicker';
+import { ExerciseTile, ExercisePicker } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { Sheet } from '../components/Sheet';
 import { formatDate } from '../lib/dates';
@@ -296,7 +296,7 @@ export function Import() {
                   return (
                     <button className="list-item" key={name} onClick={() => setEditing(name)}>
                       {ex ? (
-                        <ExerciseInitial exercise={ex} />
+                        <ExerciseTile exercise={ex} />
                       ) : (
                         <div className="tile">
                           <Plus size={20} />

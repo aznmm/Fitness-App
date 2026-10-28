@@ -10,6 +10,7 @@ import {
   addSet,
   addWarmups,
   applyTarget,
+  completeSets,
   insertSet,
   moveExercise,
   patchExercise,
@@ -17,23 +18,16 @@ import {
   removeExercise,
   removeSet,
   replaceExercise,
+  uncompleteSets,
   type WorkoutUpdater,
 } from '../lib/workoutOps';
-import {
-  distanceUnit,
-  formatDuration,
-  fromKg,
-  fromMetres,
-  parseDuration,
-  toKg,
-  toMetres,
-  trimNumber,
-} from '../lib/units';
+import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
+import { formatDuration, fromKg, parseDuration, toKg, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } from '../types';
 import { toast } from './Dialogs';
 import { ExerciseGuide } from './ExerciseGuide';
-import { ExerciseInitial, ExercisePicker } from './ExercisePicker';
+import { ExerciseTile, ExercisePicker } from './ExercisePicker';
 import { SwipeToDelete } from './SwipeToDelete';
 import { NumberInput } from './NumberInput';
 import { PlateCalculator } from './PlateCalculator';
@@ -145,17 +139,57 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   const hasHistory = previous.warmup.length + previous.working.length > 0;
   // Working sets aim for the suggestion; without one, a routine target only applies on a first-ever session.
   const goal = suggestion ?? (hasHistory ? undefined : we.target);
+  const rows = we.sets.map((set, index) => {
+    const warmup = set.kind === 'warmup';
+    const number = warmup ? 0 : ++workingIndex;
+    const prev = warmup ? prevFor(previous.warmup, warmupIndex++) : prevFor(previous.working, number - 1);
+    return { set, index, number, prev, goal: warmup ? undefined : goal };
+  });
+  const allDone = we.sets.length > 0 && we.sets.every((s) => s.done);
+
+  // One tap for the whole exercise: every set is saved with what was typed, else the target or last time.
+  const toggleExercise = () => {
+    if (allDone) {
+      onChange(uncompleteSets(we.id));
+      return;
+    }
+    const values: Record<string, Partial<WorkoutSet>> = {};
+    let missing = 0;
+    for (const r of rows) {
+      if (r.set.done) continue;
+      const v = tickValues(r.set, type, r.goal, r.prev);
+      if (v) values[r.set.id] = v;
+      else missing++;
+    }
+    const need = type === 'duration' ? 'a time' : type === 'distance_duration' ? 'a distance or time' : 'reps';
+    if (!Object.keys(values).length) {
+      toast(`Enter ${need} first`);
+      return;
+    }
+    onChange(completeSets(we.id, values));
+    if (missing) toast(`${missing} set${missing > 1 ? 's' : ''} still need${missing > 1 ? '' : 's'} ${need}`);
+    onSetDone();
+  };
 
   return (
     <section className="ex-card" aria-label={exercise?.name}>
       <div className="ex-card-head">
-        <ExerciseInitial exercise={exercise} />
+        <ExerciseTile exercise={exercise} />
         <button className="name" onClick={() => navigate(`/exercises/${we.exerciseId}`)}>
           <strong className="truncate">{exercise?.name ?? 'Unknown exercise'}</strong>
           <span>
             {exercise ? MUSCLE_LABELS[exercise.primary] : ''}
             {live && ` · Rest ${restSec ? formatDuration(restSec) : 'off'}`}
           </span>
+        </button>
+        <button
+          className={`ex-check${allDone ? ' on' : ''}`}
+          onClick={toggleExercise}
+          disabled={!we.sets.length}
+          aria-label={allDone ? `Mark ${exercise?.name ?? 'exercise'} not done` : `Complete ${exercise?.name ?? 'exercise'}`}
+          aria-pressed={allDone}
+        >
+          <Check size={19} strokeWidth={3.2} />
         </button>
         <button className="glass-btn" style={{ width: 34, height: 34 }} aria-label="Exercise options" onClick={() => setMenu(true)}>
           <MoreHorizontal size={19} />
@@ -174,13 +208,10 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
         </div>
       )}
 
-      {suggestion && <TargetStrip suggestion={suggestion} type={type} unit={settings.unit} onApply={() => onChange(applyTarget(we.id, suggestion))} />}
+      {suggestion && !allDone && <TargetStrip suggestion={suggestion} type={type} unit={settings.unit} onApply={() => onChange(applyTarget(we.id, suggestion))} />}
 
-      <SetHeader type={type} unit={settings.unit} />
-      {we.sets.map((set, index) => {
-        const warmup = set.kind === 'warmup';
-        const number = warmup ? 0 : ++workingIndex;
-        const prev = warmup ? prevFor(previous.warmup, warmupIndex++) : prevFor(previous.working, number - 1);
+      <SetHeader exercise={exercise} type={type} unit={settings.unit} />
+      {rows.map(({ set, index, number, prev, goal }) => {
         return (
           <SetRow
             key={set.id}
@@ -188,10 +219,11 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             set={set}
             index={index}
             number={number}
+            exercise={exercise}
             type={type}
             unit={settings.unit}
             prev={prev}
-            goal={warmup ? undefined : goal}
+            goal={goal}
             records={records}
             bodyweight={bodyweight}
             onChange={onChange}
@@ -338,12 +370,29 @@ function columnsFor(type: Exercise['type']): number {
   return type === 'duration' ? 1 : 2;
 }
 
-function SetHeader({ type, unit }: { type: Exercise['type']; unit: Unit }) {
+/** Cardio is logged as distance/time plus calories, with last time and the pace on a line underneath. */
+function isCardio(exercise: Exercise | undefined): boolean {
+  return exercise?.primary === 'cardio' && (exercise.type === 'duration' || exercise.type === 'distance_duration');
+}
+
+function SetHeader({ exercise, type, unit }: { exercise?: Exercise; type: Exercise['type']; unit: Unit }) {
+  if (isCardio(exercise)) {
+    const cols = type === 'distance_duration' ? [distanceSpec(exercise, unit).label, 'Time', 'kcal'] : ['Time', 'kcal'];
+    return (
+      <div className={`set-grid head cardio${cols.length === 2 ? ' cols-2' : ''}`}>
+        <span>Set</span>
+        {cols.map((c) => (
+          <span key={c}>{c}</span>
+        ))}
+        <span aria-hidden />
+      </div>
+    );
+  }
   const cols =
     type === 'weight_reps' ? [unit, 'Reps']
-    : type === 'reps' ? [`+${unit}`, 'Reps']
+    : type === 'reps' ? [exercise?.assisted ? 'Assist' : `+${unit}`, 'Reps']
     : type === 'duration' ? ['Time']
-    : [distanceUnit(unit), 'Time'];
+    : [distanceSpec(exercise, unit).label, 'Time'];
   return (
     <div className={`set-grid head${columnsFor(type) === 1 ? ' cols-1' : ''}`}>
       <span>Set</span>
@@ -356,24 +405,54 @@ function SetHeader({ type, unit }: { type: Exercise['type']; unit: Unit }) {
   );
 }
 
-export function describeSet(set: Partial<WorkoutSet>, type: Exercise['type'], unit: Unit): string {
-  const w = set.weight !== undefined ? trimNumber(fromKg(set.weight, unit)) : undefined;
-  switch (type) {
+type ExerciseLike = Exercise['type'] | (Pick<Exercise, 'type'> & Partial<Pick<Exercise, 'distanceScale'>>);
+
+/** One-line summary of a set: "100 lb × 5", "−40 lb × 8" (assisted), "3.1 mi · 28:00 · 310 kcal". */
+export function describeSet(set: Partial<WorkoutSet>, ex: ExerciseLike, unit: Unit): string {
+  const e = typeof ex === 'string' ? { type: ex } : ex;
+  const w = set.weight !== undefined ? trimNumber(fromKg(Math.abs(set.weight), unit)) : undefined;
+  const kcal = set.calories ? `${set.calories} kcal` : '';
+  switch (e.type) {
     case 'weight_reps':
       return `${w ?? 0} ${unit} × ${set.reps ?? 0}`;
     case 'reps':
-      return set.weight ? `+${w} ${unit} × ${set.reps ?? 0}` : `${set.reps ?? 0} reps`;
+      return set.weight ? `${set.weight > 0 ? '+' : '−'}${w} ${unit} × ${set.reps ?? 0}` : `${set.reps ?? 0} reps`;
     case 'duration':
-      return formatDuration(set.duration);
+      return [set.duration !== undefined || !kcal ? formatDuration(set.duration) : '', kcal].filter(Boolean).join(' · ');
     case 'distance_duration': {
-      const d = set.distance !== undefined ? `${trimNumber(fromMetres(set.distance, unit), 2)} ${distanceUnit(unit)}` : '';
+      const d = set.distance !== undefined ? formatCardioDistance(set.distance, distanceSpec(e, unit)) : '';
       const t = set.duration !== undefined ? formatDuration(set.duration) : '';
-      return [d, t].filter(Boolean).join(' · ') || '—';
+      return [d, t, kcal].filter(Boolean).join(' · ') || '—';
     }
   }
 }
 
 const KIND_LABEL: Record<SetKind, string> = { normal: '', warmup: 'W', drop: 'D', failure: 'F' };
+
+type Goal = Pick<WorkoutSet, 'weight' | 'reps' | 'duration'>;
+
+/** Greyed-out hints in empty fields: today's goal when there is one, else last time's numbers. */
+function placeholders(goal?: Goal, prev?: WorkoutSet) {
+  return goal
+    ? { weight: goal.weight, reps: goal.reps, duration: goal.duration ?? prev?.duration, distance: prev?.distance }
+    : { weight: prev?.weight, reps: prev?.reps, duration: prev?.duration, distance: prev?.distance };
+}
+
+/** What a set is saved with when ticked: what was typed, else its hints. Null when the main number is missing. */
+function tickValues(set: WorkoutSet, type: Exercise['type'], goal?: Goal, prev?: WorkoutSet): Partial<WorkoutSet> | null {
+  const ph = placeholders(goal, prev);
+  const filled: Partial<WorkoutSet> = {
+    weight: set.weight ?? ph.weight,
+    reps: set.reps ?? ph.reps,
+    duration: set.duration ?? ph.duration,
+    distance: set.distance ?? ph.distance,
+  };
+  const missing =
+    type === 'weight_reps' || type === 'reps' ? !filled.reps
+    : type === 'duration' ? !filled.duration && !set.calories
+    : !filled.duration && !filled.distance && !set.calories;
+  return missing ? null : filled;
+}
 
 interface SetRowProps {
   weId: string;
@@ -381,59 +460,56 @@ interface SetRowProps {
   /** Position in the exercise's sets, to put it back on undo. */
   index: number;
   number: number;
+  exercise?: Exercise;
   type: Exercise['type'];
   unit: Unit;
   prev?: WorkoutSet;
   /** Today's aim for this set: the smart suggestion or a routine target. */
-  goal?: Pick<WorkoutSet, 'weight' | 'reps' | 'duration'>;
+  goal?: Goal;
   records?: ExerciseRecords;
   bodyweight?: number;
   onChange: (fn: WorkoutUpdater) => void;
   onDone: () => void;
 }
 
-const SetRow = memo(function SetRow({ weId, set, index, number, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
+const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
   const patch = (p: Partial<WorkoutSet>) => onChange(patchSet(weId, set.id, p));
   const remove = () => {
     onChange(removeSet(weId, set.id));
     toast(set.kind === 'warmup' ? 'Warm-up set deleted' : `Set ${number} deleted`, { label: 'Undo', run: () => onChange(insertSet(weId, set, index)) });
   };
-  const fmtWeight = useCallback((kg: number) => trimNumber(fromKg(kg, unit), 2), [unit]);
+  // Assisted machines: type the assistance as a positive number; it's stored as negative added weight.
+  const assist = !!exercise?.assisted;
+  const fmtWeight = useCallback((kg: number) => trimNumber(fromKg(assist ? Math.abs(kg) : kg, unit), 2), [unit, assist]);
   const parseWeight = useCallback((s: string) => {
     const n = Number(s.replace(',', '.'));
-    return Number.isNaN(n) ? undefined : toKg(n, unit);
-  }, [unit]);
-  const fmtDist = useCallback((m: number) => trimNumber(fromMetres(m, unit), 2), [unit]);
+    if (Number.isNaN(n)) return undefined;
+    return assist ? -Math.abs(toKg(n, unit)) || 0 : toKg(n, unit);
+  }, [unit, assist]);
+  const spec = distanceSpec(exercise, unit);
+  const fmtDist = useCallback((m: number) => trimNumber(m / spec.metres, spec.label === 'mi' || spec.label === 'km' ? 2 : 0), [spec.metres, spec.label]);
   const parseDist = useCallback((s: string) => {
     const n = Number(s.replace(',', '.'));
-    return Number.isNaN(n) ? undefined : toMetres(n, unit);
-  }, [unit]);
+    return Number.isNaN(n) ? undefined : n * spec.metres;
+  }, [spec.metres]);
   const parseReps = useCallback((s: string) => {
     const n = Number(s);
     return Number.isInteger(n) ? n : undefined;
   }, []);
+  const parseCalories = useCallback((s: string) => {
+    const n = Math.round(Number(s.replace(',', '.')));
+    return Number.isNaN(n) ? undefined : n;
+  }, []);
 
-  // Placeholders: today's goal when there is one, else last time's numbers.
-  const ph = goal
-    ? { weight: goal.weight, reps: goal.reps, duration: goal.duration ?? prev?.duration, distance: prev?.distance }
-    : { weight: prev?.weight, reps: prev?.reps, duration: prev?.duration, distance: prev?.distance };
+  const ph = placeholders(goal, prev);
 
   const toggleDone = () => {
     if (set.done) {
       patch({ done: false });
       return;
     }
-    const filled: Partial<WorkoutSet> = {
-      weight: set.weight ?? ph.weight,
-      reps: set.reps ?? ph.reps,
-      duration: set.duration ?? ph.duration,
-      distance: set.distance ?? ph.distance,
-    };
-    const missing =
-      (type === 'weight_reps' || type === 'reps') ? !filled.reps
-      : type === 'duration' ? !filled.duration
-      : !filled.duration && !filled.distance;
-    if (missing) {
+    const filled = tickValues(set, type, goal, prev);
+    if (!filled) {
       toast(type === 'duration' ? 'Enter a time first' : type === 'distance_duration' ? 'Enter a distance or time first' : 'Enter reps first');
       return;
     }
@@ -448,12 +524,13 @@ const SetRow = memo(function SetRow({ weId, set, index, number, type, unit, prev
     <NumberInput
       className="set-input"
       inputMode="decimal"
-      aria-label={type === 'reps' ? 'Added weight' : 'Weight'}
+      aria-label={assist ? 'Assistance' : type === 'reps' ? 'Added weight' : 'Weight'}
       placeholder={ph.weight !== undefined ? fmtWeight(ph.weight) : type === 'reps' ? '0' : '—'}
       value={set.weight}
       onValue={(v) => patch({ weight: v })}
       format={fmtWeight}
       parse={parseWeight}
+      allowNegative={assist}
     />
   );
   const repsInput = (
@@ -492,39 +569,81 @@ const SetRow = memo(function SetRow({ weId, set, index, number, type, unit, prev
       parse={parseDist}
     />
   );
+  const caloriesInput = (
+    <NumberInput
+      className="set-input"
+      inputMode="numeric"
+      aria-label="Calories"
+      placeholder="—"
+      value={set.calories}
+      onValue={(v) => patch({ calories: v })}
+      format={String}
+      parse={parseCalories}
+    />
+  );
+  const badge = (
+    <div className={`set-badge ${set.kind}`}>
+      {KIND_LABEL[set.kind] || number}
+      <select
+        aria-label={`Set ${number || 'warm-up'} options`}
+        value={set.kind}
+        onChange={(e) => {
+          if (e.target.value === 'delete') remove();
+          else patch({ kind: e.target.value as SetKind });
+        }}
+      >
+        <option value="normal">Normal set</option>
+        <option value="warmup">Warm-up set</option>
+        <option value="drop">Drop set</option>
+        <option value="failure">Failure set</option>
+        <option value="delete">Delete set</option>
+      </select>
+    </div>
+  );
+  const check = (
+    <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
+      <Check size={19} strokeWidth={3.2} />
+    </button>
+  );
+  const copyPrev = () => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance });
+
+  if (exercise && isCardio(exercise)) {
+    const rate = type === 'distance_duration' ? cardioRate(set.distance && set.duration ? set : { distance: ph.distance, duration: ph.duration }, exercise, unit) : null;
+    return (
+      <SwipeToDelete onDelete={remove} label={`Delete set ${number || 'warm-up'}`}>
+        <div className={`set-grid set-row cardio${set.done ? ' done' : ''}${type === 'duration' ? ' cols-2' : ''}`}>
+          {badge}
+          {type === 'distance_duration' && distanceInput}
+          {durationInput}
+          {caloriesInput}
+          {check}
+          <button className="cardio-line" onClick={copyPrev} disabled={!prev} aria-label={prev ? `Copy last time: ${describeSet(prev, exercise, unit)}` : undefined}>
+            {prs.length ? (
+              <span className="pr-tag">
+                <Trophy size={11} strokeWidth={2.5} /> PR
+              </span>
+            ) : null}
+            <span className="truncate">
+              {prev ? `Last ${describeSet(prev, exercise, unit)}` : 'First time'}
+              {rate && <strong> · {rate}</strong>}
+            </span>
+          </button>
+        </div>
+      </SwipeToDelete>
+    );
+  }
 
   return (
     <SwipeToDelete onDelete={remove} label={`Delete set ${number || 'warm-up'}`}>
       <div className={`set-grid set-row${set.done ? ' done' : ''}${cols1 ? ' cols-1' : ''}`}>
-        <div className={`set-badge ${set.kind}`}>
-          {KIND_LABEL[set.kind] || number}
-          <select
-            aria-label={`Set ${number || 'warm-up'} options`}
-            value={set.kind}
-            onChange={(e) => {
-              if (e.target.value === 'delete') remove();
-              else patch({ kind: e.target.value as SetKind });
-            }}
-          >
-            <option value="normal">Normal set</option>
-            <option value="warmup">Warm-up set</option>
-            <option value="drop">Drop set</option>
-            <option value="failure">Failure set</option>
-            <option value="delete">Delete set</option>
-          </select>
-        </div>
-        <button
-          className="prev"
-          disabled={!prev}
-          onClick={() => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance })}
-          aria-label={prev ? `Copy previous: ${describeSet(prev, type, unit)}` : 'No previous set'}
-        >
+        {badge}
+        <button className="prev" disabled={!prev} onClick={copyPrev} aria-label={prev ? `Copy previous: ${describeSet(prev, exercise ?? type, unit)}` : 'No previous set'}>
           {prs.length ? (
             <span className="pr-tag">
               <Trophy size={11} strokeWidth={2.5} /> PR
             </span>
           ) : prev ? (
-            describeSet(prev, type, unit)
+            describeSet(prev, exercise ?? type, unit)
           ) : (
             '—'
           )}
@@ -542,9 +661,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, type, unit, prev
             {durationInput}
           </>
         )}
-        <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
-          <Check size={19} strokeWidth={3.2} />
-        </button>
+        {check}
       </div>
     </SwipeToDelete>
   );

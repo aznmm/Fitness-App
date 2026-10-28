@@ -57,6 +57,17 @@ export function Home() {
   const todayPlan = planFor(plans, routines, now, now);
   const todayDone = !!todayPlan && done.some((w) => sameDay(w.startedAt, now) && w.routineId === todayPlan.routine.id);
   const upNext = todayPlan && !todayDone && todayPlan.routine.exercises.length ? todayPlan.routine : null;
+  const trainedToday = done.some((w) => sameDay(w.startedAt, now));
+  // Shown in the bar once the greeting scrolls away.
+  const todayStatus = active
+    ? `${active.name} in progress`
+    : todayPlan
+      ? `${todayPlan.routine.name} ${todayDone ? 'done ✓' : 'today'}`
+      : trainedToday
+        ? 'Workout done ✓'
+        : plans.some((p) => p.routineId)
+          ? 'Rest day'
+          : 'Nothing planned';
   const quickRoutines = [...routines].sort((a, b) => (b.lastUsedAt ?? b.createdAt) - (a.lastUsedAt ?? a.createdAt)).slice(0, 6);
 
   return (
@@ -64,6 +75,12 @@ export function Home() {
       <PageHeader
         eyebrow={formatDate(Date.now(), { weekday: 'long', month: 'long', day: 'numeric' })}
         title={greeting()}
+        navTitle={
+          <span className="nav-stack">
+            <span>{formatDate(now, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+            <span className="nav-sub truncate">{todayStatus}</span>
+          </span>
+        }
         actions={
           <Link to="/settings" className="glass-btn" aria-label="Settings">
             <SettingsIcon size={20} />

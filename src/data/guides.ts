@@ -378,4 +378,216 @@ export const GUIDES: Record<string, Guide> = {
     ['Hold the handles at hip height with the rope behind you.', 'Turn the rope with your wrists and jump just high enough to clear it.', 'Land softly on the balls of your feet.'],
     ['Keep your elbows close to your body.', 'Start with short rounds, like 30 seconds on and 30 off.'],
   ),
+
+  // Machines and assisted
+  'incline-chest-press-machine': g(
+    ['Set the seat so the handles start at your upper chest.', 'Press up and forward until your arms are almost straight.', 'Lower slowly until you feel a stretch across the top of your chest.'],
+    ['Keep your shoulder blades pulled back against the pad.', "Don't let your lower back arch off the seat."],
+  ),
+  'decline-chest-press-machine': g(
+    ['Adjust the seat so the handles line up with your lower chest.', 'Press down and forward until your arms are almost straight.', 'Return under control.'],
+    ['Keep your chest up and back flat against the pad.', 'Use a full range without letting the stack touch.'],
+  ),
+  'smith-bench-press': g(
+    ['Set the bench so the bar comes down to your mid-chest.', 'Unhook the bar by rotating it and lower it to your chest.', 'Press up, then rotate the hooks to re-rack.'],
+    ['Set the safety stops just below chest height.', 'Squeeze your shoulder blades together as on a free bench press.'],
+  ),
+  'smith-incline-press': g(
+    ['Set the bench to 30–45° under the bar so it lands on your upper chest.', 'Unhook and lower the bar to just below your collarbones.', 'Press straight up and re-rack.'],
+    ['Keep your elbows slightly tucked, not flared.', 'Set the safety stops before you start.'],
+  ),
+  'low-cable-fly': g(
+    ['Set both pulleys low and hold a handle in each hand, palms facing forward.', 'With a soft bend in your elbows, sweep your hands up and together to chest height.', 'Lower back down slowly.'],
+    ['Lean slightly forward with a staggered stance.', 'Lead with your hands, not your shoulders: this hits the upper chest.'],
+  ),
+  'assisted-dip': g(
+    ['Choose the assistance: more weight on the stack means more help.', 'Kneel or stand on the pad and grip the dip handles with straight arms.', 'Lower until your upper arms are about parallel to the floor, then press back up.'],
+    ['Log the assistance you used; less assistance over time means you are getting stronger.', 'Lean slightly forward for more chest, stay upright for more triceps.'],
+  ),
+  'chest-supported-row': g(
+    ['Set the chest pad so you can reach the handles with straight arms.', 'Pull the handles toward your ribs, squeezing your shoulder blades together.', 'Return slowly to a full stretch.'],
+    ['Keep your chest on the pad the whole time.', "Don't shrug: pull with your back, not your neck."],
+  ),
+  'high-row-machine': g(
+    ['Sit with your thighs under the pad and grab the handles overhead and in front of you.', 'Pull down and back until your hands reach your upper chest.', 'Let the handles rise back under control.'],
+    ['Drive your elbows down toward your hips.', 'Keep your chest up throughout.'],
+  ),
+  'low-row-machine': g(
+    ['Sit with your chest against the pad and grab the low handles.', 'Row the handles back to your waist, elbows close to your body.', 'Extend your arms fully on the way back.'],
+    ['Pause for a moment with your shoulder blades squeezed.', "Don't jerk the weight with your lower back."],
+  ),
+  'machine-lat-pulldown': g(
+    ['Adjust the thigh pad, sit down and grab the handles above you.', 'Pull the handles down to your upper chest.', 'Let them rise until your arms are straight.'],
+    ['Think about pulling your elbows into your back pockets.', 'Lean back only slightly.'],
+  ),
+  'close-grip-pulldown': g(
+    ['Attach a close-grip (V) handle, sit and lock your thighs under the pad.', 'Pull the handle to your upper chest, leaning back slightly.', 'Return until your arms are fully straight.'],
+    ['Keep your elbows close to your sides.', 'Control the way up; let your lats stretch.'],
+  ),
+  'pullover-machine': g(
+    ['Sit with your back against the pad and place your elbows or hands on the bar above you.', 'Pull the bar down in an arc to your waist.', 'Return slowly until you feel a stretch in your lats.'],
+    ['Keep your arms almost straight: the movement comes from your shoulders.', "Don't let your lower back arch."],
+  ),
+  'assisted-pull-up': g(
+    ['Choose the assistance: more weight on the stack means more help.', 'Kneel or stand on the pad and grip the bar wider than your shoulders, palms facing away.', 'Pull your chest toward the bar, then lower to straight arms.'],
+    ['Log the assistance you used; reduce it over time until you can do bodyweight pull-ups.', 'Lead with your chest and squeeze your shoulder blades down.'],
+  ),
+  'assisted-chin-up': g(
+    ['Choose the assistance and kneel or stand on the pad.', 'Grip the bar about shoulder width with palms facing you.', 'Pull your chin over the bar, then lower all the way down.'],
+    ['Log the assistance you used; less assistance means more strength.', 'Keep your elbows pointing down, not out.'],
+  ),
+  'back-extension-machine': g(
+    ['Sit with the pad across your upper back and your feet secured.', 'Extend backward until your body is upright or slightly past.', 'Return forward under control.'],
+    ['Move smoothly; no jerking at the top.', 'Keep your neck in line with your spine.'],
+  ),
+  'smith-shoulder-press': g(
+    ['Set an upright bench under the bar so it comes down in front of your chin.', 'Unhook the bar and lower it to about chin height.', 'Press up until your arms are straight, then re-rack.'],
+    ['Keep your back flat against the bench.', 'Set the safety stops at chin height.'],
+  ),
+  'lateral-raise-machine': g(
+    ['Adjust the seat so your shoulders line up with the machine pivots.', 'Place your arms against the pads and raise them out to your sides to shoulder height.', 'Lower slowly.'],
+    ["Lead with your elbows and don't shrug.", 'Use a weight you can control without swinging.'],
+  ),
+  'bicep-curl-machine': g(
+    ['Set the seat so your upper arms rest flat on the pad with elbows at the pivot.', 'Curl the handles up toward your shoulders.', 'Lower all the way down slowly.'],
+    ['Keep your upper arms on the pad throughout.', 'Squeeze at the top for a second.'],
+  ),
+  'machine-preacher-curl': g(
+    ['Sit with the backs of your arms on the angled pad and grab the handles.', 'Curl up until your forearms are vertical.', 'Lower until your arms are almost straight.'],
+    ['Control the bottom: that is where the stretch is.', "Don't lift your elbows off the pad."],
+  ),
+  'tricep-extension-machine': g(
+    ['Sit with your upper arms on the pad and elbows lined up with the pivot.', 'Push the handles down until your arms are straight.', 'Return slowly until your forearms pass vertical.'],
+    ['Keep your elbows still: only your forearms move.', 'Lock out fully at the bottom.'],
+  ),
+  'seated-dip-machine': g(
+    ['Sit with your back against the pad and grab the handles at your sides.', 'Press the handles down until your arms are straight.', 'Let them rise until your elbows are at about 90°.'],
+    ['Keep your shoulders down, away from your ears.', 'Stay upright to keep the focus on your triceps.'],
+  ),
+  'smith-squat': g(
+    ['Set the bar at shoulder height and step under it, resting it on your upper back.', 'Unhook and squat down until your thighs are at least parallel to the floor.', 'Drive back up and re-rack.'],
+    ['Place your feet slightly in front of the bar.', 'Set the safety stops just below your lowest position.'],
+  ),
+  'pendulum-squat': g(
+    ['Step in with your back against the pad and shoulders under the yokes.', 'Release the safety and squat down as deep as is comfortable.', 'Push through your whole foot to stand back up.'],
+    ['Keep your lower back on the pad.', 'Feet lower on the platform work the quads more.'],
+  ),
+  'belt-squat': g(
+    ['Attach the belt around your hips and stand on the platform.', 'Squat down with your chest up until your thighs are about parallel.', 'Stand back up.'],
+    ['Great for loading the legs without loading your spine.', 'Hold the handles lightly for balance.'],
+  ),
+  'standing-leg-curl': g(
+    ['Stand facing the machine with the pad behind one ankle.', 'Curl your heel toward your glutes.', 'Lower slowly, then switch legs after the set.'],
+    ['Keep your hips against the pad; no swinging.', 'Log both legs with the same reps.'],
+  ),
+  'hip-thrust-machine': g(
+    ['Sit with your upper back against the pad and the belt or pad across your hips.', 'Drive your hips up until your body is straight from shoulders to knees.', 'Lower under control.'],
+    ['Squeeze your glutes hard at the top.', 'Keep your chin tucked and ribs down.'],
+  ),
+  'glute-kickback-machine': g(
+    ['Set up on the machine with one foot on the plate or pad.', 'Push your leg back and up until your hip is fully extended.', 'Return slowly, then switch legs.'],
+    ["Don't arch your lower back to get extra range.", 'Pause and squeeze at the top.'],
+  ),
+  'leg-press-calf-raise': g(
+    ['Sit in the leg press with the balls of your feet on the bottom edge of the platform.', 'Keeping your knees straight but not locked, press through your toes.', 'Lower your heels until you feel a stretch.'],
+    ['Keep the safety catches on and never fully lock your knees.', 'Use a full range: deep stretch, full squeeze.'],
+  ),
+  'ab-crunch-machine': g(
+    ['Adjust the seat and grab the handles or place your arms on the pads.', 'Crunch forward, curling your ribs toward your hips.', 'Return slowly without letting the stack touch.'],
+    ['Move from your abs, not your arms.', 'Breathe out as you crunch.'],
+  ),
+  'torso-rotation': g(
+    ['Sit and lock your legs in place, holding the pads or handles.', 'Rotate your torso to one side against the resistance.', 'Return to centre slowly; do both sides.'],
+    ['Use a light weight and a controlled speed.', 'Keep your hips facing forward.'],
+  ),
+  'captains-chair': g(
+    ['Stand on the step with your back against the pad and forearms on the arm rests.', 'Raise your knees (or straight legs) up toward your chest.', 'Lower slowly without swinging.'],
+    ['Tilt your pelvis up at the top to work the lower abs.', 'Straight legs make it harder.'],
+  ),
+
+  // Cardio
+  jogging: g(
+    ['Warm up with a few minutes of brisk walking.', 'Jog at an easy pace where you could still hold a conversation.', 'Walk for a few minutes to cool down.'],
+    ['Land with your feet under your hips, not out in front.', 'Log your distance and time; Forge works out your pace.'],
+  ),
+  'trail-running': g(
+    ['Warm up with easy walking or jogging.', 'Run at a steady effort, shortening your stride on climbs and descents.', 'Cool down with an easy walk.'],
+    ['Watch the ground a few steps ahead.', 'Run by effort, not pace: hills slow everyone down.'],
+  ),
+  sprints: g(
+    ['Warm up for 10 minutes with jogging and drills.', 'Sprint a set distance, such as 100 m, at close to full speed.', 'Walk back or rest fully before the next one. Log each sprint as a set.'],
+    ['Stay tall and drive your arms.', 'Quality over quantity: stop when your speed drops off.'],
+  ),
+  'treadmill-walk': g(
+    ['Start the belt slowly and step on.', 'Walk at a brisk pace with relaxed arms.', 'Slow down for a couple of minutes before stopping.'],
+    ["Don't hold the handrails; let your arms swing.", 'Log the distance and time from the display.'],
+  ),
+  'incline-walk': g(
+    ['Start walking on a flat belt, then raise the incline (10–15% is common).', 'Walk at a steady pace for the session.', 'Lower the incline and slow down to cool down.'],
+    ["Don't hold the rails: it takes the work away from your legs.", 'Stand tall instead of leaning into the hill.'],
+  ),
+  hiking: g(
+    ['Plan your route and bring water.', 'Hike at a steady pace, shortening your steps on steep sections.', 'Log the distance and total time when you finish.'],
+    ['Use poles on steep or long descents to save your knees.', 'Moving time and elevation from your watch can go in the notes.'],
+  ),
+  rucking: g(
+    ['Pack a weighted backpack (start with around 10% of your bodyweight).', 'Walk at a brisk pace, standing tall.', 'Log the distance and time; note the pack weight in the exercise notes.'],
+    ['Keep the weight high and tight against your back.', 'Build the load and distance gradually.'],
+  ),
+  'stationary-bike': g(
+    ['Set the seat so your knee is slightly bent at the bottom of the pedal stroke.', 'Pedal at a steady cadence and resistance for the session.', 'Finish with a few easy minutes.'],
+    ['Keep your upper body relaxed.', "Log the distance and time from the bike's display."],
+  ),
+  'mountain-biking': g(
+    ['Check your tyres and brakes before you set off.', 'Ride at a steady effort, shifting early for climbs.', 'Log the distance and total time.'],
+    ['Stand on the pedals for rough descents.', 'Look where you want to go, not at obstacles.'],
+  ),
+  'spin-class': g(
+    ['Set the seat and handlebars before class starts.', "Follow the instructor's cues for cadence and resistance.", 'Log the class length and calories.'],
+    ['Never pedal with zero resistance at high speed.', 'Keep your shoulders relaxed and core braced.'],
+  ),
+  'air-bike': g(
+    ['Set the seat so your leg is almost straight at the bottom.', 'Push and pull the handles while you pedal.', 'Work in intervals, e.g. 20 seconds hard and 40 easy.'],
+    ['The harder you go, the more resistance you get.', 'Log the time and the calories from the display.'],
+  ),
+  'ski-erg': g(
+    ['Stand facing the machine and reach up to grab both handles.', 'Pull down hard, hinging at the hips and bending your knees slightly.', 'Let the handles rise as you stand back up.'],
+    ['The power comes from your hips and lats, not just your arms.', 'Log the metres and time; Forge shows your /500m split.'],
+  ),
+  kayaking: g(
+    ['Sit upright with your feet braced and hands shoulder-width on the paddle.', 'Rotate your torso to drive each stroke.', 'Log the distance and time.'],
+    ['Power comes from your core, not just your arms.', 'Always wear a buoyancy aid.'],
+  ),
+  hiit: g(
+    ['Warm up for 5 minutes.', 'Alternate short, hard efforts with easy recovery, such as 30 seconds on and 30 off.', 'Cool down and log the total time and calories.'],
+    ['Go hard on the work intervals; rest fully on the easy ones.', 'Two or three sessions a week is plenty.'],
+  ),
+  'battle-ropes': g(
+    ['Hold one rope end in each hand with your knees bent and chest up.', 'Make fast waves with alternating or double arms.', 'Work in rounds, such as 30 seconds on and 30 off.'],
+    ['Stay in a half-squat and brace your core.', 'Move from your shoulders, keeping the waves going to the anchor.'],
+  ),
+  boxing: g(
+    ['Wrap your hands and warm up with shadow boxing.', 'Work rounds on the bag or pads, typically 3 minutes with 1 minute rest.', 'Log the total time and calories.'],
+    ['Turn your hips and shoulders into each punch.', 'Keep your hands up and chin down between combinations.'],
+  ),
+  dance: g(
+    ['Warm up with a few easy songs.', 'Dance continuously for the session or class.', 'Log the total time and calories.'],
+    ['Any style counts: keep moving.', 'Drink water between songs.'],
+  ),
+  basketball: g(
+    ['Warm up with jogging, stretches and easy shooting.', 'Play your game or drills.', 'Log the time played and calories.'],
+    ['Land softly from jumps with your knees over your toes.', 'Good court shoes help protect your ankles.'],
+  ),
+  soccer: g(
+    ['Warm up with jogging, skips and passing.', 'Play your match or training session.', 'Log the time played and calories.'],
+    ['Stretch your hamstrings and hips afterwards.', 'Wear shin guards for matches.'],
+  ),
+  tennis: g(
+    ['Warm up with a gentle rally and some shoulder circles.', 'Play your match or practice session.', 'Log the time played and calories.'],
+    ['Rotate through your hips and shoulders on groundstrokes.', 'Stay on the balls of your feet between shots.'],
+  ),
+  pickleball: g(
+    ['Warm up with easy dinking at the kitchen line.', 'Play your games.', 'Log the time played and calories.'],
+    ['Stay low with your paddle up at the net.', 'Shuffle rather than cross your feet when moving sideways.'],
+  ),
 };
