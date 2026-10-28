@@ -23,10 +23,10 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 **Workout logging**
 - Start an empty workout or one from a routine; a live timer runs in the header
 - Log weight × reps, bodyweight reps (+ added weight), timed holds, or distance + time for cardio
-- **One tick per exercise**: the ✓ next to an exercise completes all its sets, filling empty ones from your target or last time. Ticking single sets still works, and sets you typed numbers into can be saved as done when you finish
-- **Previous** column shows what you did last time; empty fields auto-fill from it when you tick ✓
+- **One tick per exercise**: no ticking every set. Type in what you did; the ✓ next to an exercise completes all its sets, filling empty ones from your target or last time. Sets with numbers that aren't ticked can be saved as done when you finish
+- **Previous** column shows what you did last time (tap it to copy); empty fields fill from it when you tick the exercise
 - Warm-up, drop and failure sets (tap the set number)
-- Rest timer: start one any time from the timer button next to Finish, and choose whether it starts by itself after each set; ±15s / skip, a beep and a vibration
+- Rest timer: start one any time from the timer button next to Finish, and choose whether it starts by itself when you enter a set; ±15s / skip, a beep and a vibration
 - 🏆 PR badges as you beat your best estimated 1RM, weight, reps, time or distance
 - Per-exercise notes and rest times, replace / reorder / remove exercises
 - Minimise a workout and keep browsing — a bar at the bottom brings you back
