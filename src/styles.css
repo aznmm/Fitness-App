@@ -1951,10 +1951,6 @@ button.day-row:active {
   transition: background 0.3s var(--ease);
 }
 
-.set-row.done {
-  background: var(--green-tint);
-}
-
 /* Bottom of each exercise: Done (ticks every set) and a small Add set */
 .ex-actions {
   display: grid;
@@ -1963,11 +1959,7 @@ button.day-row:active {
   margin-top: 10px;
 }
 
-.ex-done {
-  background: var(--green-tint);
-  color: var(--green-text);
-}
-
+/* Grey until every set is done, then green */
 .ex-done.on {
   background: var(--green);
   color: #fff;
@@ -2092,10 +2084,6 @@ button.day-row:active {
 .set-input::placeholder {
   color: var(--text-3);
   font-weight: 500;
-}
-
-.set-row.done .set-input {
-  background: transparent;
 }
 
 @keyframes check-pop {
