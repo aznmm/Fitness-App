@@ -57,6 +57,8 @@ export interface Exercise {
   metric?: CardioMetric;
   /** Distance in metres (rowing, sprints) or pool lengths (yd/m) instead of miles/km. */
   distanceScale?: 'metres' | 'pool';
+  /** Id of the exercise this is a grip, stance or machine version of; variations can be swapped mid-workout. */
+  variantOf?: string;
   custom?: boolean;
   /** Last local change (ms), used to merge synced copies. */
   updatedAt?: number;

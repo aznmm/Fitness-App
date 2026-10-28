@@ -72,14 +72,18 @@ const mapExercise = (w: Workout, weId: string, fn: (we: WorkoutExercise) => Work
   exercises: w.exercises.map((we) => (we.id === weId ? fn(we) : we)),
 });
 
+/**
+ * Swap the exercise in a slot. A different exercise starts with empty sets;
+ * a variation (another grip or machine) keeps what was entered.
+ */
 export const replaceExercise =
-  (weId: string, exerciseId: string): WorkoutUpdater =>
+  (weId: string, exerciseId: string, keepSets = false): WorkoutUpdater =>
   (w) =>
     mapExercise(w, weId, (we) => ({
       ...we,
       exerciseId,
-      target: undefined,
-      sets: we.sets.map((s) => ({ ...s, weight: undefined, reps: undefined, duration: undefined, distance: undefined, done: false })),
+      target: keepSets ? we.target : undefined,
+      sets: keepSets ? we.sets : we.sets.map((s) => ({ ...s, weight: undefined, reps: undefined, duration: undefined, distance: undefined, done: false })),
     }));
 
 export const patchExercise =

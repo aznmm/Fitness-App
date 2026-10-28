@@ -58,7 +58,8 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - Bodyweight log with trend chart
 
 **Your data**
-- ~140 built-in exercises, plus your own custom ones: free weights, cables, a big range of machines (Smith, plate-loaded, assisted pull-up/dip, where you log the assistance), and 30 cardio activities
+- ~210 built-in exercises, plus your own custom ones: free weights, cables, a big range of machines (plate-loaded, assisted pull-up/dip where you log the assistance), 22 Smith machine lifts, and 30 cardio activities
+- **Variations**: wide, close, reverse and neutral grips, wide and narrow stances, and Smith machine versions of the main lifts are linked, so each exercise lists its variations and you can switch grip or machine mid-workout without losing your sets
 - **Cardio**: runs, walks, jogs, rides, swims, rowing, hikes, stairs, HIIT and sports, logged as distance, time and calories with pace (/mi or /km), speed (mph or km/h), /500m splits for rowing and /100 yd or m for swimming
 - Every exercise shows the muscle it works (or an activity icon for cardio) instead of a letter
 - lb or kg (switch any time — everything converts)
