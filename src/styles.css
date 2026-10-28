@@ -1889,23 +1889,23 @@ button.day-row:active {
 
 .set-grid {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 74px 60px 40px;
+  grid-template-columns: 30px minmax(0, 1fr) 84px 68px;
   gap: 8px;
   align-items: center;
 }
 
 .set-grid.cols-1 {
-  grid-template-columns: 30px minmax(0, 1fr) 96px 40px;
+  grid-template-columns: 30px minmax(0, 1fr) 112px;
 }
 
 /* Cardio: distance, time and calories, with last time and pace underneath */
 .set-grid.cardio {
-  grid-template-columns: 30px repeat(3, minmax(0, 1fr)) 40px;
+  grid-template-columns: 30px repeat(3, minmax(0, 1fr));
   row-gap: 4px;
 }
 
 .set-grid.cardio.cols-2 {
-  grid-template-columns: 30px repeat(2, minmax(0, 1fr)) 40px;
+  grid-template-columns: 30px repeat(2, minmax(0, 1fr));
 }
 
 .set-grid.head.cardio > :nth-child(n + 2) {
@@ -2105,28 +2105,6 @@ button.day-row:active {
 
 .set-row.done .set-input {
   background: transparent;
-}
-
-.check {
-  width: 40px;
-  height: 36px;
-  border-radius: 10px;
-  border: none;
-  background: var(--fill);
-  color: var(--text-3);
-  display: grid;
-  place-items: center;
-  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease);
-}
-
-.check:active {
-  transform: scale(0.88);
-}
-
-.set-row.done .check {
-  background: var(--green);
-  color: #fff;
-  animation: check-pop 0.4s var(--spring);
 }
 
 @keyframes check-pop {

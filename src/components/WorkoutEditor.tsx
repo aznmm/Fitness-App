@@ -11,6 +11,7 @@ import {
   addWarmups,
   applyTarget,
   completeSets,
+  hasEntry,
   insertSet,
   moveExercise,
   patchExercise,
@@ -227,7 +228,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             records={records}
             bodyweight={bodyweight}
             onChange={onChange}
-            onDone={onSetDone}
+            onLogged={onSetDone}
           />
         );
       })}
@@ -384,7 +385,6 @@ function SetHeader({ exercise, type, unit }: { exercise?: Exercise; type: Exerci
         {cols.map((c) => (
           <span key={c}>{c}</span>
         ))}
-        <span aria-hidden />
       </div>
     );
   }
@@ -400,7 +400,6 @@ function SetHeader({ exercise, type, unit }: { exercise?: Exercise; type: Exerci
       {cols.map((c) => (
         <span key={c}>{c}</span>
       ))}
-      <span aria-hidden />
     </div>
   );
 }
@@ -469,11 +468,17 @@ interface SetRowProps {
   records?: ExerciseRecords;
   bodyweight?: number;
   onChange: (fn: WorkoutUpdater) => void;
-  onDone: () => void;
+  /** The set just got its first reps, time, distance or calories: it's been done, so rest can start. */
+  onLogged: () => void;
 }
 
-const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, unit, prev, goal, records, bodyweight, onChange, onDone }: SetRowProps) {
+const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, unit, prev, goal, records, bodyweight, onChange, onLogged }: SetRowProps) {
   const patch = (p: Partial<WorkoutSet>) => onChange(patchSet(weId, set.id, p));
+  // Entering a set's numbers is what marks it done now that sets have no ✓ of their own.
+  const patchEntry = (p: Partial<WorkoutSet>) => {
+    if (!hasEntry(set) && Object.values(p).some(Boolean)) onLogged();
+    patch(p);
+  };
   const remove = () => {
     onChange(removeSet(weId, set.id));
     toast(set.kind === 'warmup' ? 'Warm-up set deleted' : `Set ${number} deleted`, { label: 'Undo', run: () => onChange(insertSet(weId, set, index)) });
@@ -503,20 +508,6 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
 
   const ph = placeholders(goal, prev);
 
-  const toggleDone = () => {
-    if (set.done) {
-      patch({ done: false });
-      return;
-    }
-    const filled = tickValues(set, type, goal, prev);
-    if (!filled) {
-      toast(type === 'duration' ? 'Enter a time first' : type === 'distance_duration' ? 'Enter a distance or time first' : 'Enter reps first');
-      return;
-    }
-    patch({ ...filled, done: true });
-    onDone();
-  };
-
   const prs = set.done && records ? setPRs(set, type, records, bodyweight) : [];
   const cols1 = columnsFor(type) === 1;
 
@@ -540,7 +531,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       aria-label="Reps"
       placeholder={ph.reps !== undefined ? String(ph.reps) : '—'}
       value={set.reps}
-      onValue={(v) => patch({ reps: v })}
+      onValue={(v) => patchEntry({ reps: v })}
       format={String}
       parse={parseReps}
     />
@@ -552,7 +543,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       aria-label="Time"
       placeholder={ph.duration !== undefined ? formatDuration(ph.duration) : '0:00'}
       value={set.duration}
-      onValue={(v) => patch({ duration: v })}
+      onValue={(v) => patchEntry({ duration: v })}
       format={formatDuration}
       parse={parseDuration}
     />
@@ -564,7 +555,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       aria-label="Distance"
       placeholder={ph.distance !== undefined ? fmtDist(ph.distance) : '—'}
       value={set.distance}
-      onValue={(v) => patch({ distance: v })}
+      onValue={(v) => patchEntry({ distance: v })}
       format={fmtDist}
       parse={parseDist}
     />
@@ -576,7 +567,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       aria-label="Calories"
       placeholder="—"
       value={set.calories}
-      onValue={(v) => patch({ calories: v })}
+      onValue={(v) => patchEntry({ calories: v })}
       format={String}
       parse={parseCalories}
     />
@@ -600,11 +591,6 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       </select>
     </div>
   );
-  const check = (
-    <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
-      <Check size={19} strokeWidth={3.2} />
-    </button>
-  );
   const copyPrev = () => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance });
 
   if (exercise && isCardio(exercise)) {
@@ -616,7 +602,6 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
           {type === 'distance_duration' && distanceInput}
           {durationInput}
           {caloriesInput}
-          {check}
           <button className="cardio-line" onClick={copyPrev} disabled={!prev} aria-label={prev ? `Copy last time: ${describeSet(prev, exercise, unit)}` : undefined}>
             {prs.length ? (
               <span className="pr-tag">
@@ -661,7 +646,6 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
             {durationInput}
           </>
         )}
-        {check}
       </div>
     </SwipeToDelete>
   );
