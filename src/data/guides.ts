@@ -590,4 +590,278 @@ export const GUIDES: Record<string, Guide> = {
     ['Warm up with easy dinking at the kitchen line.', 'Play your games.', 'Log the time played and calories.'],
     ['Stay low with your paddle up at the net.', 'Shuffle rather than cross your feet when moving sideways.'],
   ),
+
+  // Grip, stance and Smith machine variations
+  'wide-grip-bench': g(
+    ['Lie on the bench and grip the bar about a hand-width wider than your normal grip.', 'Lower the bar to your mid-chest.', 'Press back up to straight arms.'],
+    ['A wider grip shifts work toward the chest and shortens the range.', "Don't go so wide your shoulders ache; forearms should stay near vertical at the bottom."],
+  ),
+  'smith-decline-bench': g(
+    ['Set a decline bench under the bar so it lines up with your lower chest.', 'Unhook the bar and lower it to your lower chest.', 'Press up and re-rack by rotating the hooks.'],
+    ['Set the safety stops before you start.', 'Keep your shoulder blades pinched together.'],
+  ),
+  'smith-close-grip-bench': g(
+    ['Lie under the bar and grip it about shoulder-width apart.', 'Lower the bar to your lower chest, elbows tucked close to your sides.', 'Press up until your arms lock out.'],
+    ['Narrow, not touching: hands about shoulder-width.', 'Keep your elbows in to load the triceps.'],
+  ),
+  'wide-push-up': g(
+    ['Set your hands wider than your shoulders in a push-up position.', 'Lower your chest to just above the floor.', 'Push back up, keeping your body in a straight line.'],
+    ['Wider hands put more work on the chest.', "Don't let your hips sag."],
+  ),
+  'diamond-push-up': g(
+    ['Place your hands together under your chest, forming a diamond with your thumbs and index fingers.', 'Lower your chest toward your hands, elbows close to your body.', 'Press back up.'],
+    ['This is a triceps-focused push-up.', 'Drop to your knees if you can\'t keep good form.'],
+  ),
+  'bench-dip': g(
+    ['Sit on the edge of a bench, hands beside your hips, and slide off with your legs out in front.', 'Bend your elbows to lower your hips until your upper arms are about parallel to the floor.', 'Press back up.'],
+    ['Keep your back close to the bench.', 'Bend your knees to make it easier, raise your feet to make it harder.'],
+  ),
+  'rack-pull': g(
+    ['Set the bar in a rack at about knee height.', 'Grip it just outside your legs, chest up and back flat.', 'Drive your hips forward to stand up tall, then lower to the pins.'],
+    ['A partial deadlift that lets you handle heavier weight for the upper back and lockout.', "Don't lean back at the top."],
+  ),
+  'smith-deadlift': g(
+    ['Stand under the Smith bar with it over your mid-foot.', 'Hinge down, grip the bar and set your back flat.', 'Stand up by pushing the floor away, then lower under control.'],
+    ['The fixed path helps you learn the hinge.', 'Keep the bar close to your legs the whole way.'],
+  ),
+  'barbell-row-reverse': g(
+    ['Hold the bar with an underhand grip, shoulder-width apart.', 'Hinge forward until your torso is about 45° or lower.', 'Row the bar to your lower stomach, then lower it.'],
+    ['The underhand grip brings in more biceps and lower lats.', 'Keep your back flat; no jerking.'],
+  ),
+  'pendlay-row': g(
+    ['Set the bar on the floor and hinge until your back is nearly parallel to the floor.', 'Row the bar explosively to your lower chest.', 'Return it all the way to the floor each rep.'],
+    ['Every rep starts from a dead stop.', 'Your torso stays still; only your arms and shoulders move.'],
+  ),
+  'smith-row': g(
+    ['Set the bar around knee height and hinge forward with a flat back.', 'Unhook and row the bar to your lower ribs.', 'Lower until your arms are straight.'],
+    ['The fixed path lets you focus on squeezing your back.', 'Keep your neck in line with your spine.'],
+  ),
+  'seal-row': g(
+    ['Lie face down on a high bench with the bar or dumbbells below you.', 'Row the weight up toward the bench.', 'Lower to full arm extension.'],
+    ['The bench supports your chest, so there is no cheating with your legs or back.', 'Squeeze your shoulder blades at the top.'],
+  ),
+  'seated-cable-row-wide': g(
+    ['Attach a long bar and grip it wider than your shoulders.', 'Sit tall and row the bar to your upper stomach, elbows flaring out a little.', 'Extend your arms slowly.'],
+    ['A wide grip works the upper back and rear delts more.', "Don't lean back to finish the rep."],
+  ),
+  'single-arm-cable-row': g(
+    ['Set a handle at chest height and hold it in one hand.', 'Row it to your side, letting your torso rotate slightly at the end.', 'Reach forward to stretch, then repeat. Switch sides.'],
+    ['Log the reps for one side; do the same on the other.', 'Lead with your elbow.'],
+  ),
+  'lat-pulldown-wide': g(
+    ['Grip the bar well outside shoulder-width, palms facing away.', 'Pull the bar down to your upper chest.', 'Let it rise until your arms are straight.'],
+    ['Drive your elbows down and back.', 'Lean back only slightly.'],
+  ),
+  'lat-pulldown-reverse': g(
+    ['Grip the bar about shoulder-width with palms facing you.', 'Pull it down to your upper chest, elbows close to your body.', 'Return to straight arms.'],
+    ['This grip brings in more biceps and lower lats.', 'Keep your chest up.'],
+  ),
+  'single-arm-pulldown': g(
+    ['Attach a single handle high and kneel or sit facing the cable.', 'Pull the handle down to your shoulder, elbow toward your hip.', 'Return slowly. Switch sides after the set.'],
+    ['Working one side at a time helps fix imbalances.', 'Keep your torso still.'],
+  ),
+  'pull-up-wide': g(
+    ['Grip the bar well wider than your shoulders, palms facing away.', 'Pull until your chin clears the bar.', 'Lower all the way down.'],
+    ['Wide grip shortens the range and targets the upper lats.', 'Lead with your chest.'],
+  ),
+  'pull-up-close': g(
+    ['Grip the bar with your hands close together, palms facing away.', 'Pull your chin over the bar.', 'Lower to straight arms.'],
+    ['Close grip uses a longer range and more biceps.', 'Keep your shoulders down, away from your ears.'],
+  ),
+  'pull-up-neutral': g(
+    ['Grab parallel handles with palms facing each other.', 'Pull up until your chin clears the handles.', 'Lower all the way down.'],
+    ['Neutral grip is the easiest on the shoulders and elbows.', 'Avoid kipping or swinging.'],
+  ),
+  'smith-inverted-row': g(
+    ['Set the Smith bar about waist height and lie underneath it.', 'Grip the bar and keep your body straight from heels to head.', 'Pull your chest to the bar, then lower.'],
+    ['Raise the bar to make it easier, lower it to make it harder.', 'Squeeze your glutes to stay rigid.'],
+  ),
+  'smith-shrug': g(
+    ['Set the bar at mid-thigh height and grip it just outside your hips.', 'Shrug your shoulders straight up toward your ears.', 'Lower slowly.'],
+    ["Don't roll your shoulders.", 'Pause at the top.'],
+  ),
+  'landmine-press': g(
+    ['Wedge one end of a barbell into a corner or landmine and hold the other end at your shoulder.', 'Press the bar up and forward until your arm is straight.', 'Lower back to your shoulder. Switch sides after the set.'],
+    ['The angled path is easier on the shoulders than pressing straight overhead.', 'Brace your core and avoid leaning back.'],
+  ),
+  'cable-front-raise': g(
+    ['Stand facing away from a low pulley with the handle between your legs.', 'Raise your arm straight in front of you to shoulder height.', 'Lower slowly.'],
+    ['Keep a slight bend in your elbow.', 'The cable keeps tension at the bottom too.'],
+  ),
+  'cable-rear-delt-fly': g(
+    ['Set two pulleys at shoulder height and cross the cables, holding the opposite handle in each hand.', 'Pull your arms out and back in a wide arc.', 'Return slowly until your hands cross.'],
+    ['Lead with your elbows, not your hands.', 'Keep the weight light and controlled.'],
+  ),
+  'upright-row-wide': g(
+    ['Hold the bar with your hands about shoulder-width or wider.', 'Pull it up along your body until your elbows are at shoulder height.', 'Lower slowly.'],
+    ['A wider grip is kinder to the shoulders than a narrow one.', 'Elbows lead, higher than your hands.'],
+  ),
+  'smith-upright-row': g(
+    ['Stand at the Smith bar and grip it about shoulder-width.', 'Pull the bar up to chest height, elbows high.', 'Lower under control.'],
+    ["Stop at shoulder height; don't force it higher.", 'Keep the bar close to your body.'],
+  ),
+  'barbell-curl-wide': g(
+    ['Hold the bar with your hands wider than shoulder-width, palms up.', 'Curl it up toward your shoulders.', 'Lower all the way down.'],
+    ['A wide grip emphasises the inner (short) head of the biceps.', 'Keep your elbows by your sides.'],
+  ),
+  'barbell-curl-close': g(
+    ['Hold the bar with your hands close together, palms up.', 'Curl it up to your chest.', 'Lower slowly.'],
+    ['A close grip emphasises the outer (long) head of the biceps.', "Don't swing your hips."],
+  ),
+  'ez-bar-curl': g(
+    ['Hold the EZ bar on the inner angled grips, palms angled up.', 'Curl the bar up to your shoulders.', 'Lower until your arms are straight.'],
+    ['The angled grip is easier on the wrists than a straight bar.', 'Keep your upper arms still.'],
+  ),
+  'reverse-curl': g(
+    ['Hold the bar with an overhand grip, shoulder-width.', 'Curl it up with your palms facing down.', 'Lower slowly.'],
+    ['Works the forearms and brachialis.', 'Use less weight than a normal curl.'],
+  ),
+  'rope-hammer-curl': g(
+    ['Attach a rope to a low pulley and hold an end in each hand, palms facing each other.', 'Curl the rope up toward your shoulders.', 'Lower under control.'],
+    ['Keep your elbows pinned to your sides.', 'Spread the rope slightly at the top.'],
+  ),
+  'concentration-curl': g(
+    ['Sit on a bench and rest the back of your upper arm against your inner thigh.', 'Curl the dumbbell up toward your shoulder.', 'Lower all the way. Switch arms after the set.'],
+    ['The braced arm stops any swinging.', 'Squeeze hard at the top.'],
+  ),
+  'spider-curl': g(
+    ['Lie chest-down on an incline bench with your arms hanging straight down.', 'Curl the weights up without moving your upper arms.', 'Lower slowly.'],
+    ['Strict form: your arms stay vertical.', 'Great for the peak contraction.'],
+  ),
+  'bayesian-curl': g(
+    ['Set a low pulley behind you and hold the handle, facing away.', 'Step forward so your arm is pulled slightly behind your body.', 'Curl the handle up, then lower slowly. Switch arms after the set.'],
+    ['The arm-behind start stretches the biceps.', 'Keep your elbow still and slightly behind you.'],
+  ),
+  'rope-pushdown': g(
+    ['Attach a rope to a high pulley and hold an end in each hand.', 'Push down until your arms are straight, spreading the rope apart at the bottom.', 'Let your forearms rise back to about 90°.'],
+    ['Keep your elbows tucked at your sides.', 'Pause and squeeze at the bottom.'],
+  ),
+  'reverse-pushdown': g(
+    ['Hold a straight bar on a high pulley with an underhand grip.', 'Push the bar down until your arms are straight.', 'Return slowly.'],
+    ['Use a lighter weight than a normal pushdown.', 'Elbows stay pinned to your sides.'],
+  ),
+  'db-skull-crusher': g(
+    ['Lie on a bench holding dumbbells above your chest, palms facing each other.', 'Bend your elbows to lower the weights beside your head.', 'Extend back up.'],
+    ['Keep your upper arms still and pointing up.', 'Dumbbells let each wrist find a comfortable angle.'],
+  ),
+  'smith-front-squat': g(
+    ['Rest the bar on the front of your shoulders with your elbows high.', 'Unhook and squat down, keeping your torso upright.', 'Stand back up and re-rack.'],
+    ['Cross your arms over the bar if a clean grip is uncomfortable.', 'Set the safety stops below your lowest point.'],
+  ),
+  'leg-press-wide': g(
+    ['Place your feet wide on the platform, toes turned out slightly.', 'Lower the platform until your knees are well bent.', 'Press back up without locking your knees.'],
+    ['A wide stance works the glutes and inner thighs more.', 'Knees track over your toes.'],
+  ),
+  'leg-press-narrow': g(
+    ['Place your feet hip-width or closer in the middle of the platform.', 'Lower the platform under control.', 'Press back up through your whole foot.'],
+    ['A narrow stance puts more work on the quads.', "Don't let your lower back peel off the pad."],
+  ),
+  'smith-bulgarian-split-squat': g(
+    ['Set the bar on your upper back and rest your rear foot on a bench behind you.', 'Lower your back knee toward the floor.', 'Drive up through your front foot. Switch legs after the set.'],
+    ['The Smith machine handles balance so you can load the leg harder.', 'Keep your front knee over your toes.'],
+  ),
+  'split-squat': g(
+    ['Stand in a long split stance holding dumbbells at your sides.', 'Lower straight down until your back knee nearly touches the floor.', 'Push back up. Switch legs after the set.'],
+    ['Your feet stay planted for the whole set.', 'Keep your torso upright.'],
+  ),
+  'smith-split-squat': g(
+    ['Stand in a split stance under the bar with it across your upper back.', 'Lower your back knee toward the floor.', 'Press back up. Switch legs after the set.'],
+    ['Set your front foot slightly ahead of the bar.', 'Go straight down, not forward.'],
+  ),
+  'walking-lunge': g(
+    ['Hold dumbbells at your sides and step forward into a lunge.', 'Lower your back knee toward the floor.', 'Push off and step straight into the next lunge with the other leg.'],
+    ['Count each step, or each pair of steps, the same way every time.', 'Take steps long enough that your front knee stays over your foot.'],
+  ),
+  'reverse-lunge': g(
+    ['Stand tall holding dumbbells.', 'Step one leg back and lower your back knee toward the floor.', 'Push through your front foot to return. Alternate legs.'],
+    ['Stepping back is easier on the knees than stepping forward.', 'Keep most of your weight on the front leg.'],
+  ),
+  'smith-reverse-lunge': g(
+    ['Set the bar on your upper back and unhook it.', 'Step one leg back and lower into a lunge.', 'Drive back to standing. Alternate legs.'],
+    ['Stay tall through your torso.', 'Set the safety stops just below your lowest point.'],
+  ),
+  'smith-sumo-squat': g(
+    ['Stand wide under the bar with your toes turned out.', 'Squat down between your legs, keeping your chest up.', 'Drive back up, squeezing your glutes.'],
+    ['Knees push out over your toes.', 'Great for glutes and inner thighs.'],
+  ),
+  'box-jump': g(
+    ['Stand facing a sturdy box about a foot away.', 'Swing your arms and jump onto the box, landing softly with both feet.', 'Stand up fully, then step back down.'],
+    ['Step down rather than jumping down to save your joints.', 'Pick a height you can land on comfortably.'],
+  ),
+  'smith-rdl': g(
+    ['Hold the Smith bar at hip height with an overhand grip.', 'Push your hips back and slide the bar down your legs until you feel a hamstring stretch.', 'Drive your hips forward to stand back up.'],
+    ['Soft knees, flat back.', 'The bar stays close to your legs.'],
+  ),
+  'single-leg-rdl': g(
+    ['Hold a dumbbell in one hand and stand on the opposite leg.', 'Hinge forward, letting your free leg extend behind you, until your torso is near parallel.', 'Return to standing. Switch sides after the set.'],
+    ['Keep your hips square to the floor.', 'Hold onto something with your free hand if balance is hard.'],
+  ),
+  'good-morning': g(
+    ['Rest a barbell on your upper back as for a squat.', 'With soft knees, push your hips back and lower your chest toward the floor.', 'Drive your hips forward to stand up.'],
+    ['Start light: this loads the lower back.', 'Stop when your back is about parallel or you feel your hamstrings pull.'],
+  ),
+  'smith-good-morning': g(
+    ['Set the bar on your upper back and unhook it.', 'Hinge forward at the hips with soft knees.', 'Stand back up by driving your hips forward.'],
+    ['Keep your back flat throughout.', 'Use a light weight and a slow tempo.'],
+  ),
+  'nordic-curl': g(
+    ['Kneel with your ankles anchored under a pad or held by a partner.', 'Lower your body forward as slowly as you can, keeping your hips straight.', 'Catch yourself with your hands, then push back up.'],
+    ['Very hard: slow lowering is the point.', 'Keep a straight line from knees to shoulders.'],
+  ),
+  'smith-hip-thrust': g(
+    ['Sit with your upper back against a bench and the Smith bar across your hips (use a pad).', 'Unhook the bar and drive your hips up until your body is flat from shoulders to knees.', 'Lower under control.'],
+    ['The fixed bar path makes setup easier than a free barbell.', 'Squeeze your glutes hard at the top and keep your chin tucked.'],
+  ),
+  'smith-glute-bridge': g(
+    ['Lie on the floor with your feet flat and the Smith bar across your hips on a pad.', 'Drive your hips up until your body is straight from shoulders to knees.', 'Lower slowly.'],
+    ['Shorter range than a hip thrust: great for heavy glute work.', 'Push through your heels.'],
+  ),
+  'cable-kickback': g(
+    ['Attach an ankle strap to a low pulley and face the machine.', 'Kick your strapped leg straight back.', 'Return slowly. Switch legs after the set.'],
+    ['Keep your torso still and core braced.', "Don't arch your lower back."],
+  ),
+  'smith-kickback': g(
+    ['Get on all fours under the Smith bar and place one foot under it.', 'Push the bar up by extending your hip.', 'Lower slowly. Switch legs after the set.'],
+    ['Set the safety stops so the bar can\'t come too low.', 'Move only at the hip.'],
+  ),
+  'cable-pull-through': g(
+    ['Stand facing away from a low pulley with a rope between your legs.', 'Hinge forward, letting the rope pull your hands back.', 'Drive your hips forward to stand tall.'],
+    ['It\'s a hip hinge, not a squat.', 'Squeeze your glutes at the top.'],
+  ),
+  'smith-calf-raise': g(
+    ['Set the bar on your upper back and stand with the balls of your feet on a plate or step.', 'Rise up onto your toes as high as you can.', 'Lower your heels below the step for a stretch.'],
+    ['Pause at the top and bottom.', 'Keep your knees straight but not locked.'],
+  ),
+  'hanging-knee-raise': g(
+    ['Hang from a bar with straight arms.', 'Bring your knees up toward your chest.', 'Lower slowly without swinging.'],
+    ['Easier than a straight-leg raise.', 'Tilt your pelvis up at the top.'],
+  ),
+  'lying-leg-raise': g(
+    ['Lie on your back with your legs straight and hands under your hips.', 'Raise your legs until they point at the ceiling.', 'Lower them slowly without touching the floor.'],
+    ['Keep your lower back pressed down.', 'Bend your knees slightly if it hurts your back.'],
+  ),
+  'bicycle-crunch': g(
+    ['Lie on your back with your hands behind your head and knees up.', 'Bring one elbow toward the opposite knee while extending the other leg.', 'Switch sides in a pedalling motion.'],
+    ['Rotate through your torso, not your neck.', 'Count each side as one rep, the same way every time.'],
+  ),
+  'decline-sit-up': g(
+    ['Hook your feet under the pads of a decline bench and lie back.', 'Sit up until your chest reaches your thighs.', 'Lower under control.'],
+    ['Hold a plate on your chest to make it harder.', "Don't yank on your neck."],
+  ),
+  'mountain-climber': g(
+    ['Start in a push-up position.', 'Drive one knee toward your chest, then switch legs quickly.', 'Keep alternating at a steady pace.'],
+    ['Hips stay level with your shoulders.', 'Count each leg as a rep, or log the time in notes.'],
+  ),
+  'hollow-hold': g(
+    ['Lie on your back with arms overhead and legs straight.', 'Lift your shoulders and legs off the floor, pressing your lower back down.', 'Hold the position.'],
+    ['Bend your knees to make it easier.', 'Your lower back must stay on the floor.'],
+  ),
+  'cable-woodchopper': g(
+    ['Set a pulley high and stand side-on to it, holding the handle with both hands.', 'Pull the handle diagonally down across your body, rotating your torso.', 'Return slowly. Do both sides.'],
+    ['Pivot your back foot as you rotate.', 'The power comes from your core, not your arms.'],
+  ),
+  'pallof-press': g(
+    ['Stand side-on to a cable at chest height, holding the handle at your chest.', 'Press the handle straight out in front of you and hold for a second.', 'Bring it back in. Do both sides.'],
+    ["Resist the cable's pull: don't let your torso rotate.", 'Brace as if about to be pushed.'],
+  ),
 };

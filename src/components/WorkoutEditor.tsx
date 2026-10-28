@@ -1,7 +1,7 @@
-import { ArrowDown, ArrowUp, BookOpen, Check, Disc3, Flame, MessageSquare, MoreHorizontal, Plus, Repeat, Target, Timer, Trash2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowLeftRight, ArrowUp, BookOpen, Check, ChevronRight, Disc3, Flame, MessageSquare, MoreHorizontal, Plus, Repeat, Target, Timer, Trash2, Trophy } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MUSCLE_LABELS } from '../data/exercises';
+import { MUSCLE_LABELS, variationsOf } from '../data/exercises';
 import { exerciseRecords, lastPerformance, setPRs, type ExerciseRecords } from '../lib/calc';
 import { primeAudio } from '../lib/feedback';
 import { defaultBarKg, suggestNext, warmupSets, type Suggestion } from '../lib/progression';
@@ -106,7 +106,10 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
   const [menu, setMenu] = useState(false);
   const [plates, setPlates] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [showNotes, setShowNotes] = useState(!!we.notes);
+  const { list: allExercises } = useExercises();
+  const variations = useMemo(() => (exercise ? variationsOf(exercise, allExercises) : []), [exercise, allExercises]);
 
   const type = exercise?.type ?? 'weight_reps';
   const previous = useMemo(() => {
@@ -298,6 +301,16 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
                 <Disc3 size={18} /> Plate calculator
               </button>
             )}
+            {variations.length > 0 && (
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  setSwitching(true);
+                }}
+              >
+                <ArrowLeftRight size={18} /> Switch grip or machine
+              </button>
+            )}
             <button
               onClick={() => {
                 setMenu(false);
@@ -336,6 +349,36 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
               <Trash2 size={18} /> Remove exercise
             </button>
           </div>
+        </Sheet>
+      )}
+      {switching && (
+        <Sheet title="Switch to" onClose={() => setSwitching(false)}>
+          <div className="list with-icons">
+            {variations.map((v) => (
+              <button
+                key={v.id}
+                className="list-item"
+                onClick={() => {
+                  // Sets carry over when both are logged the same way (e.g. weight × reps).
+                  onChange(replaceExercise(we.id, v.id, v.type === exercise?.type));
+                  setSwitching(false);
+                  toast(`Switched to ${v.name}`);
+                }}
+              >
+                <ExerciseTile exercise={v} />
+                <span className="grow">
+                  <span className="title truncate" style={{ display: 'block' }}>
+                    {v.name}
+                  </span>
+                  <span className="sub">{MUSCLE_LABELS[v.primary]}</span>
+                </span>
+                <ChevronRight size={18} className="chev" />
+              </button>
+            ))}
+          </div>
+          <p className="tiny muted" style={{ margin: '12px 4px 0' }}>
+            Your sets carry over; adjust the weight if the new version feels different.
+          </p>
         </Sheet>
       )}
       {plates && <PlateCalculator initialKg={firstWorkingKg || undefined} onClose={() => setPlates(false)} />}

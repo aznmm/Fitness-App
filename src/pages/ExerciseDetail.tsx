@@ -1,14 +1,15 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { LineChart } from '../components/charts/LineChart';
 import { CustomExerciseSheet } from '../components/CustomExerciseSheet';
 import { ExerciseGuide } from '../components/ExerciseGuide';
+import { ExerciseTile } from '../components/ExercisePicker';
 import { confirm } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
 import { ScoreRing } from '../components/ScoreRing';
 import { describeSet } from '../components/WorkoutEditor';
-import { EQUIPMENT_LABELS, MUSCLE_LABELS } from '../data/exercises';
+import { EQUIPMENT_LABELS, MUSCLE_LABELS, variationsOf } from '../data/exercises';
 import { exerciseSessions, recordsFromSessions, repMaxes, setE1RM, setVolume, workingSets, type ExerciseSession } from '../lib/calc';
 import { formatDate, relativeDay } from '../lib/dates';
 import { GAUGE_MAX, levelFor, liftScore, standardFor } from '../lib/strength';
@@ -60,7 +61,7 @@ function metricsFor(exercise: Exercise, unit: Unit, bw?: number): Metric[] {
 export function ExerciseDetail() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const { byId } = useExercises();
+  const { byId, list } = useExercises();
   const workouts = useStore((s) => s.workouts);
   const settings = useStore((s) => s.settings);
   const deleteCustom = useStore((s) => s.deleteCustomExercise);
@@ -119,6 +120,8 @@ export function ExerciseDetail() {
       {exercise.standard && records.bestE1RM > 0 && bodyweight && (
         <StandardCard exercise={exercise} e1rm={records.bestE1RM} bodyweight={bodyweight} sex={settings.sex} unit={unit} />
       )}
+
+      <Variations exercise={exercise} all={list} />
 
       <section className="section">
         <div className="section-head">
@@ -212,6 +215,35 @@ export function ExerciseDetail() {
 
       {editing && <CustomExerciseSheet existing={exercise} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />}
     </div>
+  );
+}
+
+/** Other grips, stances and machine versions of this exercise. */
+function Variations({ exercise, all }: { exercise: Exercise; all: Exercise[] }) {
+  const variations = variationsOf(exercise, all);
+  if (!variations.length) return null;
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>Variations</h2>
+      </div>
+      <div className="list with-icons">
+        {variations.map((v) => (
+          <Link key={v.id} to={`/exercises/${v.id}`} replace className="list-item">
+            <ExerciseTile exercise={v} />
+            <span className="grow">
+              <span className="title truncate" style={{ display: 'block' }}>
+                {v.name}
+              </span>
+              <span className="sub">
+                {MUSCLE_LABELS[v.primary]} · {EQUIPMENT_LABELS[v.equipment]}
+              </span>
+            </span>
+            <ChevronRight size={18} className="chev" />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

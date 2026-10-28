@@ -411,6 +411,9 @@ const TOKEN_SYNONYMS: Record<string, string[]> = {
   crunches: ['crunch'],
   shrugs: ['shrug'],
   thrusts: ['thrust'],
+  narrow: ['close'],
+  underhand: ['reverse'],
+  supinated: ['reverse'],
   bodyweight: [],
   weighted: [],
   standing: [],
@@ -442,6 +445,7 @@ const MODIFIERS = new Set([
   'incline', 'decline', 'close', 'front', 'reverse', 'rear', 'seated', 'lying', 'romanian', 'sumo', 'hack',
   'goblet', 'bulgarian', 'overhead', 'hammer', 'preacher', 'lateral', 'upright', 'straight', 'inverted', 'hanging',
   'side', 'push', 'chin', 'arnold', 'face', 'calf', 'hip', 'leg', 'kickback', 'skull',
+  'wide', 'neutral', 'smith', 'ez', 'diamond', 'rope', 'single', 'walking', 'pendlay', 'landmine', 'nordic', 'stance',
 ]);
 
 /** Weighted Jaccard similarity between two token sets. */
