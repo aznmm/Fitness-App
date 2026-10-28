@@ -1955,29 +1955,20 @@ button.day-row:active {
   background: var(--green-tint);
 }
 
-/* Tick a whole exercise at once */
-.ex-check {
+/* Bottom of each exercise: Done (ticks every set) and a small Add set */
+.ex-actions {
   display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: none;
-  border: none;
-  border-radius: 50%;
-  background: var(--fill);
-  color: var(--text-3);
-  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease);
+  grid-template-columns: 3fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.ex-check:active {
-  transform: scale(0.88);
+.ex-done {
+  background: var(--green-tint);
+  color: var(--green-text);
 }
 
-.ex-check:disabled {
-  opacity: 0.4;
-}
-
-.ex-check.on {
+.ex-done.on {
   background: var(--green);
   color: #fff;
   animation: check-pop 0.4s var(--spring);
@@ -2127,10 +2118,6 @@ button.day-row:active {
   font-weight: 700;
   font-size: 11px;
   animation: check-pop 0.5s var(--spring);
-}
-
-.add-set {
-  margin-top: 8px;
 }
 
 .target-strip {
