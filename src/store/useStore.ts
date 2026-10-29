@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   weeklyGoal: 3,
   smartSuggestions: true,
   stepGoal: 10_000,
+  tickMode: 'set',
 };
 
 export interface AppData {

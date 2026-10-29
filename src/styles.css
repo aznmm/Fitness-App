@@ -1908,6 +1908,50 @@ button.day-row:active {
   grid-template-columns: 30px repeat(2, minmax(0, 1fr));
 }
 
+/* "Each set" tick mode: an extra column for the ✓ */
+.set-grid.with-check {
+  grid-template-columns: 30px minmax(0, 1fr) 74px 60px 40px;
+}
+
+.set-grid.cols-1.with-check {
+  grid-template-columns: 30px minmax(0, 1fr) 96px 40px;
+}
+
+.set-grid.cardio.with-check {
+  grid-template-columns: 30px repeat(3, minmax(0, 1fr)) 40px;
+}
+
+.set-grid.cardio.cols-2.with-check {
+  grid-template-columns: 30px repeat(2, minmax(0, 1fr)) 40px;
+}
+
+/* Only the ✓ turns green; the row stays plain */
+.check {
+  width: 40px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: var(--fill);
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease);
+}
+
+.check:active {
+  transform: scale(0.88);
+}
+
+.set-row.done .check {
+  background: var(--green);
+  color: #fff;
+  animation: check-pop 0.4s var(--spring);
+}
+
+.add-set.wide {
+  margin-top: 8px;
+}
+
 .set-grid.head.cardio > :nth-child(n + 2) {
   text-align: center;
 }
