@@ -150,6 +150,8 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
     return { set, index, number, prev, goal: warmup ? undefined : goal };
   });
   const allDone = we.sets.length > 0 && we.sets.every((s) => s.done);
+  // Tick style from Settings: a ✓ on every set, or one Done button for the exercise.
+  const perSet = settings.tickMode !== 'exercise';
 
   // One tap for the whole exercise: every set is saved with what was typed, else the target or last time.
   const toggleExercise = () => {
@@ -205,7 +207,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
 
       {suggestion && !allDone && <TargetStrip suggestion={suggestion} type={type} unit={settings.unit} onApply={() => onChange(applyTarget(we.id, suggestion))} />}
 
-      <SetHeader exercise={exercise} type={type} unit={settings.unit} />
+      <SetHeader exercise={exercise} type={type} unit={settings.unit} perSet={perSet} />
       {rows.map(({ set, index, number, prev, goal }) => {
         return (
           <SetRow
@@ -222,11 +224,17 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             records={records}
             bodyweight={bodyweight}
             onChange={onChange}
-            onLogged={onSetDone}
+            perSet={perSet}
+            onRest={onSetDone}
           />
         );
       })}
 
+      {perSet ? (
+        <button className="btn btn-sm btn-block add-set wide" onClick={() => onChange(addSet(we.id))}>
+          <Plus size={16} strokeWidth={2.5} /> Add set
+        </button>
+      ) : (
       <div className="ex-actions">
         <button
           className={`btn ex-done${allDone ? ' on' : ''}`}
@@ -241,6 +249,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
           <Plus size={20} strokeWidth={2.5} />
         </button>
       </div>
+      )}
 
       {menu && (
         <Sheet title={exercise?.name ?? 'Exercise'} onClose={() => setMenu(false)}>
@@ -421,15 +430,17 @@ function isCardio(exercise: Exercise | undefined): boolean {
   return exercise?.primary === 'cardio' && (exercise.type === 'duration' || exercise.type === 'distance_duration');
 }
 
-function SetHeader({ exercise, type, unit }: { exercise?: Exercise; type: Exercise['type']; unit: Unit }) {
+function SetHeader({ exercise, type, unit, perSet }: { exercise?: Exercise; type: Exercise['type']; unit: Unit; perSet: boolean }) {
+  const check = perSet ? ' with-check' : '';
   if (isCardio(exercise)) {
     const cols = type === 'distance_duration' ? [distanceSpec(exercise, unit).label, 'Time', 'kcal'] : ['Time', 'kcal'];
     return (
-      <div className={`set-grid head cardio${cols.length === 2 ? ' cols-2' : ''}`}>
+      <div className={`set-grid head cardio${cols.length === 2 ? ' cols-2' : ''}${check}`}>
         <span>Set</span>
         {cols.map((c) => (
           <span key={c}>{c}</span>
         ))}
+        {perSet && <span aria-hidden />}
       </div>
     );
   }
@@ -439,12 +450,13 @@ function SetHeader({ exercise, type, unit }: { exercise?: Exercise; type: Exerci
     : type === 'duration' ? ['Time']
     : [distanceSpec(exercise, unit).label, 'Time'];
   return (
-    <div className={`set-grid head${columnsFor(type) === 1 ? ' cols-1' : ''}`}>
+    <div className={`set-grid head${columnsFor(type) === 1 ? ' cols-1' : ''}${check}`}>
       <span>Set</span>
       <span>Previous</span>
       {cols.map((c) => (
         <span key={c}>{c}</span>
       ))}
+      {perSet && <span aria-hidden />}
     </div>
   );
 }
@@ -513,15 +525,17 @@ interface SetRowProps {
   records?: ExerciseRecords;
   bodyweight?: number;
   onChange: (fn: WorkoutUpdater) => void;
-  /** The set just got its first reps, time, distance or calories: it's been done, so rest can start. */
-  onLogged: () => void;
+  /** Each set has its own ✓ (otherwise the exercise's Done button ticks them all). */
+  perSet: boolean;
+  /** The set was just done (ticked, or first numbers entered without per-set ticks): start the rest timer. */
+  onRest: () => void;
 }
 
-const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, unit, prev, goal, records, bodyweight, onChange, onLogged }: SetRowProps) {
+const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, unit, prev, goal, records, bodyweight, onChange, perSet, onRest }: SetRowProps) {
   const patch = (p: Partial<WorkoutSet>) => onChange(patchSet(weId, set.id, p));
-  // Entering a set's numbers is what marks it done now that sets have no ✓ of their own.
+  // Without per-set ticks, entering a set's numbers is what marks it done.
   const patchEntry = (p: Partial<WorkoutSet>) => {
-    if (!hasEntry(set) && Object.values(p).some(Boolean)) onLogged();
+    if (!perSet && !hasEntry(set) && Object.values(p).some(Boolean)) onRest();
     patch(p);
   };
   const remove = () => {
@@ -552,6 +566,20 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
   }, []);
 
   const ph = placeholders(goal, prev);
+
+  const toggleDone = () => {
+    if (set.done) {
+      patch({ done: false });
+      return;
+    }
+    const filled = tickValues(set, type, goal, prev);
+    if (!filled) {
+      toast(type === 'duration' ? 'Enter a time first' : type === 'distance_duration' ? 'Enter a distance or time first' : 'Enter reps first');
+      return;
+    }
+    patch({ ...filled, done: true });
+    onRest();
+  };
 
   const prs = set.done && records ? setPRs(set, type, records, bodyweight) : [];
   const cols1 = columnsFor(type) === 1;
@@ -636,17 +664,24 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       </select>
     </div>
   );
+  const check = perSet && (
+    <button className="check" onClick={toggleDone} aria-label={set.done ? 'Mark set not done' : 'Complete set'} aria-pressed={set.done}>
+      <Check size={19} strokeWidth={3.2} />
+    </button>
+  );
+  const withCheck = perSet ? ' with-check' : '';
   const copyPrev = () => prev && patch({ weight: prev.weight, reps: prev.reps, duration: prev.duration, distance: prev.distance });
 
   if (exercise && isCardio(exercise)) {
     const rate = type === 'distance_duration' ? cardioRate(set.distance && set.duration ? set : { distance: ph.distance, duration: ph.duration }, exercise, unit) : null;
     return (
       <SwipeToDelete onDelete={remove} label={`Delete set ${number || 'warm-up'}`}>
-        <div className={`set-grid set-row cardio${set.done ? ' done' : ''}${type === 'duration' ? ' cols-2' : ''}`}>
+        <div className={`set-grid set-row cardio${set.done ? ' done' : ''}${type === 'duration' ? ' cols-2' : ''}${withCheck}`}>
           {badge}
           {type === 'distance_duration' && distanceInput}
           {durationInput}
           {caloriesInput}
+          {check}
           <button className="cardio-line" onClick={copyPrev} disabled={!prev} aria-label={prev ? `Copy last time: ${describeSet(prev, exercise, unit)}` : undefined}>
             {prs.length ? (
               <span className="pr-tag">
@@ -665,7 +700,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
 
   return (
     <SwipeToDelete onDelete={remove} label={`Delete set ${number || 'warm-up'}`}>
-      <div className={`set-grid set-row${set.done ? ' done' : ''}${cols1 ? ' cols-1' : ''}`}>
+      <div className={`set-grid set-row${set.done ? ' done' : ''}${cols1 ? ' cols-1' : ''}${withCheck}`}>
         {badge}
         <button className="prev" disabled={!prev} onClick={copyPrev} aria-label={prev ? `Copy previous: ${describeSet(prev, exercise ?? type, unit)}` : 'No previous set'}>
           {prs.length ? (
@@ -691,6 +726,7 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
             {durationInput}
           </>
         )}
+        {check}
       </div>
     </SwipeToDelete>
   );

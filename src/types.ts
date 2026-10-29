@@ -177,6 +177,8 @@ export interface Settings {
   barKg?: number;
   /** Daily step goal. */
   stepGoal: number;
+  /** How sets get ticked off: a ✓ on every set (rest starts on each tick) or one Done per exercise. */
+  tickMode: 'set' | 'exercise';
 }
 
 export interface RestTimer {

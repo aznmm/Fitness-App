@@ -112,7 +112,7 @@ export function RestSheet({ onClose }: { onClose: () => void }) {
             <span className="title" style={{ display: 'block' }}>
               Start after each set
             </span>
-            <span className="sub">When you enter a set's reps or time, or tap Done on an exercise</span>
+            <span className="sub">{settings.tickMode === 'set' ? 'When you tick a set' : "When you enter a set's reps or time, or tap Done on an exercise"}</span>
           </span>
           <span className="switch">
             <input type="checkbox" checked={settings.autoRestTimer} onChange={(e) => updateSettings({ autoRestTimer: e.target.checked })} aria-label="Start rest timer after each set" />

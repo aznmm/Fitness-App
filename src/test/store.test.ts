@@ -3,6 +3,7 @@ import { makeBackup, parseBackup, workoutsToCsv } from '../lib/backup';
 import { addExercises, patchSet } from '../lib/workoutOps';
 import { useStore } from '../store/useStore';
 import { byId } from './helpers';
+import type { Settings } from '../types';
 
 describe('store', () => {
   beforeEach(() => useStore.getState().resetAll());
@@ -87,6 +88,13 @@ describe('store', () => {
     s.resetAll();
     s.mergeIn(parseBackup(text));
     expect(useStore.getState().workouts.map((w) => w.name).sort()).toEqual(['Safari 1', 'Safari 2']);
+  });
+
+  it('ticks each set by default, and older saved settings pick that up', () => {
+    expect(useStore.getState().settings.tickMode).toBe('set');
+    const { tickMode: _t, ...old } = useStore.getState().settings;
+    useStore.getState().replaceAll({ settings: old as Settings });
+    expect(useStore.getState().settings.tickMode).toBe('set');
   });
 
   it('rejects files that are not backups', () => {

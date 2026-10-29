@@ -1,4 +1,4 @@
-import { Bell, CalendarCheck, ChevronRight, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { Bell, CalendarCheck, ChevronRight, CircleCheck, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
@@ -142,6 +142,9 @@ export function Settings() {
         Training
       </div>
       <div className="list with-small-icons">
+        <Row icon={<IconTile color="var(--green)"><CircleCheck size={17} /></IconTile>} label="Tick off">
+          <Seg label="Tick off" value={settings.tickMode} options={[['set', 'Each set'], ['exercise', 'Exercise']]} onChange={set('tickMode')} />
+        </Row>
         <Row icon={<IconTile color="var(--accent-2)"><Target size={17} /></IconTile>} label="Smart targets">
           <Switch label="Smart targets" checked={settings.smartSuggestions} onChange={set('smartSuggestions')} />
         </Row>
@@ -163,7 +166,12 @@ export function Settings() {
           </select>
         </Row>
       </div>
-      <div className="list-footer">Smart targets suggest today's weight and reps from your last session. The bar weight is used for warm-ups and the plate calculator.</div>
+      <div className="list-footer">
+        {settings.tickMode === 'set'
+          ? 'Each set has its own ✓; ticking one starts the rest timer.'
+          : 'One Done button per exercise ticks all its sets; the rest timer starts when you enter a set.'}{' '}
+        Smart targets suggest today's weight and reps from your last session. The bar weight is used for warm-ups and the plate calculator.
+      </div>
 
       <div className="list-header" style={{ marginTop: 28 }}>
         Rest timer
@@ -185,7 +193,9 @@ export function Settings() {
           <Switch label="Rest timer sound" checked={settings.restSound} onChange={set('restSound')} />
         </Row>
       </div>
-      <div className="list-footer">The timer starts when you tick a set and beeps when rest is over.</div>
+      <div className="list-footer">
+        {settings.tickMode === 'set' ? 'The timer starts when you tick a set' : "The timer starts when you enter a set's reps or tap Done"} and beeps when rest is over.
+      </div>
 
       <div className="list-header" style={{ marginTop: 28 }}>
         Appearance

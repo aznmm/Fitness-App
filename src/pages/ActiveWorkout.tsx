@@ -19,6 +19,7 @@ export function ActiveWorkout() {
   const finishWorkout = useStore((s) => s.finishWorkout);
   const discardWorkout = useStore((s) => s.discardWorkout);
   const resting = useStore((s) => !!s.rest);
+  const tickMode = useStore((s) => s.settings.tickMode);
   const [restSheet, setRestSheet] = useState(false);
   const now = useNow(1000);
   const scrolled = useScrolled(8);
@@ -50,7 +51,7 @@ export function ActiveWorkout() {
     if (doneSets + unticked === 0) {
       const ok = await confirm({
         title: 'Nothing logged yet',
-        message: 'Enter your sets, or tap Done under an exercise when you finish it. Discard this empty workout instead?',
+        message: `${tickMode === 'set' ? 'Tick the ✓ on each set you finish' : 'Enter your sets, or tap Done under an exercise when you finish it'}. Discard this empty workout instead?`,
         confirmLabel: 'Discard workout',
         cancelLabel: 'Keep going',
         danger: true,
