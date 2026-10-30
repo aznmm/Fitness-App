@@ -182,7 +182,7 @@ function DayDetail({ day, now, onPlan }: { day: number; now: number } & Props) {
           <span className="grow">
             <span className="title truncate">{w.name}</span>
             <span className="sub">
-              {formatElapsed(workoutDurationMs(w))} · {workoutSetCount(w)} sets
+              {formatElapsed(workoutDurationMs(w))} · {workoutSetCount(w)} set{workoutSetCount(w) === 1 ? '' : 's'}
             </span>
           </span>
           <ChevronRight size={18} className="faint" />

@@ -1,5 +1,5 @@
 import { ChevronRight, ClipboardList, Play, Plus } from 'lucide-react';
-import { useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
@@ -8,9 +8,10 @@ import { useCreateRoutine, useRoutineTile } from '../components/StartWorkoutShee
 import { Sheet } from '../components/Sheet';
 import { muscleClass } from '../data/exercises';
 import { PROGRAMS, type Program } from '../data/programs';
-import { relativeDayInline } from '../lib/dates';
+import { shortDay } from '../lib/dates';
 import { weekdayOf, weeklyRoutineId } from '../lib/plans';
 import { uid } from '../lib/id';
+import { lastDone } from '../lib/stats';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import { useStartWorkout } from './Home';
 
@@ -18,6 +19,8 @@ const PROGRAM_TILES = ['m-legs', 'm-back', 'm-chest', 'm-shoulders'];
 
 export function Routines() {
   const routines = useStore((s) => s.routines);
+  const workouts = useStore((s) => s.workouts);
+  const done = useMemo(() => lastDone(workouts, routines), [workouts, routines]);
   const saveRoutine = useStore((s) => s.saveRoutine);
   const { byId } = useExercises();
   const start = useStartWorkout();
@@ -70,7 +73,7 @@ export function Routines() {
                   </h3>
                   <div className="small muted" style={{ marginTop: 2 }}>
                     {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'}
-                    {r.lastUsedAt ? ` · last done ${relativeDayInline(r.lastUsedAt)}` : ''}
+                    {done.has(r.id) ? ` · last done ${shortDay(done.get(r.id)!)}` : ''}
                   </div>
                 </Link>
                 <button className="btn btn-sm btn-primary" onClick={() => start(r.id)} disabled={!r.exercises.length}>

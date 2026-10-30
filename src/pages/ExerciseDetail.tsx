@@ -12,7 +12,7 @@ import { describeSet } from '../components/WorkoutEditor';
 import { EQUIPMENT_LABELS, MUSCLE_LABELS, variationsOf } from '../data/exercises';
 import { exerciseSessions, recordsFromSessions, repMaxes, setE1RM, setVolume, workingSets, type ExerciseSession } from '../lib/calc';
 import { formatDate, relativeDay } from '../lib/dates';
-import { GAUGE_MAX, levelFor, liftScore, standardFor } from '../lib/strength';
+import { e1rmForScore, GAUGE_MAX, levelProgress, liftScore, standardFor } from '../lib/strength';
 import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
 import { formatDuration, formatVolume, formatWeight, fromKg, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
@@ -105,10 +105,7 @@ export function ExerciseDetail() {
           exercise.custom && (
             <>
               <button className="glass-btn" aria-label="Edit exercise" onClick={() => setEditing(true)}>
-                <Pencil size={17} />
-              </button>
-              <button className="glass-btn" style={{ color: 'var(--red)' }} aria-label="Delete exercise" onClick={remove}>
-                <Trash2 size={17} />
+                <Pencil size={19} />
               </button>
             </>
           )
@@ -213,6 +210,12 @@ export function ExerciseDetail() {
         })}
       </section>
 
+      {exercise.custom && (
+        <button className="btn btn-plain-danger btn-block" style={{ marginTop: 24 }} onClick={remove}>
+          <Trash2 size={17} /> Delete exercise
+        </button>
+      )}
+
       {editing && <CustomExerciseSheet existing={exercise} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />}
     </div>
   );
@@ -293,7 +296,7 @@ function StandardCard({ exercise, e1rm, bodyweight, sex, unit }: { exercise: Exe
   const standard = standardFor(exercise, bodyweight, sex);
   if (!standard) return null;
   const score = liftScore(e1rm, standard);
-  const level = levelFor(score);
+  const { level, next } = levelProgress(score);
   return (
     <div className="card" style={{ marginTop: 10 }}>
       <div className="score-card" style={{ gap: 16 }}>
@@ -308,11 +311,17 @@ function StandardCard({ exercise, e1rm, bodyweight, sex, unit }: { exercise: Exe
             {level.name}
           </div>
           <div className="small muted" style={{ marginTop: 2 }}>
-            Intermediate for you:{' '}
-            <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
-              {formatWeight(standard, unit)}
-            </span>{' '}
-            1RM
+            {next ? (
+              <>
+                {next.name} at{' '}
+                <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
+                  {formatWeight(e1rmForScore(next.min, standard), unit)}
+                </span>{' '}
+                1RM
+              </>
+            ) : (
+              'The top level for this lift'
+            )}
           </div>
         </div>
       </div>

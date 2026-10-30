@@ -23,7 +23,7 @@ import {
   uncompleteSets,
   type WorkoutUpdater,
 } from '../lib/workoutOps';
-import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
+import { cardioRate, distanceSpec, formatCardioDistance, isCardio } from '../lib/cardio';
 import { LIMITS } from '../lib/limits';
 import { formatDuration, fromKg, parseDecimal, parseDuration, parseWholeNumber, toKg, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
@@ -130,7 +130,8 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
     () => (exercise ? exerciseRecords(history, exercise, bodyweight, before) : undefined),
     [history, exercise, bodyweight, before],
   );
-  const restSec = we.restSec ?? settings.defaultRestSec;
+  // Cardio is usually one long effort, so it gets no rest timer unless one is set.
+  const restSec = we.restSec ?? (isCardio(exercise) ? 0 : settings.defaultRestSec);
   const suggestion = useMemo(
     () => (exercise && settings.smartSuggestions ? suggestNext(exercise, history, before, settings.unit, we.target) : null),
     [exercise, history, before, settings.unit, settings.smartSuggestions, we.target],
@@ -198,7 +199,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
             {live && ` · Rest ${restSec ? formatDuration(restSec) : 'off'}`}
           </span>
         </button>
-        <button className="glass-btn" style={{ width: 34, height: 34 }} aria-label="Exercise options" onClick={() => setMenu(true)}>
+        <button className="glass-btn" aria-label="Exercise options" onClick={() => setMenu(true)}>
           <MoreHorizontal size={19} />
         </button>
       </div>
@@ -437,9 +438,6 @@ function columnsFor(type: Exercise['type']): number {
 }
 
 /** Cardio is logged as distance/time plus calories, with last time and the pace on a line underneath. */
-function isCardio(exercise: Exercise | undefined): boolean {
-  return exercise?.primary === 'cardio' && (exercise.type === 'duration' || exercise.type === 'distance_duration');
-}
 
 function SetHeader({ exercise, type, unit, perSet }: { exercise?: Exercise; type: Exercise['type']; unit: Unit; perSet: boolean }) {
   const check = perSet ? ' with-check' : '';
@@ -670,8 +668,8 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
       >
         <option value="normal">Normal set</option>
         <option value="warmup">Warm-up set</option>
-        <option value="drop">Drop set</option>
-        <option value="failure">Failure set</option>
+        {!isCardio(exercise) && <option value="drop">Drop set</option>}
+        {!isCardio(exercise) && <option value="failure">Failure set</option>}
         <option value="delete">Delete set</option>
       </select>
     </div>

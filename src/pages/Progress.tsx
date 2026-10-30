@@ -1,14 +1,15 @@
-import { ChevronRight, CircleCheck, Clock, Flame, Info, Trash2 } from 'lucide-react';
+import { BarChart3, ChevronRight, CircleCheck, Clock, FileUp, Flame, Info, Play, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, HeatLegend, heatColor, heatStep } from '../components/BodyMap';
 import { BarChart } from '../components/charts/BarChart';
 import { LineChart } from '../components/charts/LineChart';
 import { ExerciseTile } from '../components/ExercisePicker';
-import { PageHeader } from '../components/Layout';
+import { EmptyState, PageHeader } from '../components/Layout';
 import { MuscleIcon } from '../components/MuscleIcon';
 import { Sheet } from '../components/Sheet';
 import { ScoreRing } from '../components/ScoreRing';
+import { StartWorkoutSheet } from '../components/StartWorkoutSheet';
 import { formatSteps, StepsSheet } from '../components/Steps';
 import { ScoreDelta } from '../components/StrengthScoreCard';
 import { MUSCLE_LABELS } from '../data/exercises';
@@ -16,6 +17,7 @@ import { exerciseRecords, workoutDurationMs, workoutVolume } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
 import { LIMITS } from '../lib/limits';
 import { groupFatigue, MAP_MUSCLES, muscleFatigue, muscleSets, type RecoveryStatus } from '../lib/muscles';
+import { planFor } from '../lib/plans';
 import { exerciseUsage, finished, setsPerMuscle, VOLUME_MUSCLES, weekStreak, weeklyStats } from '../lib/stats';
 import { recentSteps } from '../lib/steps';
 import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
@@ -24,16 +26,18 @@ import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Muscle, StrengthGroup } from '../types';
 import { HistoryView } from './History';
+import { useStartWorkout } from './Home';
 
 /** Dashboard: an overview of training, steps and strength, plus the full workout history. */
 export function Progress() {
   const [params, setParams] = useSearchParams();
   const view = params.get('view') === 'history' ? 'history' : 'overview';
   const show = (v: typeof view) => setParams(v === 'history' ? { view: v } : {}, { replace: true });
+  const trained = useStore((s) => s.workouts.some((w) => w.endedAt));
 
   return (
     <div className="page">
-      <PageHeader title="Progress" />
+      <PageHeader title="Progress" backTitle={view === 'history' ? 'History' : 'Progress'} />
       <div className="seg" role="group" aria-label="Progress view" style={{ marginBottom: 20 }}>
         <button aria-pressed={view === 'overview'} onClick={() => show('overview')}>
           Overview
@@ -44,6 +48,12 @@ export function Progress() {
       </div>
       {view === 'history' ? (
         <HistoryView />
+      ) : !trained ? (
+        <>
+          <GettingStarted />
+          <StepsSection />
+          <BodyweightSection />
+        </>
       ) : (
         <>
           <SummarySection />
@@ -59,11 +69,46 @@ export function Progress() {
   );
 }
 
+/** Before the first workout: what this page will show, and how to get there. */
+function GettingStarted() {
+  const plans = useStore((s) => s.plans);
+  const routines = useStore((s) => s.routines);
+  const start = useStartWorkout();
+  const [picker, setPicker] = useState(false);
+  const now = Date.now();
+  return (
+    <div className="card" style={{ marginBottom: 12 }}>
+      <EmptyState icon={<BarChart3 size={30} />} title="Your progress shows up here">
+        <p className="small">Log a workout to see your streak, strength score, the muscles you've trained and your personal records.</p>
+        <div className="stack" style={{ gap: 8, maxWidth: 260, margin: '18px auto 0' }}>
+          <button className="btn btn-primary btn-block" onClick={() => setPicker(true)}>
+            <Play size={17} fill="currentColor" /> Start a workout
+          </button>
+          <Link to="/import" className="btn btn-tinted btn-block">
+            <FileUp size={17} /> Import history
+          </Link>
+        </div>
+      </EmptyState>
+      {picker && (
+        <StartWorkoutSheet
+          plan={planFor(plans, routines, now, now)}
+          onClose={() => setPicker(false)}
+          onStart={(id) => {
+            setPicker(false);
+            void start(id);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 /** Last 30 days at a glance. */
 function SummarySection() {
   const workouts = useStore((s) => s.workouts);
   const steps = useStore((s) => s.steps);
   const unit = useStore((s) => s.settings.unit);
+  const [stepsOpen, setStepsOpen] = useState(false);
   const stats = useMemo(() => {
     const since = Date.now() - 30 * DAY_MS;
     const recent = finished(workouts).filter((w) => w.startedAt >= since);
@@ -95,11 +140,12 @@ function SummarySection() {
             <small>{stats.streak === 1 ? 'week' : 'weeks'}</small>
           </div>
         </div>
-        <div className="stat">
+        <button className="stat" onClick={() => setStepsOpen(true)} aria-label="Steps, 7-day average. Update steps">
           <div className="label">Steps · 7-day avg</div>
-          <div className="value">{stats.steps !== undefined ? formatSteps(stats.steps) : '–'}</div>
-        </div>
+          <div className="value">{stats.steps !== undefined ? formatSteps(stats.steps) : <span className="faint">Add</span>}</div>
+        </button>
       </div>
+      {stepsOpen && <StepsSheet onClose={() => setStepsOpen(false)} />}
       {stats.volume > 0 && (
         <p className="tiny muted" style={{ margin: '8px 4px 0' }}>
           {formatVolume(stats.volume, unit)} lifted in the last month.
@@ -174,7 +220,7 @@ function StrengthSection() {
       <div className="card" style={{ position: 'relative', textAlign: 'center', paddingTop: 24 }}>
         <button
           className="glass-btn"
-          style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, color: 'var(--text-2)' }}
+          style={{ position: 'absolute', top: 12, right: 12 }}
           aria-label="How the strength score works"
           onClick={() => setInfo(true)}
         >
@@ -589,7 +635,7 @@ function RecordsSection() {
             <div className="grow">
               <div className="title truncate">{exercise.name}</div>
               <div className="sub truncate">
-                {rec.sessions} sessions · last {relativeDayInline(last)}
+                {rec.sessions} session{rec.sessions === 1 ? '' : 's'} · last {relativeDayInline(last)}
                 {last < addDays(Date.now(), -SCORE_WINDOW_DAYS) ? ' · not in score' : ''}
               </div>
             </div>

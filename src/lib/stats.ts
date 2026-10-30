@@ -1,9 +1,22 @@
-import type { Exercise, Muscle, Workout } from '../types';
+import type { Exercise, Muscle, Routine, Workout } from '../types';
 import { workingSets, workoutSetCount, workoutVolume } from './calc';
 import { addDays, startOfWeek } from './dates';
 
 export function finished(workouts: Workout[]): Workout[] {
   return workouts.filter((w) => w.endedAt).sort((a, b) => b.startedAt - a.startedAt);
+}
+
+/**
+ * When each routine was last done, from the workouts logged with it. Falls
+ * back to when it was last started for routines with no linked history.
+ */
+export function lastDone(workouts: Workout[], routines: Routine[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const w of workouts) {
+    if (w.endedAt && w.routineId && w.startedAt > (out.get(w.routineId) ?? 0)) out.set(w.routineId, w.startedAt);
+  }
+  for (const r of routines) if (!out.has(r.id) && r.lastUsedAt) out.set(r.id, r.lastUsedAt);
+  return out;
 }
 
 export interface WeekStat {

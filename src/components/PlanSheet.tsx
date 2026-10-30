@@ -66,6 +66,14 @@ export function PlanSheet({ target, onClose }: { target: PlanTarget; onClose: ()
   };
   const removeLabel = !isDate ? 'Rest day' : repeat ? `Remove from every ${dayName}` : current?.weekly ? `Skip this ${dayName}` : 'Remove plan';
   const canRemove = !isDate || (repeat ? !!weekly : !!current);
+  // A day that comes from the weekly plan can also be skipped just this once.
+  const canSkip = isDate && repeat && !!current?.weekly;
+  const skip = () => {
+    if (!isDate) return;
+    setDatePlan(toDateInput(target.date), null);
+    toast(`Skipping ${dateLabel}`);
+    onClose();
+  };
 
   const buildNew = () => {
     const id = createRoutine(false);
@@ -109,6 +117,11 @@ export function PlanSheet({ target, onClose }: { target: PlanTarget; onClose: ()
 
       {canRemove && (
         <div className="list" style={{ marginTop: 20 }}>
+          {canSkip && (
+            <button className="list-item" onClick={skip} style={{ color: 'var(--accent)', justifyContent: 'center' }}>
+              Skip this {dayName}
+            </button>
+          )}
           <button className="list-item" onClick={remove} style={!isDate ? undefined : { color: 'var(--red)', justifyContent: 'center' }}>
             {!isDate ? (
               <>

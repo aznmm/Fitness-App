@@ -2,7 +2,7 @@ import { ChevronDown, Dumbbell, Timer, Trash2 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { choose, confirm, toast } from '../components/Dialogs';
-import { EmptyState, useScrolled } from '../components/Layout';
+import { EmptyState, useBackTitle, useScrolled } from '../components/Layout';
 import { RestSheet } from '../components/RestTimerBar';
 import { WorkoutEditor } from '../components/WorkoutEditor';
 import { workoutVolume } from '../lib/calc';
@@ -23,6 +23,7 @@ export function ActiveWorkout() {
   const [restSheet, setRestSheet] = useState(false);
   const now = useNow(1000);
   const scrolled = useScrolled(8);
+  useBackTitle('Workout');
   // Finishing clears `active`; don't let the redirect below beat the navigation to the summary.
   const finishing = useRef(false);
 
@@ -95,7 +96,7 @@ export function ActiveWorkout() {
             {formatDuration((now - active.startedAt) / 1000)}
           </span>
         </div>
-        <div className="navbar-side end" style={{ gap: 8 }}>
+        <div className="navbar-side end" style={{ gap: 4, marginRight: 0 }}>
           <button className={`glass-btn${resting ? ' accent' : ''}`} aria-label="Rest timer" onClick={() => setRestSheet(true)}>
             <Timer size={20} />
           </button>

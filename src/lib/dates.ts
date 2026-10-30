@@ -54,6 +54,14 @@ export function relativeDay(t: number, now = Date.now()): string {
     : formatDate(t, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** Compact relative day for tight rows: "today", "yesterday", "Monday", "Oct 19". */
+export function shortDay(t: number, now = Date.now()): string {
+  const diff = Math.round((startOfDay(now) - startOfDay(t)) / DAY_MS);
+  if (diff >= 0 && diff < 7) return relativeDayInline(t, now);
+  const sameYear = new Date(t).getFullYear() === new Date(now).getFullYear();
+  return formatDate(t, sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 /** relativeDay for use mid-sentence: "last done today", "last done Monday". */
 export function relativeDayInline(t: number, now = Date.now()): string {
   return relativeDay(t, now).replace(/^(Today|Yesterday)$/, (m) => m.toLowerCase());

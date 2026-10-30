@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BodyMap } from '../components/BodyMap';
 import { confirm } from '../components/Dialogs';
-import { EmptyState, PageHeader } from '../components/Layout';
+import { EmptyState, PageHeader, resumeButtonRef } from '../components/Layout';
 import { PlanSheet } from '../components/PlanSheet';
 import { StartWorkoutSheet } from '../components/StartWorkoutSheet';
 import { StepsCard } from '../components/Steps';
@@ -15,6 +15,8 @@ import { formatDate, greeting, sameDay } from '../lib/dates';
 import { groupFatigue, muscleFatigue } from '../lib/muscles';
 import { planFor } from '../lib/plans';
 import { finished } from '../lib/stats';
+import { formatDuration } from '../lib/units';
+import { useNow } from '../lib/useNow';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import type { Routine } from '../types';
 
@@ -47,6 +49,9 @@ export function Home() {
   const routines = useStore((s) => s.routines);
   const plans = useStore((s) => s.plans);
   const active = useStore((s) => s.active);
+  const rest = useStore((s) => s.rest);
+  const clock = useNow(1000, !!rest);
+  const restLeft = rest ? Math.ceil((rest.endsAt - clock) / 1000) : 0;
   const { byId } = useExercises();
   const start = useStartWorkout();
   const [picker, setPicker] = useState(false);
@@ -73,8 +78,9 @@ export function Home() {
   return (
     <div className="page">
       <PageHeader
-        eyebrow={formatDate(Date.now(), { weekday: 'long', month: 'long', day: 'numeric' })}
-        title={greeting()}
+        eyebrow={greeting()}
+        title={formatDate(now, { weekday: 'long', month: 'short', day: 'numeric' })}
+        backTitle="Home"
         navTitle={
           <span className="nav-stack">
             <span>{formatDate(now, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
@@ -92,8 +98,9 @@ export function Home() {
 
       <section className="section" style={{ marginTop: 20 }}>
         {active ? (
-          <Link to="/workout" className="btn btn-hero btn-lg btn-block">
-            <Play size={20} fill="currentColor" /> Resume {active.name}
+          <Link to="/workout" className="btn btn-hero btn-lg btn-block" ref={resumeButtonRef}>
+            <Play size={20} fill="currentColor" /> <span className="truncate">Resume {active.name}</span>
+            {restLeft > 0 && <span className="hero-rest rounded-num">Rest {formatDuration(restLeft)}</span>}
           </Link>
         ) : upNext ? (
           <>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BUILT_IN_EXERCISES } from '../data/exercises';
 import { recordsFromSessions, setVolume } from '../lib/calc';
-import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
+import { cardioRate, distanceSpec, formatCardioDistance, isCardio } from '../lib/cardio';
 import { suggestNext } from '../lib/progression';
 import { byId, NOW, set, workout } from './helpers';
 
@@ -57,5 +57,13 @@ describe('assisted machines', () => {
     const ids = BUILT_IN_EXERCISES.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(BUILT_IN_EXERCISES.filter((e) => e.assisted).every((e) => e.type === 'reps')).toBe(true);
+  });
+});
+
+describe('isCardio', () => {
+  it('covers timed and distance cardio, not lifts', () => {
+    expect(isCardio(BUILT_IN_EXERCISES.find((e) => e.primary === 'cardio' && e.type === 'distance_duration'))).toBe(true);
+    expect(isCardio(ex('bench-press'))).toBe(false);
+    expect(isCardio(undefined)).toBe(false);
   });
 });
