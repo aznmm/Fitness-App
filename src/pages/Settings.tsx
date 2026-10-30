@@ -1,10 +1,12 @@
-import { Bell, CalendarCheck, ChevronRight, CircleCheck, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { Bell, CalendarCheck, Check, ChevronRight, CircleCheck, Copy, Disc3, FileInput, Download, FileSpreadsheet, Footprints, Moon, Palette, Ruler, Target, Timer, Trash2, Upload, User, Zap } from 'lucide-react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { AppIcon } from '../components/AppIcon';
 import { Link } from 'react-router-dom';
 import { confirm, toast } from '../components/Dialogs';
 import { PageHeader } from '../components/Layout';
 import { RestoreSheet } from '../components/RestoreSheet';
 import { SyncSettings } from '../components/SyncSettings';
+import { ACCENTS, accentOf } from '../lib/accents';
 import { makeBackup, saveFile, workoutsToCsv } from '../lib/backup';
 import { toDateInput } from '../lib/dates';
 import { BAR_OPTIONS, defaultBarKg } from '../lib/progression';
@@ -204,6 +206,42 @@ export function Settings() {
         <Row icon={<IconTile color="#636366"><Moon size={17} /></IconTile>} label="Theme">
           <Seg label="Theme" value={settings.theme} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} onChange={set('theme')} />
         </Row>
+        <div className="list-item accent-row">
+          <IconTile color="var(--accent)">
+            <Palette size={17} />
+          </IconTile>
+          <span className="grow title">Color</span>
+          <span className="muted">{accentOf(settings.accent).name}</span>
+          <div className="swatches" role="radiogroup" aria-label="App color">
+            {ACCENTS.map((id) => {
+              const a = accentOf(id);
+              const on = accentOf(settings.accent) === a;
+              return (
+                <button
+                  key={id}
+                  className="swatch"
+                  role="radio"
+                  aria-checked={on}
+                  aria-label={a.name}
+                  style={{ '--sw': a.dark[0], '--sw-2': a.dark[1] } as CSSProperties}
+                  onClick={() => update({ accent: id })}
+                >
+                  {on && <Check size={18} strokeWidth={3} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="list-item">
+          <AppIcon size={44} />
+          <div className="grow">
+            <div className="title">App icon</div>
+            <div className="sub">The barbell matches your color</div>
+          </div>
+        </div>
+      </div>
+      <div className="list-footer">
+        An icon already on your Home Screen keeps the color it was added with. To update it, pick the color in Safari and add Forge to your Home Screen again (copy a backup first: the new icon starts empty).
       </div>
 
       <div className="list-header" style={{ marginTop: 28 }}>

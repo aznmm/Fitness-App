@@ -1,4 +1,6 @@
-// Renders public/icon.svg to the PNG sizes the PWA manifest and iOS need.
+// Renders public/icon.svg to the PNG sizes the PWA manifest and iOS need, plus
+// an iOS Home Screen icon for each colour in src/data/accents.json
+// (apple-touch-icon-<colour>.png), picked when the app is added in that colour.
 // Usage: npm run icons   (requires Playwright's Chromium)
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -12,11 +14,18 @@ const maskable = svg
   .replace(bg, `${bg.replace('rx="112"', 'rx="0"')}<g transform="translate(51.2 51.2) scale(0.8)">`)
   .replace('</svg>', '</g></svg>');
 
+const accents = require('../src/data/accents.json');
+const recolour = (source, [main, partner]) =>
+  source.replace(/(<stop offset="0" stop-color=")[^"]+/, `$1${partner}`).replace(/(<stop offset="1" stop-color=")[^"]+/, `$1${main}`);
+
 const targets = [
   ['icon-192.png', 192, svg],
   ['icon-512.png', 512, svg],
   ['apple-touch-icon.png', 180, svg.replace('rx="112"', 'rx="0"')],
   ['icon-maskable-512.png', 512, maskable],
+  ...Object.entries(accents)
+    .filter(([id]) => id !== 'blue')
+    .map(([id, a]) => [`apple-touch-icon-${id}.png`, 180, recolour(svg.replace('rx="112"', 'rx="0"'), a.dark)]),
 ];
 
 (async () => {

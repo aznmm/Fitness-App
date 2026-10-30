@@ -67,6 +67,7 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 - **Import history** from other apps' CSV exports: Strong and Hevy are recognised automatically, and any other spreadsheet can be mapped column by column, with exercise names matched to the library
 - Optional **cloud sync** across devices via a free Supabase project (see [docs/sync-setup.md](docs/sync-setup.md))
 - iOS-inspired design with light and dark themes: large titles, glass tab bar, activity-ring strength score and colour-coded muscle groups
+- **Colour themes** (Settings → Color): blue, indigo, purple, pink, red, orange, green or teal, applied across the app and to the barbell app icon
 
 ## Using it on your phone
 

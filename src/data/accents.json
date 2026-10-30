@@ -1,0 +1,10 @@
+{
+  "blue": { "name": "Blue", "dark": ["#0a84ff", "#5e5ce6"], "light": ["#007aff", "#5856d6"] },
+  "indigo": { "name": "Indigo", "dark": ["#5e5ce6", "#3634a3"], "light": ["#5856d6", "#3634a3"] },
+  "purple": { "name": "Purple", "dark": ["#bf5af2", "#8944ab"], "light": ["#af52de", "#8944ab"] },
+  "pink": { "name": "Pink", "dark": ["#ff375f", "#d30f45"], "light": ["#ff2d55", "#d30f45"] },
+  "red": { "name": "Red", "dark": ["#ff453a", "#d70015"], "light": ["#ff3b30", "#d70015"] },
+  "orange": { "name": "Orange", "dark": ["#ff9f0a", "#c93400"], "light": ["#ff9500", "#c93400"] },
+  "green": { "name": "Green", "dark": ["#30d158", "#248a3d"], "light": ["#28b14c", "#248a3d"] },
+  "teal": { "name": "Teal", "dark": ["#40c8e0", "#008299"], "light": ["#30b0c7", "#008299"] }
+}

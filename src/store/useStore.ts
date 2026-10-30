@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smartSuggestions: true,
   stepGoal: 10_000,
   tickMode: 'set',
+  accent: 'blue',
 };
 
 export interface AppData {

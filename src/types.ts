@@ -179,6 +179,8 @@ export interface Settings {
   stepGoal: number;
   /** How sets get ticked off: a ✓ on every set (rest starts on each tick) or one Done per exercise. */
   tickMode: 'set' | 'exercise';
+  /** App colour, an id from src/data/accents.json (blue, purple, …). */
+  accent: string;
 }
 
 export interface RestTimer {
