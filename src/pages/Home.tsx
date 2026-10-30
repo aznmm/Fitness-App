@@ -156,7 +156,7 @@ export function Home() {
             })}
           </div>
         ) : (
-          <Link to="/routines" className="card link">
+          <Link to="/routines?add=1" className="card link">
             <div className="row" style={{ gap: 14 }}>
               <div className="tile">
                 <Plus size={22} />
