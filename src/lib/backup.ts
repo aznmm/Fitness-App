@@ -1,5 +1,6 @@
 import type { AppData } from '../store/useStore';
 import type { Exercise, Unit } from '../types';
+import { cleanData } from './sanitize';
 import { formatDuration, fromKg, fromMetres, trimNumber } from './units';
 
 export const BACKUP_FORMAT = 'forge-backup';
@@ -28,12 +29,14 @@ export function parseBackup(text: string): Partial<AppData> {
   if (!b || b.format !== BACKUP_FORMAT || typeof b.data !== 'object' || b.data === null) {
     throw new Error('That file is not a Forge backup.');
   }
-  const d = b.data as Partial<AppData>;
+  const fields = b.data as Record<string, unknown>;
   const arrays: (keyof AppData)[] = ['workouts', 'routines', 'customExercises', 'bodyweights', 'plans', 'steps'];
   for (const key of arrays) {
-    if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error(`Backup field "${key}" is malformed.`);
+    if (fields[key] !== undefined && !Array.isArray(fields[key])) throw new Error(`Backup field "${key}" is malformed.`);
   }
-  const deleted = d.deleted && typeof d.deleted === 'object' && !Array.isArray(d.deleted) ? d.deleted : {};
+  // Damaged records are repaired or left out rather than crashing every screen.
+  // A workout that was in progress when the backup was made isn't restored.
+  const d = cleanData(fields);
   return {
     workouts: d.workouts ?? [],
     routines: d.routines ?? [],
@@ -41,10 +44,9 @@ export function parseBackup(text: string): Partial<AppData> {
     bodyweights: d.bodyweights ?? [],
     plans: d.plans ?? [],
     steps: d.steps ?? [],
-    active: d.active ?? null,
     settings: d.settings,
-    settingsUpdatedAt: typeof d.settingsUpdatedAt === 'number' ? d.settingsUpdatedAt : 0,
-    deleted,
+    settingsUpdatedAt: d.settingsUpdatedAt ?? 0,
+    deleted: d.deleted ?? {},
   };
 }
 

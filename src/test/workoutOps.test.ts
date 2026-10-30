@@ -6,8 +6,12 @@ import {
   countUntickedEntries,
   createWorkout,
   insertSet,
+  patchSet,
   pruneIncomplete,
+  removeExercise,
   removeSet,
+  replaceExercise,
+  restoreExercise,
   routineFromWorkout,
   uncompleteSets,
 } from '../lib/workoutOps';
@@ -90,5 +94,34 @@ describe('workout operations', () => {
     const w = workout(NOW, { squat: [set(60, 5, { kind: 'warmup' }), set(100, 5), set(100, 5)] });
     const r = routineFromWorkout(w);
     expect(r.exercises[0]).toMatchObject({ exerciseId: 'squat', sets: 2, reps: 5 });
+  });
+});
+
+describe('undoing exercise changes', () => {
+  it('puts a removed exercise back where it was', () => {
+    const w = workout(NOW, { 'bench-press': [set(100, 5)], squat: [set(140, 5)], deadlift: [set(180, 5)] });
+    const mid = w.exercises[1];
+    const removed = removeExercise(mid.id)(w);
+    expect(restoreExercise(mid, 1)(removed).exercises.map((e) => e.exerciseId)).toEqual(['bench-press', 'squat', 'deadlift']);
+  });
+
+  it('brings back the sets a replace cleared', () => {
+    const w = workout(NOW, { 'bench-press': [set(100, 5)] });
+    const old = w.exercises[0];
+    const replaced = replaceExercise(old.id, 'dumbbell-fly')(w);
+    expect(replaced.exercises[0].sets[0].done).toBe(false);
+    expect(restoreExercise(old, 0)(replaced).exercises).toEqual([old]);
+  });
+});
+
+describe('clearing a ticked set', () => {
+  it('unticks it once its main number is gone', () => {
+    const w = workout(NOW, { 'bench-press': [set(100, 5)] });
+    const we = w.exercises[0];
+    const cleared = patchSet(we.id, we.sets[0].id, { reps: undefined })(w);
+    expect(cleared.exercises[0].sets[0].done).toBe(false);
+    expect(pruneIncomplete(cleared).exercises).toHaveLength(0);
+    // Changing the weight alone keeps it ticked.
+    expect(patchSet(we.id, we.sets[0].id, { weight: 110 })(w).exercises[0].sets[0].done).toBe(true);
   });
 });

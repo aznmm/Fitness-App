@@ -14,11 +14,12 @@ import { ScoreDelta } from '../components/StrengthScoreCard';
 import { MUSCLE_LABELS } from '../data/exercises';
 import { exerciseRecords, workoutDurationMs, workoutVolume } from '../lib/calc';
 import { DAY_MS, addDays, formatDate, fromDateInput, relativeDay, relativeDayInline, toDateInput } from '../lib/dates';
+import { LIMITS } from '../lib/limits';
 import { groupFatigue, MAP_MUSCLES, muscleFatigue, muscleSets, type RecoveryStatus } from '../lib/muscles';
 import { exerciseUsage, finished, setsPerMuscle, VOLUME_MUSCLES, weekStreak, weeklyStats } from '../lib/stats';
 import { recentSteps } from '../lib/steps';
 import { GAUGE_MAX, GROUP_LABELS, LEVELS, levelFor, SCORE_WINDOW_DAYS, STRENGTH_GROUPS } from '../lib/strength';
-import { formatElapsed, formatVolume, formatWeight, fromKg, toKg, trimNumber } from '../lib/units';
+import { formatElapsed, formatVolume, formatWeight, fromKg, parseDecimal, toKg, trimNumber } from '../lib/units';
 import { useStrength } from '../lib/useStrength';
 import { exerciseName, useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Muscle, StrengthGroup } from '../types';
@@ -311,11 +312,12 @@ function BodyweightSection() {
   const [date, setDate] = useState(() => toDateInput(Date.now()));
   const [showAll, setShowAll] = useState(false);
 
+  const typed = parseDecimal(value);
+  const valid = !!typed && toKg(typed, unit) <= LIMITS.weightKg && !!date;
   const submit = () => {
-    const n = Number(value.replace(',', '.'));
-    if (!(n > 0)) return;
+    if (!valid) return;
     const d = date === toDateInput(Date.now()) ? Date.now() : fromDateInput(date);
-    addBodyweight(toKg(n, unit), d);
+    addBodyweight(toKg(typed, unit), d);
     setValue('');
   };
 
@@ -358,7 +360,7 @@ function BodyweightSection() {
             style={{ flex: 1.2 }}
           />
           <input className="input" type="date" value={date} max={toDateInput(Date.now())} onChange={(e) => setDate(e.target.value)} aria-label="Date" style={{ flex: 1 }} />
-          <button className="btn btn-primary" type="submit" disabled={!(Number(value.replace(',', '.')) > 0)} style={{ minHeight: 46 }}>
+          <button className="btn btn-primary" type="submit" disabled={!valid} style={{ minHeight: 46 }}>
             Log
           </button>
         </form>

@@ -1,4 +1,5 @@
 import { uid } from './id';
+import { LIMITS } from './limits';
 import { toKg } from './units';
 import type { Equipment, Exercise, ExerciseType, Muscle, SetKind, Unit, Workout, WorkoutSet } from '../types';
 
@@ -167,6 +168,13 @@ function to24h(h: number, ampm?: string): number {
   return (h % 12) + (pm ? 12 : 0);
 }
 
+/** A local date-time, or undefined when a part is out of range (no rolling 2026-13-45 over into 2027). */
+function localDate(y: number, mo: number, d: number, h = 12, mi = 0, se = 0): number | undefined {
+  const t = new Date(y, mo, d, h, mi, se);
+  const ok = t.getFullYear() === y && t.getMonth() === mo && t.getDate() === d && h < 24 && mi < 60 && se < 60;
+  return ok ? t.getTime() : undefined;
+}
+
 export function parseDate(input: string, order: DateOrder = 'mdy'): number | undefined {
   const s = input.trim();
   if (!s) return undefined;
@@ -178,6 +186,7 @@ export function parseDate(input: string, order: DateOrder = 'mdy'): number | und
   let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?)?\s*(Z|[+-]\d{2}:?\d{2})?/);
   if (m) {
     if (m[7]) {
+      if (localDate(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0)) === undefined) return undefined;
       const t = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0));
       if (m[7] === 'Z') return t;
       const sign = m[7][0] === '-' ? -1 : 1;
@@ -185,7 +194,7 @@ export function parseDate(input: string, order: DateOrder = 'mdy'): number | und
       return t - sign * (oh * 60 + om) * 60000;
     }
     const [h, mi, se] = time(m[4], m[5], m[6]);
-    return new Date(+m[1], +m[2] - 1, +m[3], h, mi, se).getTime();
+    return localDate(+m[1], +m[2] - 1, +m[3], h, mi, se);
   }
 
   m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?)?/);
@@ -194,7 +203,7 @@ export function parseDate(input: string, order: DateOrder = 'mdy'): number | und
     const [month, day] = order === 'dmy' ? [b, a] : [a, b];
     const year = m[3].length === 2 ? 2000 + +m[3] : +m[3];
     const [h, mi, se] = time(m[4], m[5], m[6], m[7]);
-    return new Date(year, month - 1, day, h, mi, se).getTime();
+    return localDate(year, month - 1, day, h, mi, se);
   }
 
   // "1 Oct 2023, 18:30" (Hevy) or "Oct 1, 2023 6:30 PM"
@@ -206,7 +215,7 @@ export function parseDate(input: string, order: DateOrder = 'mdy'): number | und
     if (month < 0) return undefined;
     const [year, hh, mm, ss, ampm] = named.rest;
     const [h, mi, se] = time(hh, mm, ss, ampm);
-    return new Date(+year, month, +named.day, h, mi, se).getTime();
+    return localDate(+year, month, +named.day, h, mi, se);
   }
   return undefined;
 }
@@ -312,6 +321,19 @@ export function buildWorkouts(table: CsvTable, columns: ColumnMap, opts: ImportO
     const seconds = parseNumber(get(row, 'seconds'));
     if (!weight && !reps && !distance && !seconds) {
       skippedRows++; // rest-timer rows, notes-only rows, empty sets
+      continue;
+    }
+    // Negative reps or a 1e9 lb set would wreck records and stats for good.
+    const outOfRange =
+      Math.abs(toKg(weight ?? 0, opts.weightUnit)) > LIMITS.weightKg ||
+      (reps ?? 0) < 0 ||
+      (reps ?? 0) > LIMITS.reps ||
+      (distance ?? 0) < 0 ||
+      (distance ?? 0) * DIST_TO_M[opts.distanceUnit] > LIMITS.distanceM ||
+      (seconds ?? 0) < 0 ||
+      (seconds ?? 0) > LIMITS.durationSec;
+    if (outOfRange) {
+      skippedRows++;
       continue;
     }
 

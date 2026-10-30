@@ -11,7 +11,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 export function RestoreSheet({ onClose }: { onClose: () => void }) {
   const replaceAll = useStore((s) => s.replaceAll);
   const mergeIn = useStore((s) => s.mergeIn);
-  const hasData = useStore((s) => s.workouts.length + s.routines.length + s.bodyweights.length > 0);
+  const hasData = useStore((s) => s.workouts.length + s.routines.length + s.bodyweights.length + s.customExercises.length + s.plans.length + s.steps.length > 0);
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
@@ -45,8 +45,10 @@ export function RestoreSheet({ onClose }: { onClose: () => void }) {
 
   const add = () => {
     if (!backup) return;
-    mergeIn(backup);
-    toast('Backup added');
+    // With nothing here yet, take the backup whole, settings included.
+    if (hasData) mergeIn(backup);
+    else replaceAll(backup);
+    toast(hasData ? 'Backup added' : 'Backup restored');
     onClose();
   };
 
@@ -54,7 +56,7 @@ export function RestoreSheet({ onClose }: { onClose: () => void }) {
     if (!backup) return;
     const ok = await confirm({
       title: 'Replace everything?',
-      message: 'Workouts, routines and bodyweight entries on this device that are not in the backup will be erased.',
+      message: 'Workouts, routines and bodyweight entries on this device that are not in the backup will be erased. A workout in progress is kept.',
       confirmLabel: 'Replace',
       danger: true,
     });

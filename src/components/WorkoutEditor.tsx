@@ -19,11 +19,13 @@ import {
   removeExercise,
   removeSet,
   replaceExercise,
+  restoreExercise,
   uncompleteSets,
   type WorkoutUpdater,
 } from '../lib/workoutOps';
 import { cardioRate, distanceSpec, formatCardioDistance } from '../lib/cardio';
-import { formatDuration, fromKg, parseDuration, toKg, trimNumber } from '../lib/units';
+import { LIMITS } from '../lib/limits';
+import { formatDuration, fromKg, parseDecimal, parseDuration, parseWholeNumber, toKg, trimNumber } from '../lib/units';
 import { useBodyweight, useExercises, useStore } from '../store/useStore';
 import type { Exercise, SetKind, Unit, Workout, WorkoutExercise, WorkoutSet } from '../types';
 import { toast } from './Dialogs';
@@ -56,6 +58,7 @@ export function WorkoutEditor({ workout, onChange, live }: EditorProps) {
           exercise={byId.get(we.exerciseId)}
           history={history}
           before={workout.startedAt}
+          index={i}
           live={live}
           isFirst={i === 0}
           isLast={i === workout.exercises.length - 1}
@@ -75,7 +78,12 @@ export function WorkoutEditor({ workout, onChange, live }: EditorProps) {
           onClose={() => setPicker(null)}
           onPick={(ids) => {
             if (picker.mode === 'add') onChange(addExercises(ids, byId, history));
-            else onChange(replaceExercise(picker.weId, ids[0]));
+            else {
+              const index = workout.exercises.findIndex((we) => we.id === picker.weId);
+              const old = workout.exercises[index];
+              onChange(replaceExercise(picker.weId, ids[0]));
+              if (old) toast(`Replaced ${byId.get(old.exerciseId)?.name ?? 'exercise'}`, { label: 'Undo', run: () => onChange(restoreExercise(old, index)) });
+            }
             setPicker(null);
           }}
         />
@@ -91,6 +99,8 @@ interface CardProps {
   exercise: Exercise | undefined;
   history: Workout[];
   before: number;
+  /** Position in the workout, to put the exercise back if a remove is undone. */
+  index: number;
   live: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -98,7 +108,7 @@ interface CardProps {
   onReplace: () => void;
 }
 
-const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before, live, isFirst, isLast, onChange, onReplace }: CardProps) {
+const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before, index, live, isFirst, isLast, onChange, onReplace }: CardProps) {
   const navigate = useNavigate();
   const settings = useStore((s) => s.settings);
   const startRest = useStore((s) => s.startRest);
@@ -353,6 +363,7 @@ const ExerciseCard = memo(function ExerciseCard({ we, exercise, history, before,
               onClick={() => {
                 onChange(removeExercise(we.id));
                 setMenu(false);
+                toast(`Removed ${exercise?.name ?? 'exercise'}`, { label: 'Undo', run: () => onChange(restoreExercise(we, index)) });
               }}
             >
               <Trash2 size={18} /> Remove exercise
@@ -545,24 +556,25 @@ const SetRow = memo(function SetRow({ weId, set, index, number, exercise, type, 
   // Assisted machines: type the assistance as a positive number; it's stored as negative added weight.
   const assist = !!exercise?.assisted;
   const fmtWeight = useCallback((kg: number) => trimNumber(fromKg(assist ? Math.abs(kg) : kg, unit), 2), [unit, assist]);
+  // Numbers past LIMITS are typos; the field keeps its last sensible value.
   const parseWeight = useCallback((s: string) => {
-    const n = Number(s.replace(',', '.'));
-    if (Number.isNaN(n)) return undefined;
+    const n = parseDecimal(s);
+    if (n === undefined || toKg(n, unit) > LIMITS.weightKg) return undefined;
     return assist ? -Math.abs(toKg(n, unit)) || 0 : toKg(n, unit);
   }, [unit, assist]);
   const spec = distanceSpec(exercise, unit);
   const fmtDist = useCallback((m: number) => trimNumber(m / spec.metres, spec.label === 'mi' || spec.label === 'km' ? 2 : 0), [spec.metres, spec.label]);
   const parseDist = useCallback((s: string) => {
-    const n = Number(s.replace(',', '.'));
-    return Number.isNaN(n) ? undefined : n * spec.metres;
+    const n = parseDecimal(s);
+    return n === undefined || n * spec.metres > LIMITS.distanceM ? undefined : n * spec.metres;
   }, [spec.metres]);
   const parseReps = useCallback((s: string) => {
-    const n = Number(s);
-    return Number.isInteger(n) ? n : undefined;
+    const n = parseWholeNumber(s);
+    return n === undefined || n > LIMITS.reps ? undefined : n;
   }, []);
   const parseCalories = useCallback((s: string) => {
-    const n = Math.round(Number(s.replace(',', '.')));
-    return Number.isNaN(n) ? undefined : n;
+    const n = parseDecimal(s);
+    return n === undefined || n > LIMITS.calories ? undefined : Math.round(n);
   }, []);
 
   const ph = placeholders(goal, prev);

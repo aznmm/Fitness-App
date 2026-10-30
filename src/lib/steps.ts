@@ -1,5 +1,6 @@
 import type { StepEntry } from '../types';
 import { startOfDay, toDateInput } from './dates';
+import { LIMITS } from './limits';
 
 /** Name of the iPhone Shortcut that copies steps from Apple Health. */
 export const STEPS_SHORTCUT = 'Forge Steps';
@@ -14,7 +15,7 @@ export function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-const MAX_STEPS = 200_000;
+const MAX_STEPS = LIMITS.steps;
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`;

@@ -5,10 +5,11 @@ import { BUILT_IN_EXERCISES } from '../data/exercises';
 import { uid } from '../lib/id';
 import { datePlanId, weekdayPlanId } from '../lib/plans';
 import { stepsId } from '../lib/steps';
+import { cleanData } from '../lib/sanitize';
 import { mergeDocs } from '../sync/merge';
 import { createWorkout, pruneIncomplete, routineFromWorkout, type WorkoutUpdater } from '../lib/workoutOps';
 import type { BodyWeightEntry, Exercise, Plan, RestTimer, Routine, Settings, StepEntry, Workout } from '../types';
-import { appStorage } from './storage';
+import { appStorage, onOtherTabWrite } from './storage';
 
 export const DEFAULT_SETTINGS: Settings = {
   unit: 'lb',
@@ -83,6 +84,7 @@ export interface AppActions {
   deleteSteps(date: string): void;
 
   updateSettings(patch: Partial<Settings>): void;
+  /** Swap this device's records for `data`. A workout in progress here is kept. */
   replaceAll(data: Partial<AppData>): void;
   /** Add a backup's records to what's here; the newer copy of each record wins. */
   mergeIn(data: Partial<AppData>): void;
@@ -278,6 +280,8 @@ export const useStore = create<AppState>()(
           return {
             ...EMPTY,
             ...data,
+            active: s.active,
+            rest: s.rest,
             workouts: stampAll(data.workouts),
             routines: stampAll(data.routines),
             customExercises: stampAll(data.customExercises),
@@ -356,12 +360,17 @@ export const useStore = create<AppState>()(
         deleted,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<AppData>;
+        const p = cleanData(persisted);
         return { ...current, ...p, settings: { ...DEFAULT_SETTINGS, ...p.settings } };
       },
     },
   ),
 );
+
+// Load what another tab just saved, so this tab never writes an older copy over it.
+onOtherTabWrite((name) => {
+  if (name === useStore.persist.getOptions().name) void useStore.persist.rehydrate();
+});
 
 /** Built-in + custom exercises, as a list and an id lookup. */
 export function useExercises(): { list: Exercise[]; byId: Map<string, Exercise> } {

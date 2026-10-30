@@ -1,18 +1,22 @@
 import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { confirm } from '../components/Dialogs';
+import { confirm, toast } from '../components/Dialogs';
 import { ExerciseTile, ExercisePicker } from '../components/ExercisePicker';
 import { PageHeader } from '../components/Layout';
 import { NumberInput } from '../components/NumberInput';
 import { uid } from '../lib/id';
-import { formatDuration, fromKg, toKg, trimNumber } from '../lib/units';
+import { LIMITS } from '../lib/limits';
+import { formatDuration, fromKg, parseDecimal, parseWholeNumber, toKg, trimNumber } from '../lib/units';
 import { exerciseName, useExercises, useStore } from '../store/useStore';
 import type { Routine, RoutineExercise } from '../types';
 import { useStartWorkout } from './Home';
 
 const REST_CHOICES = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300];
-const int = (s: string) => (Number.isInteger(Number(s)) ? Number(s) : undefined);
+const int = (s: string) => {
+  const n = parseWholeNumber(s);
+  return n !== undefined && n <= LIMITS.reps ? n : undefined;
+};
 
 export function RoutineEditor() {
   const { id } = useParams();
@@ -31,6 +35,12 @@ export function RoutineEditor() {
   const update = (patch: Partial<Routine>) => saveRoutine({ ...routine, ...patch });
   const updateEx = (exId: string, patch: Partial<RoutineExercise>) =>
     update({ exercises: routine.exercises.map((e) => (e.id === exId ? { ...e, ...patch } : e)) });
+  // Reads the saved routine at undo time, so edits made since are kept.
+  const restoreEx = (re: RoutineExercise, i: number) => {
+    const current = useStore.getState().routines.find((r) => r.id === routine.id);
+    if (!current || current.exercises.some((e) => e.id === re.id)) return;
+    saveRoutine({ ...current, exercises: [...current.exercises.slice(0, i), re, ...current.exercises.slice(i)] });
+  };
   const move = (i: number, d: number) => {
     const list = [...routine.exercises];
     [list[i], list[i + d]] = [list[i + d], list[i]];
@@ -86,7 +96,10 @@ export function RoutineEditor() {
               <button
                 className="icon-btn"
                 aria-label="Remove exercise"
-                onClick={() => update({ exercises: routine.exercises.filter((e) => e.id !== re.id) })}
+                onClick={() => {
+                  update({ exercises: routine.exercises.filter((e) => e.id !== re.id) });
+                  toast(`Removed ${exerciseName(byId, re.exerciseId)}`, { label: 'Undo', run: () => restoreEx(re, i) });
+                }}
               >
                 <Trash2 size={18} />
               </button>
@@ -109,7 +122,10 @@ export function RoutineEditor() {
                   value={re.weight}
                   onValue={(v) => updateEx(re.id, { weight: v || undefined })}
                   format={(kg) => trimNumber(fromKg(kg, settings.unit), 2)}
-                  parse={(s) => (Number.isNaN(Number(s)) ? undefined : toKg(Number(s), settings.unit))}
+                  parse={(s) => {
+                    const n = parseDecimal(s);
+                    return n === undefined || toKg(n, settings.unit) > LIMITS.weightKg ? undefined : toKg(n, settings.unit);
+                  }}
                 />
               </label>
               <label className="field grow">

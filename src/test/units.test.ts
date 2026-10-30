@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatWeight, fromKg, parseDuration, toKg, trimNumber } from '../lib/units';
+import { formatDuration, formatWeight, fromKg, parseDecimal, parseDuration, parseWholeNumber, toKg, trimNumber } from '../lib/units';
 
 describe('units', () => {
   it('round-trips pounds through kilograms', () => {
@@ -28,5 +28,21 @@ describe('units', () => {
     expect(parseDuration('3000')).toBe(1800);
     expect(parseDuration('')).toBeUndefined();
     expect(parseDuration('a:b')).toBeUndefined();
+  });
+
+  it('rejects typos instead of reading them as other numbers', () => {
+    expect(parseDuration('1:75')).toBeUndefined();
+    expect(parseDuration('160')).toBeUndefined();
+    expect(parseDuration('99:99')).toBeUndefined();
+    expect(parseDuration('25:00:00')).toBeUndefined();
+    expect(parseDecimal('62,5')).toBe(62.5);
+    expect(parseDecimal('62.')).toBe(62);
+    expect(parseDecimal('1e3')).toBeUndefined();
+    expect(parseDecimal('0x0A')).toBeUndefined();
+    expect(parseDecimal('-5')).toBeUndefined();
+    expect(parseDecimal('.')).toBeUndefined();
+    expect(parseWholeNumber('12')).toBe(12);
+    expect(parseWholeNumber('1.5')).toBeUndefined();
+    expect(parseWholeNumber('0x0A')).toBeUndefined();
   });
 });

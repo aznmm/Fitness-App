@@ -1,4 +1,5 @@
 import type { Unit } from '../types';
+import { LIMITS } from './limits';
 
 export const KG_PER_LB = 0.45359237;
 const M_PER_MI = 1609.344;
@@ -9,6 +10,21 @@ export function toKg(value: number, unit: Unit): number {
 
 export function fromKg(kg: number, unit: Unit): number {
   return unit === 'kg' ? kg : kg / KG_PER_LB;
+}
+
+/**
+ * A typed decimal: "62.5", "62,5", "62." or ".5". Anything else ("1e3",
+ * "0x0A", "12kg") is rejected rather than read as some other number.
+ */
+export function parseDecimal(input: string): number | undefined {
+  const s = input.trim().replace(',', '.');
+  return /^\d*\.?\d*$/.test(s) && /\d/.test(s) ? Number(s) : undefined;
+}
+
+/** A typed whole number, digits only. */
+export function parseWholeNumber(input: string): number | undefined {
+  const s = input.trim();
+  return /^\d+$/.test(s) ? Number(s) : undefined;
 }
 
 /** Trim to at most `decimals` places without trailing zeros: 61.50 → "61.5", 135.0 → "135". */
@@ -75,11 +91,16 @@ export function formatElapsed(ms: number): string {
 export function parseDuration(input: string): number | undefined {
   const trimmed = input.trim();
   if (!trimmed) return undefined;
+  let parts: number[];
   if (/^\d+$/.test(trimmed)) {
     if (trimmed.length <= 2) return Number(trimmed);
-    return Number(trimmed.slice(0, -2)) * 60 + Number(trimmed.slice(-2));
+    parts = [Number(trimmed.slice(0, -2)), Number(trimmed.slice(-2))];
+  } else {
+    if (!/^\d+(:\d{1,2}){1,2}$/.test(trimmed)) return undefined;
+    parts = trimmed.split(':').map(Number);
   }
-  const parts = trimmed.split(':').map((p) => Number(p));
-  if (parts.some((p) => Number.isNaN(p) || p < 0)) return undefined;
-  return parts.reduce((acc, p) => acc * 60 + p, 0);
+  // Minutes and seconds after the first part stop at 59 ("1:75" is a typo).
+  if (parts.slice(1).some((p) => p > 59)) return undefined;
+  const sec = parts.reduce((acc, p) => acc * 60 + p, 0);
+  return sec <= LIMITS.durationSec ? sec : undefined;
 }

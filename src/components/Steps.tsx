@@ -109,7 +109,7 @@ export function StepsSheet({ onClose }: { onClose: () => void }) {
 
   const saveManual = () => {
     const n = parseCount(manual.trim());
-    if (n === null || !manual.trim()) return;
+    if (n === null || !manual.trim() || !date) return;
     saveSteps([{ date, count: n }], 'manual');
     setManual('');
     toast(`${formatSteps(n)} steps saved`);
@@ -193,7 +193,7 @@ export function StepsSheet({ onClose }: { onClose: () => void }) {
       >
         <input className="input" inputMode="numeric" placeholder="Steps" value={manual} onChange={(e) => setManual(e.target.value)} aria-label="Step count" style={{ flex: 1.1 }} />
         <input className="input" type="date" value={date} max={toDateInput(Date.now())} onChange={(e) => setDate(e.target.value)} aria-label="Date" style={{ flex: 1 }} />
-        <button className="btn btn-primary" type="submit" disabled={!manual.trim()} style={{ minHeight: 46 }}>
+        <button className="btn btn-primary" type="submit" disabled={!manual.trim() || !date} style={{ minHeight: 46 }}>
           Save
         </button>
       </form>
