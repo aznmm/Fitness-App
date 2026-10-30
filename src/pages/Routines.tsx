@@ -1,6 +1,6 @@
-import { ChevronRight, ClipboardList, Play, Plus } from 'lucide-react';
-import { useMemo, useState, type CSSProperties } from 'react';
-import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, ClipboardList, Play, Plus } from 'lucide-react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from '../components/Dialogs';
 import { EmptyState, PageHeader } from '../components/Layout';
 import { PlanSheet, weekdayName } from '../components/PlanSheet';
@@ -25,7 +25,15 @@ export function Routines() {
   const { byId } = useExercises();
   const start = useStartWorkout();
   const create = useCreateRoutine();
-  const [program, setProgram] = useState<Program | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [adding, setAdding] = useState(false);
+
+  // Home's "Create a routine" card links here with ?add=1 to open the chooser.
+  useEffect(() => {
+    if (!params.get('add')) return;
+    setAdding(true);
+    setParams({}, { replace: true });
+  }, [params, setParams]);
 
   const addProgram = (p: Program) => {
     const now = Date.now();
@@ -38,7 +46,7 @@ export function Routines() {
         exercises: d.exercises.map((e) => ({ id: uid(), ...e })),
       }),
     );
-    setProgram(null);
+    setAdding(false);
     toast(`Added ${p.days.length} routine${p.days.length > 1 ? 's' : ''} from ${p.name}`);
   };
 
@@ -47,7 +55,7 @@ export function Routines() {
       <PageHeader
         title="Routines"
         actions={
-          <button className="glass-btn accent" onClick={() => create()} aria-label="New routine">
+          <button className="glass-btn accent" onClick={() => setAdding(true)} aria-label="New routine">
             <Plus size={22} strokeWidth={2.4} />
           </button>
         }
@@ -56,8 +64,8 @@ export function Routines() {
       {routines.length === 0 ? (
         <div className="card">
           <EmptyState icon={<ClipboardList size={30} />} title="No routines yet">
-            <p className="small">Routines are reusable workout templates. Build your own or start from a program below.</p>
-            <button className="btn btn-tinted" style={{ marginTop: 14 }} onClick={() => create()}>
+            <p className="small">Routines are reusable workout templates. Build your own or start from a ready-made program.</p>
+            <button className="btn btn-tinted" style={{ marginTop: 14 }} onClick={() => setAdding(true)}>
               <Plus size={18} strokeWidth={2.5} /> New routine
             </button>
           </EmptyState>
@@ -101,63 +109,104 @@ export function Routines() {
 
       {routines.length > 0 && <WeeklyPlan />}
 
-      <section className="section">
-        <div className="section-head">
-          <h2>Programs</h2>
-        </div>
-        <div className="list with-icons">
-          {PROGRAMS.map((p, i) => (
-            <button className="list-item" key={p.id} onClick={() => setProgram(p)}>
-              <div className={`tile solid ${PROGRAM_TILES[i % PROGRAM_TILES.length]}`}>
-                <span className="rounded-num">{p.days.length}</span>
-              </div>
-              <div className="grow">
-                <div className="title">{p.name}</div>
-                <div className="sub truncate">
-                  {p.daysPerWeek} · {p.description}
-                </div>
-              </div>
-              <ChevronRight size={18} className="chev" />
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {program && (
-        <Sheet
-          title={program.name}
-          onClose={() => setProgram(null)}
-          footer={
-            <button className="btn btn-primary btn-lg btn-block" onClick={() => addProgram(program)}>
-              <Plus size={19} strokeWidth={2.5} /> Add {program.days.length} routines
-            </button>
-          }
-        >
-          <p className="secondary" style={{ marginTop: 0 }}>
-            {program.description}
-          </p>
-          <span className="badge accent" style={{ marginBottom: 14 }}>
-            {program.daysPerWeek} per week
-          </span>
-          {program.days.map((d) => (
-            <div className="card tight" key={d.name}>
-              <h3 style={{ marginBottom: 10 }}>{d.name}</h3>
-              <div className="stack-sm" style={{ gap: 8 }}>
-                {d.exercises.map((e) => (
-                  <div className="row small" key={e.exerciseId} style={{ gap: 10 }}>
-                    <span className={`dot ${muscleClass(byId.get(e.exerciseId)?.primary)}`} aria-hidden />
-                    <span className="grow">{exerciseName(byId, e.exerciseId)}</span>
-                    <span className="rounded-num muted">
-                      {e.sets} × {e.reps ?? '—'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </Sheet>
+      {adding && (
+        <NewRoutineSheet
+          onClose={() => setAdding(false)}
+          onBlank={() => {
+            setAdding(false);
+            create();
+          }}
+          onAddProgram={addProgram}
+        />
       )}
     </div>
+  );
+}
+
+/** What + offers: an empty routine, or a ready-made program to copy in (with a preview first). */
+function NewRoutineSheet({ onClose, onBlank, onAddProgram }: { onClose: () => void; onBlank: () => void; onAddProgram: (p: Program) => void }) {
+  const { byId } = useExercises();
+  const [program, setProgram] = useState<Program | null>(null);
+
+  if (program) {
+    return (
+      <Sheet
+        title={program.name}
+        onClose={onClose}
+        headerExtra={
+          <button className="link-btn row" style={{ gap: 0, marginLeft: -6 }} onClick={() => setProgram(null)}>
+            <ChevronLeft size={22} /> Back
+          </button>
+        }
+        footer={
+          <button className="btn btn-primary btn-lg btn-block" onClick={() => onAddProgram(program)}>
+            <Plus size={19} strokeWidth={2.5} /> Add {program.days.length} routine{program.days.length === 1 ? '' : 's'}
+          </button>
+        }
+      >
+        <p className="secondary" style={{ marginTop: 0 }}>
+          {program.description}
+        </p>
+        <span className="badge accent" style={{ marginBottom: 14 }}>
+          {program.daysPerWeek} per week
+        </span>
+        {program.days.map((d) => (
+          <div className="card tight" key={d.name}>
+            <h3 style={{ marginBottom: 10 }}>{d.name}</h3>
+            <div className="stack-sm" style={{ gap: 8 }}>
+              {d.exercises.map((e) => (
+                <div className="row small" key={e.exerciseId} style={{ gap: 10 }}>
+                  <span className={`dot ${muscleClass(byId.get(e.exerciseId)?.primary)}`} aria-hidden />
+                  <span className="grow">{exerciseName(byId, e.exerciseId)}</span>
+                  <span className="rounded-num muted">
+                    {e.sets} × {e.reps ?? '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Sheet>
+    );
+  }
+
+  return (
+    <Sheet title="New routine" onClose={onClose}>
+      <div className="list with-icons" style={{ marginBottom: 20 }}>
+        <button className="list-item" onClick={onBlank}>
+          <span className="tile">
+            <Plus size={20} strokeWidth={2.5} />
+          </span>
+          <span className="grow">
+            <span className="title" style={{ display: 'block' }}>
+              Build your own
+            </span>
+            <span className="sub">Start empty and add exercises</span>
+          </span>
+          <ChevronRight size={18} className="chev" />
+        </button>
+      </div>
+      <div className="list-header">Start from a program</div>
+      <div className="list with-icons">
+        {PROGRAMS.map((p, i) => (
+          <button className="list-item" key={p.id} onClick={() => setProgram(p)}>
+            <div className={`tile solid ${PROGRAM_TILES[i % PROGRAM_TILES.length]}`}>
+              <span className="rounded-num">{p.days.length}</span>
+            </div>
+            <div className="grow" style={{ minWidth: 0 }}>
+              <div className="title">{p.name}</div>
+              <div className="sub truncate">
+                {p.daysPerWeek} · {p.description}
+              </div>
+            </div>
+            <ChevronRight size={18} className="chev" />
+          </button>
+        ))}
+      </div>
+      <p className="tiny muted" style={{ margin: '12px 4px 0' }}>
+        A program adds one routine per training day. You can edit them like any other routine.
+      </p>
+    </Sheet>
   );
 }
 

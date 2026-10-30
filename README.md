@@ -44,7 +44,7 @@ A mobile-first workout tracker inspired by [Caliber](https://caliberstrong.com/)
 
 **Routines & programs**
 - Build reusable routines with target sets, reps, weight and rest
-- One-tap import of ready-made programs: Full Body, Upper/Lower, Push/Pull/Legs, Strength 5×5
+- New routines start empty or from a ready-made program (Full Body, Upper/Lower, Push/Pull/Legs, Strength 5×5): tap + on Routines, preview it, and add its routines in one tap
 - Save any finished workout as a routine, or repeat it
 
 **Progress dashboard**
