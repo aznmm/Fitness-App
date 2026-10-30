@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DialogHost } from './components/Dialogs';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { applyAccent } from './lib/accents';
 import { ActiveWorkoutBar, TabBar } from './components/Layout';
 import { RestTimerBar } from './components/RestTimerBar';
 import { ActiveWorkout } from './pages/ActiveWorkout';
@@ -23,6 +24,8 @@ function hidesTabs(pathname: string, search: string): boolean {
 
 function useTheme() {
   const theme = useStore((s) => s.settings.theme);
+  const accent = useStore((s) => s.settings.accent);
+  useEffect(() => applyAccent(accent), [accent]);
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'system') root.removeAttribute('data-theme');

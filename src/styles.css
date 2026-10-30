@@ -22,10 +22,12 @@
   --text-3: rgba(235, 235, 245, 0.32);
   --muted: var(--text-2);
 
-  --accent: #0a84ff;
-  --accent-2: #5e5ce6;
+  /* The accent follows the colour picked in Settings: applyAccent() sets
+     --accent-dark/-light and their gradient partners; blue is the default. */
+  --accent: var(--accent-dark, #0a84ff);
+  --accent-2: var(--accent-2-dark, #5e5ce6);
   --accent-ink: #ffffff;
-  --accent-tint: rgba(10, 132, 255, 0.18);
+  --accent-tint: color-mix(in srgb, var(--accent) 18%, transparent);
   --green: #30d158;
   --green-text: #30d158;
   --green-tint: rgba(48, 209, 88, 0.16);
@@ -84,9 +86,9 @@
     --text: #000000;
     --text-2: rgba(60, 60, 67, 0.64);
     --text-3: rgba(60, 60, 67, 0.32);
-    --accent: #007aff;
-    --accent-2: #5856d6;
-    --accent-tint: rgba(0, 122, 255, 0.11);
+    --accent: var(--accent-light, #007aff);
+    --accent-2: var(--accent-2-light, #5856d6);
+    --accent-tint: color-mix(in srgb, var(--accent) 11%, transparent);
     --green: #34c759;
     --green-text: #248a3d;
     --green-tint: rgba(52, 199, 89, 0.15);
@@ -128,9 +130,9 @@
   --text: #000000;
   --text-2: rgba(60, 60, 67, 0.64);
   --text-3: rgba(60, 60, 67, 0.32);
-  --accent: #007aff;
-  --accent-2: #5856d6;
-  --accent-tint: rgba(0, 122, 255, 0.11);
+  --accent: var(--accent-light, #007aff);
+  --accent-2: var(--accent-2-light, #5856d6);
+  --accent-tint: color-mix(in srgb, var(--accent) 11%, transparent);
   --green: #34c759;
   --green-text: #248a3d;
   --green-tint: rgba(52, 199, 89, 0.15);
@@ -1096,6 +1098,48 @@ a.list-item:active {
   font-size: 13px;
   color: var(--text-2);
   padding: 8px 16px 0;
+}
+
+/* Settings colour picker: the swatches wrap onto their own line under the row */
+.list-item.accent-row {
+  flex-wrap: wrap;
+  row-gap: 14px;
+  padding-bottom: 16px;
+}
+
+.swatches {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  justify-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 359px) {
+  .swatches {
+    grid-template-columns: repeat(4, 1fr);
+    row-gap: 12px;
+  }
+}
+
+.swatch {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, var(--sw), var(--sw-2));
+  transition: transform 0.2s var(--ease), box-shadow 0.2s;
+}
+
+.swatch:active {
+  transform: scale(0.9);
+}
+
+.swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--sw);
 }
 
 .icon-tile {
