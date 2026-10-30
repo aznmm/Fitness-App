@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { useStore, type AppState } from '../store/useStore';
 import { createSupabaseBackend, type SyncBackend } from './backend';
 import { SUPABASE_KEY, SUPABASE_URL, syncConfigured } from './config';
+import { cleanData } from '../lib/sanitize';
 import { mergeDocs, type SyncDoc } from './merge';
 
 export type SyncStatus = 'unconfigured' | 'loading' | 'signed-out' | 'idle' | 'syncing' | 'error';
@@ -51,7 +52,9 @@ export async function syncNow(): Promise<void> {
   clearTimeout(timer);
   useSync.setState({ status: 'syncing', error: undefined });
   try {
-    const remote = await backend.load(userId);
+    const loaded = await backend.load(userId);
+    // The cloud copy comes from outside too; repair it before it reaches the store.
+    const remote = loaded && ({ ...loaded, ...cleanData(loaded), version: 1 } as SyncDoc);
     // Merge against the store as it is *now*, so changes made while loading aren't lost.
     const local = localDoc();
     const merged = mergeDocs(local, remote);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BAR_OPTIONS, defaultBarKg, platesPerSide } from '../lib/progression';
-import { fromKg, toKg, trimNumber } from '../lib/units';
+import { LIMITS } from '../lib/limits';
+import { fromKg, parseDecimal, toKg, trimNumber } from '../lib/units';
 import { useStore } from '../store/useStore';
 import { Sheet } from './Sheet';
 
@@ -33,8 +34,9 @@ export function PlateCalculator({ initialKg, onClose }: Props) {
   const bar = Math.round(fromKg(barKg, unit) * 100) / 100;
   const [text, setText] = useState(() => (initialKg ? trimNumber(fromKg(initialKg, unit)) : ''));
 
-  const total = Number(text.replace(',', '.'));
-  const load = total > 0 ? platesPerSide(total, bar, unit) : null;
+  const total = parseDecimal(text) ?? 0;
+  // Past the limit it's a typo, and counting plates for it would hang the page.
+  const load = total > 0 && toKg(total, unit) <= LIMITS.weightKg ? platesPerSide(total, bar, unit) : null;
   const options = [...new Set([...BAR_OPTIONS[unit], Math.round(bar)])].sort((a, b) => b - a);
 
   return (

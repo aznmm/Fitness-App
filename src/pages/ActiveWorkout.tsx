@@ -114,13 +114,13 @@ export function ActiveWorkout() {
       <div className="row small muted" style={{ gap: 14, marginTop: 2 }}>
         <span>
           <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
-            {doneSets + unticked}
+            {doneSets}
           </span>{' '}
-          set{doneSets + unticked === 1 ? '' : 's'} logged
+          set{doneSets === 1 ? '' : 's'} done
         </span>
         <span>
           <span className="rounded-num" style={{ color: 'var(--text)', fontWeight: 600 }}>
-            {formatVolume(workoutVolume(pruneIncomplete(active, true)), unit)}
+            {formatVolume(workoutVolume(pruneIncomplete(active)), unit)}
           </span>{' '}
           volume
         </span>

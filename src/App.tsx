@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DialogHost } from './components/Dialogs';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ActiveWorkoutBar, TabBar } from './components/Layout';
 import { RestTimerBar } from './components/RestTimerBar';
 import { ActiveWorkout } from './pages/ActiveWorkout';
@@ -46,20 +47,23 @@ function Shell() {
   return (
     <div className="app">
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/workout" element={<ActiveWorkout />} />
-        <Route path="/routines" element={<Routines />} />
-        <Route path="/routines/:id" element={<RoutineEditor />} />
-        <Route path="/history" element={<Navigate to="/progress?view=history" replace />} />
-        <Route path="/history/:id" element={<WorkoutDetail />} />
-        <Route path="/exercises" element={<Exercises />} />
-        <Route path="/exercises/:id" element={<ExerciseDetail />} />
-        <Route path="/progress" element={<Progress />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/import" element={<Import />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {/* Keyed by page, so moving to another page clears the error. */}
+      <ErrorBoundary inApp key={pathname}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/workout" element={<ActiveWorkout />} />
+          <Route path="/routines" element={<Routines />} />
+          <Route path="/routines/:id" element={<RoutineEditor />} />
+          <Route path="/history" element={<Navigate to="/progress?view=history" replace />} />
+          <Route path="/history/:id" element={<WorkoutDetail />} />
+          <Route path="/exercises" element={<Exercises />} />
+          <Route path="/exercises/:id" element={<ExerciseDetail />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/import" element={<Import />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
       {tabs && <ActiveWorkoutBar />}
       <RestTimerBar />
       {tabs && <TabBar />}

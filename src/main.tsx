@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { requestPersistentStorage } from './store/storage';
 import { useStore } from './store/useStore';
 import { initSync } from './sync/engine';
@@ -20,7 +21,13 @@ function Root() {
     if (useStore.persist.hasHydrated()) setReady(true);
     return unsub;
   }, [ready]);
-  return ready ? <App /> : <div className="splash">Loading…</div>;
+  return ready ? (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  ) : (
+    <div className="splash">Loading…</div>
+  );
 }
 
 requestPersistentStorage();

@@ -56,6 +56,14 @@ export const removeExercise =
   (weId: string): WorkoutUpdater =>
   (w) => ({ ...w, exercises: w.exercises.filter((we) => we.id !== weId) });
 
+/** Put an exercise back as it was, at its old position, e.g. to undo removing or replacing it. */
+export const restoreExercise =
+  (we: WorkoutExercise, index: number): WorkoutUpdater =>
+  (w) => {
+    const others = w.exercises.filter((x) => x.id !== we.id);
+    return { ...w, exercises: [...others.slice(0, index), we, ...others.slice(index)] };
+  };
+
 export const moveExercise =
   (weId: string, delta: number): WorkoutUpdater =>
   (w) => {
@@ -128,10 +136,18 @@ export const insertSet =
       we.sets.some((s) => s.id === set.id) ? we : { ...we, sets: [...we.sets.slice(0, index), set, ...we.sets.slice(index)] },
     );
 
+/** Clearing a ticked set's main number unticks it, so an empty set is never saved as done. */
 export const patchSet =
   (weId: string, setId: string, patch: Partial<WorkoutSet>): WorkoutUpdater =>
   (w) =>
-    mapExercise(w, weId, (we) => ({ ...we, sets: we.sets.map((s) => (s.id === setId ? { ...s, ...patch } : s)) }));
+    mapExercise(w, weId, (we) => ({
+      ...we,
+      sets: we.sets.map((s) => {
+        if (s.id !== setId) return s;
+        const next = { ...s, ...patch };
+        return next.done && !hasEntry(next) ? { ...next, done: false } : next;
+      }),
+    }));
 
 /** A set with its main number filled in (reps, time, distance or calories), ticked or not. */
 export function hasEntry(s: WorkoutSet): boolean {

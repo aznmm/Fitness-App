@@ -77,6 +77,13 @@ describe('dates and numbers', () => {
     expect(parseDate('not a date')).toBeUndefined();
   });
 
+  it('rejects impossible dates instead of rolling them over', () => {
+    expect(parseDate('2026-13-45')).toBeUndefined();
+    expect(parseDate('2026-02-30 10:00')).toBeUndefined();
+    expect(parseDate('31/02/2024', 'dmy')).toBeUndefined();
+    expect(parseDate('2024-02-29')).toBeDefined();
+  });
+
   it('guesses day-first files', () => {
     expect(guessDateOrder(['05/03/2024', '21/03/2024'])).toBe('dmy');
     expect(guessDateOrder(['05/03/2024', '03/21/2024'])).toBe('mdy');
@@ -126,6 +133,13 @@ describe('buildWorkouts', () => {
     expect(w.endedAt - w.startedAt).toBe(69 * 60000);
     expect(w.exercises[0].sets[0]).toMatchObject({ kind: 'warmup', weight: 60, reps: 8 });
     expect(w.exercises[1].sets[0]).toMatchObject({ duration: 60 });
+  });
+
+  it('skips rows with impossible numbers', () => {
+    const t = parseCsv('Date,Exercise,Weight,Reps\n2024-01-02,Squat,1e9,5\n2024-01-02,Squat,100,-8\n2024-01-02,Squat,100,5');
+    const r = buildWorkouts(t, detectColumns(t.header).columns, { weightUnit: 'kg', distanceUnit: 'km', dateOrder: 'mdy' });
+    expect(r.skippedRows).toBe(2);
+    expect(r.workouts[0].exercises[0].sets).toHaveLength(1);
   });
 
   it('counts rows with unreadable dates', () => {
