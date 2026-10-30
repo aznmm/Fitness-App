@@ -1,9 +1,11 @@
 import { CalendarCheck, ClipboardList, Play, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { muscleClass } from '../data/exercises';
-import { relativeDayInline } from '../lib/dates';
+import { useMemo } from 'react';
+import { shortDay } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { DayPlan } from '../lib/plans';
+import { lastDone } from '../lib/stats';
 import { useExercises, useStore } from '../store/useStore';
 import type { Exercise, Routine } from '../types';
 import { ExerciseIcon } from './MuscleIcon';
@@ -64,6 +66,8 @@ interface Props {
 /** Asks which routine to do before starting a workout. */
 export function StartWorkoutSheet({ plan, onStart, onClose }: Props) {
   const routines = useStore((s) => s.routines);
+  const workouts = useStore((s) => s.workouts);
+  const done = useMemo(() => lastDone(workouts, routines), [workouts, routines]);
   const createRoutine = useCreateRoutine();
   const others = routines
     .filter((r) => r.id !== plan?.routine.id)
@@ -77,7 +81,7 @@ export function StartWorkoutSheet({ plan, onStart, onClose }: Props) {
             <CalendarCheck size={14} /> Planned for today
           </div>
           <div className="list with-icons" style={{ marginBottom: 20 }}>
-            <RoutineRow routine={plan.routine} onStart={onStart} />
+            <RoutineRow routine={plan.routine} last={done.get(plan.routine.id)} onStart={onStart} />
           </div>
         </>
       )}
@@ -86,7 +90,7 @@ export function StartWorkoutSheet({ plan, onStart, onClose }: Props) {
       {others.length > 0 && (
         <div className="list with-icons" style={{ marginBottom: 20 }}>
           {others.map((r) => (
-            <RoutineRow key={r.id} routine={r} onStart={onStart} />
+            <RoutineRow key={r.id} routine={r} last={done.get(r.id)} onStart={onStart} />
           ))}
         </div>
       )}
@@ -125,7 +129,7 @@ export function StartWorkoutSheet({ plan, onStart, onClose }: Props) {
   );
 }
 
-function RoutineRow({ routine, onStart }: { routine: Routine; onStart: (routineId?: string) => void }) {
+function RoutineRow({ routine, last, onStart }: { routine: Routine; last?: number; onStart: (routineId?: string) => void }) {
   const empty = !routine.exercises.length;
   return (
     <button className="list-item" onClick={() => onStart(routine.id)} disabled={empty} style={empty ? { opacity: 0.5 } : undefined}>
@@ -137,7 +141,7 @@ function RoutineRow({ routine, onStart }: { routine: Routine; onStart: (routineI
         <span className="sub truncate" style={{ display: 'block' }}>
           {empty
             ? 'No exercises yet'
-            : `${routine.exercises.length} exercise${routine.exercises.length === 1 ? '' : 's'}${routine.lastUsedAt ? ` · last done ${relativeDayInline(routine.lastUsedAt)}` : ''}`}
+            : `${routine.exercises.length} exercise${routine.exercises.length === 1 ? '' : 's'}${last ? ` · last done ${shortDay(last)}` : ''}`}
         </span>
       </span>
       {!empty && (

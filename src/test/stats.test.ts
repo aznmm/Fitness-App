@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { setsPerMuscle, weekStreak, weeklyStats } from '../lib/stats';
+import { shortDay } from '../lib/dates';
+import { lastDone, setsPerMuscle, weekStreak, weeklyStats } from '../lib/stats';
 import { byId, DAY, NOW, set, workout } from './helpers';
 
 describe('weeklyStats', () => {
@@ -49,5 +50,24 @@ describe('heat scale', () => {
   it('buckets intensities into four steps', async () => {
     const { heatStep } = await import('../components/BodyMap');
     expect([0, 0.1, 0.25, 0.49, 0.5, 0.74, 0.75, 1, 3].map(heatStep)).toEqual([0, 1, 2, 2, 3, 3, 4, 4, 4]);
+  });
+});
+
+describe('lastDone', () => {
+  it('takes the latest logged workout, falling back to when the routine was started', () => {
+    const routines = [
+      { id: 'r1', name: 'Push', exercises: [], createdAt: 0, lastUsedAt: NOW - 9 * DAY },
+      { id: 'r2', name: 'Pull', exercises: [], createdAt: 0, lastUsedAt: NOW - 2 * DAY },
+    ];
+    const ws = [workout(NOW - 5 * DAY, {}, { routineId: 'r1' }), workout(NOW - 3 * DAY, {}, { routineId: 'r1' }), workout(NOW - DAY, {}, { routineId: 'r1', endedAt: undefined })];
+    const done = lastDone(ws, routines);
+    expect(done.get('r1')).toBe(NOW - 3 * DAY);
+    expect(done.get('r2')).toBe(NOW - 2 * DAY);
+  });
+
+  it('formats short relative days for tight rows', () => {
+    expect(shortDay(NOW, NOW)).toBe('today');
+    expect(shortDay(NOW - DAY, NOW)).toBe('yesterday');
+    expect(shortDay(NOW - 20 * DAY, NOW)).not.toMatch(/,/);
   });
 });

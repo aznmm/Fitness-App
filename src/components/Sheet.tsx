@@ -40,7 +40,7 @@ export function Sheet({ title, onClose, children, footer, full, headerExtra }: S
           <div>{headerExtra}</div>
           <h2 id={titleId}>{title}</h2>
           <div className="end">
-            <button className="glass-btn" style={{ width: 32, height: 32 }} onClick={onClose} aria-label="Close">
+            <button className="glass-btn" onClick={onClose} aria-label="Close">
               <X size={18} strokeWidth={2.5} />
             </button>
           </div>

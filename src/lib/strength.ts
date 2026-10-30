@@ -87,6 +87,11 @@ export function liftScore(e1rm: number, standardKg: number): number {
   return Math.min(MAX_SCORE, (e1rm / standardKg) * SCORE_AT_STANDARD);
 }
 
+/** The estimated 1RM (kg) that reaches `score` for a lift with this standard. */
+export function e1rmForScore(score: number, standardKg: number): number {
+  return (score / SCORE_AT_STANDARD) * standardKg;
+}
+
 export interface GroupScore {
   score: number;
   exerciseId: string;

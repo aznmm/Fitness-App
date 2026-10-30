@@ -211,6 +211,16 @@ h4 {
   line-height: 1.15;
 }
 
+/* A long unbroken name or note wraps instead of pushing the page sideways. */
+h1,
+h2,
+h3,
+h4,
+p,
+.card {
+  overflow-wrap: break-word;
+}
+
 h1 {
   font-size: 34px;
   font-weight: 700;
@@ -380,7 +390,7 @@ h3 {
 
 .navbar.scrolled,
 .navbar.solid {
-  background: var(--glass);
+  background: var(--glass-strong);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   backdrop-filter: saturate(180%) blur(24px);
   box-shadow: 0 0.5px 0 var(--separator);
@@ -393,8 +403,11 @@ h3 {
   min-width: 0;
 }
 
+/* Plain icons hang into the gutter so their glyphs line up with the content edge. */
 .navbar-side.end {
   justify-content: flex-end;
+  gap: 0;
+  margin-right: -10px;
 }
 
 .navbar-title {
@@ -446,19 +459,60 @@ h3 {
   font-size: 28px;
 }
 
+/* Back: chevron + the previous screen's name, like iOS. */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  max-width: 100%;
+  height: 44px;
+  margin-left: -12px;
+  padding: 0 6px 0 2px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  transition: opacity 0.15s;
+}
+
+.back-btn svg {
+  flex: none;
+}
+
+.back-btn span {
+  min-width: 0;
+  margin-left: -3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.back-btn:active {
+  opacity: 0.35;
+}
+
+/* Small round button inside content (sheet close, card menu, info): one size everywhere. */
 .glass-btn {
+  position: relative;
   display: inline-grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   flex: none;
-  color: var(--text);
+  color: var(--text-2);
   background: var(--fill);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
   transition: transform 0.2s var(--ease), background 0.2s;
+}
+
+/* A fingertip-sized hit area around the smaller circle. */
+.glass-btn::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }
 
 .glass-btn:active {
@@ -467,6 +521,27 @@ h3 {
 
 .glass-btn.accent {
   color: var(--accent);
+}
+
+/* In the navigation bar, actions are plain tinted icons with no circle. */
+.navbar .glass-btn {
+  width: 44px;
+  height: 44px;
+  color: var(--accent);
+  background: none;
+}
+
+.navbar .glass-btn::after {
+  content: none;
+}
+
+.navbar .glass-btn:active {
+  transform: none;
+  opacity: 0.35;
+}
+
+.workout-bar > .glass-btn {
+  margin-left: -10px;
 }
 
 /* ---------- Cards ---------- */
@@ -493,6 +568,28 @@ button.card {
 .card.link:active,
 button.card:active {
   transform: scale(0.975);
+}
+
+button.stat {
+  border: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.25s var(--ease);
+}
+
+button.stat:active {
+  transform: scale(0.96);
+}
+
+/* Rest countdown inside Home's Resume button */
+.hero-rest {
+  flex: none;
+  margin-left: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 15px;
 }
 
 .card + .card {
@@ -1166,9 +1263,10 @@ a.list-item:active {
   font-weight: 600;
 }
 
+/* Done days get a green tick, so they don't look like today (blue). */
 .week-strip .bubble.on {
-  background: linear-gradient(140deg, var(--accent), var(--accent-2));
-  color: #fff;
+  background: var(--green-tint);
+  color: var(--green-text);
 }
 
 .week-strip .bubble.today:not(.on) {
@@ -1436,6 +1534,17 @@ button.day-row:active {
 .tab.active {
   color: var(--accent);
   background: var(--fill);
+}
+
+.tabbar-fade {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 24;
+  height: calc(var(--tabbar-h) + var(--float-bottom) + 28px);
+  background: linear-gradient(to bottom, transparent, var(--bg) 62%);
+  pointer-events: none;
 }
 
 /* ---------- Floating bars ---------- */
@@ -2128,6 +2237,62 @@ button.day-row:active {
 .set-input::placeholder {
   color: var(--text-3);
   font-weight: 500;
+}
+
+/* Small phones (iPhone SE, Display Zoom): tighter set grid so "Previous" still fits. */
+@media (max-width: 359px) {
+  .set-grid {
+    gap: 6px;
+    grid-template-columns: 24px minmax(0, 1fr) 64px 52px;
+  }
+
+  .set-grid.cols-1 {
+    grid-template-columns: 24px minmax(0, 1fr) 92px;
+  }
+
+  .set-grid.cardio {
+    grid-template-columns: 24px repeat(3, minmax(0, 1fr));
+  }
+
+  .set-grid.cardio.cols-2 {
+    grid-template-columns: 24px repeat(2, minmax(0, 1fr));
+  }
+
+  .set-grid.with-check {
+    grid-template-columns: 24px minmax(0, 1fr) 58px 46px 34px;
+  }
+
+  .set-grid.cols-1.with-check {
+    grid-template-columns: 24px minmax(0, 1fr) 80px 34px;
+  }
+
+  .set-grid.cardio.with-check {
+    grid-template-columns: 24px repeat(3, minmax(0, 1fr)) 34px;
+  }
+
+  .set-grid.cardio.cols-2.with-check {
+    grid-template-columns: 24px repeat(2, minmax(0, 1fr)) 34px;
+  }
+
+  .prev {
+    font-size: 12px;
+  }
+
+  .set-input {
+    font-size: 15px;
+  }
+
+  .check {
+    width: 34px;
+  }
+
+  .stat {
+    padding: 12px 10px;
+  }
+
+  .stat .value {
+    font-size: 18px;
+  }
 }
 
 @keyframes check-pop {

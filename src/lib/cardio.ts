@@ -25,6 +25,11 @@ export function distanceSpec(exercise: Pick<Exercise, 'distanceScale'> | undefin
   }
 }
 
+/** A timed or distance cardio exercise (run, row, bike), as opposed to lifting. */
+export function isCardio(exercise: Pick<Exercise, 'primary' | 'type'> | undefined): boolean {
+  return exercise?.primary === 'cardio' && (exercise.type === 'duration' || exercise.type === 'distance_duration');
+}
+
 export function formatCardioDistance(m: number, spec: DistanceSpec): string {
   return `${trimNumber(m / spec.metres, spec.metres === 1 || spec.label === 'yd' ? 0 : 2)} ${spec.label}`;
 }

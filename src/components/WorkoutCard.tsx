@@ -39,7 +39,10 @@ export function WorkoutCard({ workout, prCount }: { workout: Workout; prCount?: 
           </span>
         )}
         <span className="row" style={{ gap: 5 }}>
-          <Layers size={15} /> <span className="rounded-num">{workoutSetCount(workout)} sets</span>
+          <Layers size={15} />{' '}
+          <span className="rounded-num">
+            {workoutSetCount(workout)} set{workoutSetCount(workout) === 1 ? '' : 's'}
+          </span>
         </span>
       </div>
       <div className="stack-sm" style={{ gap: 7 }}>

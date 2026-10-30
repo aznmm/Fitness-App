@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { estimate1RM } from '../lib/calc';
-import { bodyweightAt, computeStrength, levelFor, strengthHistory } from '../lib/strength';
+import { bodyweightAt, computeStrength, e1rmForScore, levelFor, liftScore, strengthHistory } from '../lib/strength';
 import { byId, DAY, NOW, set, workout } from './helpers';
 
 const BW = 80;
@@ -76,5 +76,13 @@ describe('levels and history', () => {
     expect(points.length).toBe(3);
     expect(points[0].score).toBeCloseTo(500, 5);
     expect(points[points.length - 1].score).toBeCloseTo(600, 5);
+  });
+});
+
+describe('next level target', () => {
+  it('is the 1RM that reaches the next level score', () => {
+    const standard = 100;
+    expect(e1rmForScore(575, standard)).toBeCloseTo(115);
+    expect(levelFor(liftScore(e1rmForScore(575, standard), standard)).name).toBe('Advanced');
   });
 });

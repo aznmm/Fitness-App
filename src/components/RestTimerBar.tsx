@@ -4,6 +4,7 @@ import { primeAudio, restFinishedAlert } from '../lib/feedback';
 import { formatDuration } from '../lib/units';
 import { useNow } from '../lib/useNow';
 import { useStore } from '../store/useStore';
+import { useResumeOnScreen } from './Layout';
 import { Sheet } from './Sheet';
 
 const R = 17;
@@ -17,6 +18,7 @@ export function RestTimerBar() {
   const sound = useStore((s) => s.settings.restSound);
   const now = useNow(250, !!rest);
   const { pathname } = useLocation();
+  const resumeShown = useResumeOnScreen();
 
   const remaining = rest ? Math.min(rest.totalSec, Math.max(0, (rest.endsAt - now) / 1000)) : 0;
 
@@ -27,7 +29,8 @@ export function RestTimerBar() {
     }
   }, [rest, now, stopRest, sound]);
 
-  if (!rest || remaining <= 0) return null;
+  // On Home the Resume button shows the countdown while it's on screen.
+  if (!rest || remaining <= 0 || resumeShown) return null;
   const onWorkout = pathname === '/workout';
   const fraction = remaining / rest.totalSec;
 
